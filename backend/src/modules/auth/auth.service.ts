@@ -28,7 +28,7 @@ export class AuthService {
       const user = await this.usersService.findOrCreate(wallet_address);
 
       // Update last seen
-      await this.usersService.updateLastSeen(user._id.toString());
+      await this.usersService.updateLastSeen((user as any)._id.toString());
 
       return user;
     } catch (error) {
@@ -39,14 +39,14 @@ export class AuthService {
   async login(user: any) {
     const payload = {
       wallet_address: user.wallet_address,
-      sub: user._id.toString(),
+      sub: (user as any)._id.toString(),
       username: user.username,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
-        id: user._id.toString(),
+        id: (user as any)._id.toString(),
         wallet_address: user.wallet_address,
         username: user.username,
         display_name: user.display_name,

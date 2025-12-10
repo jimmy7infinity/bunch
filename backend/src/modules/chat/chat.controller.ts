@@ -34,7 +34,7 @@ export class ChatController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async sendMessage(@Request() req, @Body() body: { text: string }) {
+  async sendMessage(@Request() req: any, @Body() body: { text: string }) {
     const message = await this.chatService.createMessage(
       req.user.userId,
       body.text,
@@ -46,7 +46,7 @@ export class ChatController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/react')
   async reactToMessage(
-    @Request() req,
+    @Request() req: any,
     @Param('id') messageId: string,
     @Body() body: { emoji: string },
   ) {

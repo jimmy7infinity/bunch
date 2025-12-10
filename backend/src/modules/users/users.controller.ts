@@ -14,14 +14,14 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMe(@Request() req) {
+  async getMe(@Request() req: any) {
     return req.user;
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   async updateMe(
-    @Request() req,
+    @Request() req: any,
     @Body() updates: { display_name?: string; avatar_url?: string },
   ) {
     return this.usersService.updateProfile(req.user.userId, updates);

@@ -1,12 +1,7 @@
 import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-
-class WalletLoginDto {
-  wallet_address: string;
-  signature: string;
-  message: string;
-}
+import { WalletLoginDto } from './dto/wallet-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +20,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMe(@Request() req) {
+  async getMe(@Request() req: any) {
     return {
       id: req.user.userId,
       wallet_address: req.user.wallet_address,

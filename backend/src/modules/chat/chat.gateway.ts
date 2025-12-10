@@ -112,7 +112,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const message = await this.chatService.createMessage(userId, data.text);
 
       // Populate sender info
-      const populatedMessage = await message.populate(
+      const populatedMessage = await (message as any).populate(
         'sender_id',
         'username display_name avatar_url',
       );
