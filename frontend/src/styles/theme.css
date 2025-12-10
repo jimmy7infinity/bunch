@@ -1,0 +1,91 @@
+:root {
+  /* Colors */
+  --background: rgb(231, 229, 228);
+  --foreground: rgb(30, 41, 59);
+  --card: rgb(245, 245, 244);
+  --card-foreground: rgb(30, 41, 59);
+  --primary: rgb(99, 102, 241);
+  --primary-foreground: rgb(255, 255, 255);
+  --secondary: rgb(214, 211, 209);
+  --secondary-foreground: rgb(75, 85, 99);
+  --muted: rgb(231, 229, 228);
+  --muted-foreground: rgb(107, 114, 128);
+  --accent: rgb(243, 229, 245);
+  --accent-foreground: rgb(55, 65, 81);
+  --destructive: rgb(239, 68, 68);
+  --destructive-foreground: rgb(255, 255, 255);
+  --border: rgb(214, 211, 209);
+  --input: rgb(214, 211, 209);
+  --ring: rgb(99, 102, 241);
+  
+  /* Typography */
+  --font-sans: Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Border radius */
+  --radius: 1.25rem;
+  
+  /* Shadows */
+  --shadow: 2px 2px 10px 4px hsl(240 4% 60% / 0.18), 2px 1px 2px 3px hsl(240 4% 60% / 0.18);
+}
+
+.dark {
+  --background: rgb(30, 27, 24);
+  --foreground: rgb(226, 232, 240);
+  --card: rgb(44, 40, 37);
+  --card-foreground: rgb(226, 232, 240);
+  --primary: rgb(136, 128, 255);
+  --primary-foreground: rgb(30, 27, 24);
+  --secondary: rgb(58, 54, 51);
+  --secondary-foreground: rgb(209, 213, 219);
+  --muted: rgb(31, 28, 25);
+  --muted-foreground: rgb(156, 163, 175);
+  --accent: rgb(72, 68, 65);
+  --accent-foreground: rgb(209, 213, 219);
+  --destructive: rgb(239, 68, 68);
+  --destructive-foreground: rgb(30, 27, 24);
+  --border: rgb(58, 54, 51);
+  --input: rgb(58, 54, 51);
+  --ring: rgb(33, 48, 181);
+  --shadow: 2px 2px 10px 4px hsl(0 0% 0% / 0.18), 2px 1px 2px 3px hsl(0 0% 0% / 0.18);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
