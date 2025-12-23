@@ -1,0 +1,83 @@
+/* Top bar with drop shadows */
+.chatroom-topbar {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Nav icon buttons with drop shadows */
+.nav-icon-button {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease;
+}
+
+.nav-icon-button:hover {
+  opacity: 0.8;
+}
+
+/* Chat window heading with drop shadows - only black shadow */
+.chat-window-heading {
+  box-shadow: 
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Online indicator with drop shadows */
+.online-indicator {
+  box-shadow: 
+    -0.5px -0.5px 1px 0px rgba(255, 255, 255, 0.04),
+    0.5px 0.5px 1px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Chat window with inner shadows */
+.chat-window {
+  box-shadow: 
+    inset -10px -10px 20px rgba(255, 255, 255, 0.01),
+    inset 10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Message input container with drop shadows */
+.message-input-container {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Send button with drop shadows */
+.send-button {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease;
+}
+
+.send-button:hover {
+  opacity: 0.8;
+}
+
+/* Message input placeholder color */
+.message-input-field::placeholder {
+  color: #323232;
+}
+
+/* Chat bubble drop shadows */
+.chat-bubble-other, .chat-bubble-self {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Message PFP drop shadows */
+.message-pfp {
+  box-shadow: 
+    -1px -1px 2px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* User rank badge drop shadows */
+.user-rank-badge {
+  box-shadow: 
+    -1px -1px 2px 0px rgba(255, 255, 255, 0.04),
+    2px 2px 4px 0px rgba(0, 0, 0, 0.25);
+}

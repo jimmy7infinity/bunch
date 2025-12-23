@@ -1,11 +1,11 @@
 import { useAuthStore } from './stores/authStore';
 import { WalletConnect } from './components/auth/WalletConnect';
-import { ChatRoom } from './components/chat/ChatRoom';
+import { ChatsList } from './components/chat/ChatsList';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  return isAuthenticated ? <ChatRoom /> : <WalletConnect />;
+  return isAuthenticated ? <ChatsList /> : <WalletConnect />;
 }
 
 export default App;

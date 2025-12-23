@@ -1,0 +1,162 @@
+/* Top bar with drop shadows - adjusted for CSS from Figma values */
+.chat-topbar {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* User PFP drop shadows - adjusted Figma values */
+.user-pfp {
+  box-shadow: 
+    -1px -1px 2px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Button container with inner shadows - adjusted Figma values */
+.button-container {
+  box-shadow: 
+    inset -10px -10px 20px rgba(255, 255, 255, 0.04),
+    inset 10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Nav separator with inner shadows */
+.nav-separator {
+  box-shadow: 
+    inset -2px -2px 4px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Favorite button star with inner shadows */
+.nav-button-favorite svg {
+  filter: drop-shadow(-1px -1px 2px rgba(245, 245, 245, 0.08)) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+/* Nav buttons with drop shadows - adjusted Figma values */
+.nav-button, .nav-button-favorite {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Nav button hover effect */
+.nav-button:hover, .nav-button-favorite:hover {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+/* Search input with gradient border */
+.search-input-container {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Search button with drop shadows */
+.search-button {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* New chat button with drop shadows */
+.new-chat-button {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Search and new chat button hover effects */
+.search-button:hover, .new-chat-button:hover {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+/* Division element with inner shadows */
+.division-element {
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.15),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Search input placeholder color */
+.search-input-field::placeholder {
+  color: #323232;
+}
+
+/* AI Feed announcement with drop shadows */
+.ai-feed-announcement {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.ai-feed-announcement:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.06),
+    12px 12px 24px 0px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+
+/* Chat card with hover effect */
+.chat-card {
+  transition: transform 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-card:hover {
+  transform: translateY(-2px);
+  z-index: 2;
+}
+
+.chat-card:hover .chat-card-top {
+  box-shadow: 
+    12px 12px 24px 0px rgba(0, 0, 0, 0.35);
+}
+
+/* Chat card top half with drop shadows */
+.chat-card-top {
+  box-shadow: 
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Chat card bottom half with inner shadows */
+.chat-card-bottom {
+  box-shadow: 
+    inset -10px -10px 20px rgba(255, 255, 255, 0.04),
+    inset 10px 10px 20px rgba(0, 0, 0, 0.02);
+}
+
+/* Text bubble with drop shadows */
+.text-bubble {
+  box-shadow: 
+    -2px -2px 4px 0px rgba(255, 255, 255, 0.04),
+    2px 2px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Chat card bell and star buttons */
+.chat-card-bell-button, .chat-card-star-button {
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease;
+}
+
+.chat-card-bell-button:hover, .chat-card-star-button:hover {
+  opacity: 0.8;
+}
+
+/* Star button inner shadows */
+.chat-card-star-button svg {
+  filter: drop-shadow(-1px -1px 2px rgba(245, 245, 245, 0.08)) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+/* Bell button inner shadows */
+.chat-card-bell-button svg {
+  filter: drop-shadow(-1px -1px 2px rgba(245, 245, 245, 0.08)) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.15));
+}
