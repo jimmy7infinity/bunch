@@ -1,0 +1,18 @@
+.settings-topbar {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.settings-action-button:hover {
+  background-color: #242424 !important;
+  border-color: #5BC854 !important;
+}
+
+.settings-action-button-danger:hover {
+  background-color: #2A1A1A !important;
+}
+
+.toggle-button:active {
+  transform: scale(0.95);
+}

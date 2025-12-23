@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { GroupMembersModal } from './GroupMembersModal';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
@@ -7,18 +8,30 @@ interface ChatRoomProps {
   chatType?: 'global' | 'market' | 'private';
   onlineCount?: number;
   onBack?: () => void;
+  onUserClick?: (userId: string) => void;
 }
 
 export const ChatRoom = ({ 
   chatName = 'Politics', 
   chatType = 'global',
   onlineCount = 332,
-  onBack 
+  onBack,
+  onUserClick
 }: ChatRoomProps) => {
   const { user } = useAuthStore();
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+
+  // Mock members data - will be replaced with actual API call
+  const mockMembers = [
+    { id: '1', username: 'user_one', pfp: '👤', rank: 'Gold', isOnline: true },
+    { id: '2', username: 'user_two', pfp: '👤', rank: 'Silver', isOnline: true },
+    { id: '3', username: 'user_three', pfp: '👤', rank: 'Bronze', isOnline: false },
+    { id: '4', username: 'user_four', pfp: '👤', rank: 'Gold', isOnline: true },
+    { id: '5', username: 'user_five', pfp: '👤', rank: 'Silver', isOnline: false },
+  ];
 
   const getChatTypeIcon = () => {
     switch (chatType) {
@@ -261,16 +274,23 @@ export const ChatRoom = ({
           {/* Left: Chat Type Icon */}
           <div>{getChatTypeIcon()}</div>
 
-          {/* Center: Groups Icon + Online Count */}
-          <div style={{ 
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px',
-          }}>
+          {/* Center: Groups Icon + Online Count (Clickable) */}
+          <button
+            onClick={() => setIsMembersModalOpen(true)}
+            style={{ 
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '5px',
+            }}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
@@ -284,7 +304,7 @@ export const ChatRoom = ({
             }}>
               {onlineCount}
             </span>
-          </div>
+          </button>
 
           {/* Right: Online Indicator */}
           <div
@@ -517,6 +537,7 @@ export const ChatRoom = ({
                 {/* PFP */}
                 <div
                   className="message-pfp"
+                  onClick={() => onUserClick?.('demo_user_id')}
                   style={{
                     width: '50px',
                     height: '50px',
@@ -528,6 +549,7 @@ export const ChatRoom = ({
                     backgroundColor: '#2A2A2A',
                     overflow: 'hidden',
                     filter: 'grayscale(100%)',
+                    cursor: 'pointer',
                   }}
                 >
                   <span style={{ fontSize: '24px' }}>👤</span>
@@ -584,6 +606,7 @@ export const ChatRoom = ({
                   {/* PFP */}
                   <div
                     className="message-pfp"
+                    onClick={() => onUserClick?.(user?.id || 'current_user_id')}
                     style={{
                       width: '50px',
                       height: '50px',
@@ -595,6 +618,7 @@ export const ChatRoom = ({
                       backgroundColor: '#2A2A2A',
                       overflow: 'hidden',
                       filter: 'grayscale(100%)',
+                      cursor: 'pointer',
                     }}
                   >
                     <span style={{ fontSize: '24px' }}>👤</span>
@@ -759,6 +783,17 @@ export const ChatRoom = ({
           />
         </div>
       </div>
+
+      {/* Group Members Modal */}
+      <GroupMembersModal
+        isOpen={isMembersModalOpen}
+        onClose={() => setIsMembersModalOpen(false)}
+        chatName={chatName}
+        members={mockMembers}
+        onMemberClick={(userId) => {
+          onUserClick?.(userId);
+        }}
+      />
     </div>
   );
 };

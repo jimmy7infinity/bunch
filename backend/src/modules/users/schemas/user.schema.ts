@@ -5,10 +5,10 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ required: true, unique: true })
+  @Prop({ unique: true, sparse: true })
   twitter_id: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop()
   twitter_username: string;
 
   @Prop()
@@ -20,7 +20,7 @@ export class User {
   @Prop({ default: false })
   wallet_verified: boolean;
 
-  @Prop()
+  @Prop({ unique: true, sparse: true })
   username: string;
 
   @Prop()

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PolyBanter",
   "version": "0.1.0",
-  "description": "Social chat for Polymarket",
+  "description": "Social chat for Polymarket - Connect with traders in real-time",
   "side_panel": {
     "default_path": "index.html"
   },
@@ -12,7 +12,8 @@
   ],
   "host_permissions": [
     "https://polymarket.com/*",
-    "http://localhost:3000/*"
+    "http://localhost:3000/*",
+    "https://*.railway.app/*"
   ],
   "background": {
     "service_worker": "service-worker.js",

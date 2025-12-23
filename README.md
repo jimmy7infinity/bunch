@@ -6,13 +6,33 @@ A Chrome extension side panel that brings real-time chat, AI-powered insights, a
 
 ---
 
+## 🎯 Ready to Deploy?
+
+**Everything is configured!** Choose your path:
+
+| Guide | Time | Best For |
+|-------|------|----------|
+| **[START_DEPLOYMENT.md](./START_DEPLOYMENT.md)** | 5 min | Overview & choosing your path |
+| **[QUICK_DEPLOY.md](./QUICK_DEPLOY.md)** | 30 min | Fast deployment to production |
+| **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** | 1 hour | Complete production setup |
+| **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** | - | Step-by-step verification |
+
+### Verify Your Setup
+
+```bash
+# Check if everything is configured correctly
+./scripts/verify-setup.sh
+```
+
+---
+
 ## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
 | **[OVERVIEW.md](./OVERVIEW.md)** | Complete technical specification and architecture (1,900+ lines) |
+| **[STATUS.md](./STATUS.md)** | Current implementation status and what's ready |
 | **[GETTING_STARTED.md](./GETTING_STARTED.md)** | Step-by-step setup guide for development |
-| **[WEEK_1_CHECKLIST.md](./WEEK_1_CHECKLIST.md)** | Day-by-day checklist for first week |
 | **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** | Common commands and code snippets |
 
 ---
@@ -22,35 +42,40 @@ A Chrome extension side panel that brings real-time chat, AI-powered insights, a
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
+- npm or pnpm
 - Docker Desktop
 - Chrome browser
+- MetaMask wallet
 
-### Setup (5 minutes)
+### Local Development (5 minutes)
 
 ```bash
-# 1. Install dependencies
-pnpm install
+# 1. Clone and setup
+git clone <your-repo>
+cd poly_banter
 
-# 2. Start Docker services (MongoDB, Redis)
-docker-compose up -d
+# 2. Run setup script (sets up everything)
+npm run setup
 
-# 3. Set up backend
-cd backend
-cp .env.example .env
-# Edit .env with your values
-pnpm install
-pnpm dev
+# 3. Start backend (Terminal 1)
+cd backend && npm run dev
 
-# 4. Set up frontend (in new terminal)
-cd frontend
-pnpm install
-pnpm dev
+# 4. Start frontend (Terminal 2)
+cd frontend && npm run dev
 
-# 5. Build and load extension
-pnpm build
-# Go to chrome://extensions/, enable Developer mode, click "Load unpacked", select frontend/dist
+# 5. Load extension in Chrome
+# Go to chrome://extensions/, enable Developer mode
+# Click "Load unpacked", select frontend/dist
 ```
+
+### Deploy to Production (30 minutes)
+
+```bash
+# Follow the deployment guide
+# See START_DEPLOYMENT.md for step-by-step instructions
+```
+
+👉 **[Start Deployment Guide](./START_DEPLOYMENT.md)**
 
 ---
 

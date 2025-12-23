@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WalletLoginDto } from './dto/wallet-login.dto';
@@ -38,6 +38,17 @@ export class AuthController {
       message,
       nonce,
     };
+  }
+
+  // DEV ONLY: Simple Twitter-style login for testing
+  @Post('dev-login')
+  async devLogin(@Body() body: { username: string }) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new UnauthorizedException('Dev login not available in production');
+    }
+    
+    const user = await this.authService.findOrCreateByUsername(body.username);
+    return this.authService.login(user);
   }
 }
 

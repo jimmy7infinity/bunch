@@ -1,13 +1,24 @@
 import axios from 'axios';
 import type { AuthResponse, Message } from '../types';
 
+// API URL configuration with fallback
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+// Log API configuration in development
+if (import.meta.env.DEV) {
+  console.log('🔧 API Configuration:', {
+    API_URL,
+    WS_URL: import.meta.env.VITE_WS_URL || 'http://localhost:3000',
+    ENV: import.meta.env.MODE,
+  });
+}
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Add token to requests
@@ -18,6 +29,20 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   async getNonce() {

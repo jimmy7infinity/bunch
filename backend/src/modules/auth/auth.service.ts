@@ -58,5 +58,23 @@ export class AuthService {
   async validateUser(userId: string): Promise<any> {
     return this.usersService.findById(userId);
   }
+
+  // DEV ONLY: Find or create user by username
+  async findOrCreateByUsername(username: string): Promise<any> {
+    let user = await this.usersService.findByUsername(username);
+    
+    if (!user) {
+      // Create new user with fake wallet address for dev
+      const fakeWallet = `0x${username.toLowerCase().padEnd(40, '0')}`;
+      user = await this.usersService.findOrCreate(fakeWallet);
+      // Update username via service
+      user = await this.usersService.updateProfile(
+        (user as any)._id.toString(), 
+        { display_name: username }
+      );
+    }
+    
+    return user;
+  }
 }
 

@@ -98,6 +98,29 @@ export class UsersService {
 
     return user;
   }
+
+  async findOrCreate(wallet_address: string): Promise<User> {
+    let user = await this.userModel.findOne({ 
+      wallet_address: wallet_address.toLowerCase() 
+    }).exec();
+    
+    if (!user) {
+      const username = `user_${wallet_address.slice(0, 8)}`;
+      user = new this.userModel({
+        wallet_address: wallet_address.toLowerCase(),
+        username,
+        display_name: username,
+        wallet_verified: true,
+      });
+      await user.save();
+    }
+
+    return user;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userModel.findOne({ username }).exec();
+  }
 }
 
 

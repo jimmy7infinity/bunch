@@ -1,0 +1,39 @@
+# Frontend (not needed for backend deployment)
+frontend/
+
+# Documentation
+*.md
+!README.md
+
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+test/
+tests/
+
+# Logs
+*.log
+logs/
+
+# Environment files (Railway uses Variables)
+.env
+.env.*
+
+# Docker files (Railway uses Nixpacks)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Scripts
+scripts/
+
+# Misc
+.DS_Store
+Thumbs.db
+

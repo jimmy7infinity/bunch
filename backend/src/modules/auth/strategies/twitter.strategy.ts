@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-twitter';
+// import { Strategy } from 'passport-twitter';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
+export class TwitterStrategy {
+  // Disabled for now - using dev login instead
+  /*
+  extends PassportStrategy(Strategy, 'twitter') {
   constructor(private configService: ConfigService) {
     super({
       consumerKey: configService.get<string>('TWITTER_CONSUMER_KEY'),
@@ -22,5 +25,6 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
       profile_image_url: profile.photos?.[0]?.value,
     };
   }
+  */
 }
 

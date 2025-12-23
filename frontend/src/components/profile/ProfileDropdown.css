@@ -1,0 +1,28 @@
+.profile-dropdown {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-menu {
+  box-shadow: 
+    -2px -2px 4px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.35);
+}
+
+.dropdown-item:hover {
+  background-color: #19191A !important;
+}
+
+.dropdown-item-danger:hover {
+  background-color: #2A1A1A !important;
+}

@@ -1,0 +1,107 @@
+.profile-topbar {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.nav-icon-button {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.nav-icon-button:hover {
+  background-color: #242424 !important;
+}
+
+.profile-pfp {
+  box-shadow: 
+    -2px -2px 4px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-rank-badge {
+  box-shadow: 
+    -2px -2px 4px rgba(255, 255, 255, 0.04),
+    5px 5px 10px rgba(0, 0, 0, 0.25);
+}
+
+.edit-pfp-button {
+  box-shadow: 
+    -2px -2px 4px rgba(255, 255, 255, 0.04),
+    5px 5px 10px rgba(0, 0, 0, 0.25);
+}
+
+.edit-pfp-button:hover {
+  background-color: #242424 !important;
+}
+
+.profile-action-button {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-action-button:hover {
+  background-color: #242424 !important;
+}
+
+.profile-action-button-danger {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-action-button-danger:hover {
+  background-color: #2A1A1A !important;
+}
+
+.profile-icon-button {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-icon-button:hover {
+  background-color: #242424 !important;
+}
+
+.profile-icon-button-danger {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-icon-button-danger:hover {
+  background-color: #2A1A1A !important;
+}
+
+.profile-pill-button {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-pill-button:hover {
+  background-color: #242424 !important;
+}
+
+.profile-pill-button-primary {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-pill-button-primary:hover {
+  background-color: #1A2A1A !important;
+}
+
+.profile-pill-button-danger {
+  box-shadow: 
+    -2.5px -2.5px 5px rgba(255, 255, 255, 0.04),
+    10px 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.profile-pill-button-danger:hover {
+  background-color: #2A1A1A !important;
+}

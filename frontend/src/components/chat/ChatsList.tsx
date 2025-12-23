@@ -1,19 +1,74 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { ChatRoom } from './ChatRoom';
+import { UserProfile } from '../profile/UserProfile';
+import { Settings } from '../profile/Settings';
+import { ProfileDropdown } from '../profile/ProfileDropdown';
+import { CreateGroupModal } from './CreateGroupModal';
 import './ChatsList.css';
 
-export const ChatsList = () => {
-  const { user } = useAuthStore();
-  const [selectedChat, setSelectedChat] = useState<{ name: string; type: 'global' | 'market' | 'private'; count: number } | null>(null);
+type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile';
 
-  if (selectedChat) {
+export const ChatsList = () => {
+  const { user, logout } = useAuthStore();
+  const [selectedChat, setSelectedChat] = useState<{ name: string; type: 'global' | 'market' | 'private'; count: number } | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('chats');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const pfpRef = useRef<HTMLDivElement>(null);
+
+  const handleCreateGroup = (groupName: string, selectedFriends: string[]) => {
+    console.log('Creating group:', groupName, 'with friends:', selectedFriends);
+    // TODO: Implement actual group creation API call
+  };
+
+  // Handle chat selection
+  if (selectedChat && viewMode === 'chats') {
     return (
       <ChatRoom 
         chatName={selectedChat.name}
         chatType={selectedChat.type}
         onlineCount={selectedChat.count}
         onBack={() => setSelectedChat(null)}
+        onUserClick={(userId) => {
+          setSelectedUserId(userId);
+          setViewMode('other-profile');
+        }}
+      />
+    );
+  }
+
+  // Handle profile view
+  if (viewMode === 'profile') {
+    return (
+      <UserProfile
+        userId={user?.id || ''}
+        isOwnProfile={true}
+        onBack={() => setViewMode('chats')}
+      />
+    );
+  }
+
+  // Handle other user's profile view
+  if (viewMode === 'other-profile' && selectedUserId) {
+    return (
+      <UserProfile
+        userId={selectedUserId}
+        isOwnProfile={false}
+        onBack={() => {
+          setViewMode('chats');
+          setSelectedUserId(null);
+        }}
+      />
+    );
+  }
+
+  // Handle settings view
+  if (viewMode === 'settings') {
+    return (
+      <Settings
+        onBack={() => setViewMode('chats')}
       />
     );
   }
@@ -127,7 +182,9 @@ export const ChatsList = () => {
 
           {/* USER PFP */}
           <div
+            ref={pfpRef}
             className="user-pfp"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             style={{
               width: '45px',
               height: '45px',
@@ -139,11 +196,25 @@ export const ChatsList = () => {
               backgroundColor: '#2A2A2A',
               overflow: 'hidden',
               filter: 'grayscale(100%)',
+              cursor: 'pointer',
             }}
           >
             <span style={{ fontSize: '24px' }}>👤</span>
           </div>
         </div>
+
+        {/* Profile Dropdown */}
+        <ProfileDropdown
+          isOpen={isDropdownOpen}
+          onClose={() => setIsDropdownOpen(false)}
+          onViewProfile={() => setViewMode('profile')}
+          onSettings={() => setViewMode('settings')}
+          onLogout={() => {
+            logout();
+            setViewMode('chats');
+          }}
+          anchorEl={pfpRef.current}
+        />
         </div>
 
         {/* BUTTON SECTION */}
@@ -365,6 +436,7 @@ export const ChatsList = () => {
 
           {/* New Chat Button */}
           <button
+            onClick={() => setIsCreateGroupOpen(true)}
             className="new-chat-button"
             style={{
               width: '60px',
@@ -388,6 +460,13 @@ export const ChatsList = () => {
             </svg>
           </button>
         </div>
+
+        {/* Create Group Modal */}
+        <CreateGroupModal
+          isOpen={isCreateGroupOpen}
+          onClose={() => setIsCreateGroupOpen(false)}
+          onCreateGroup={handleCreateGroup}
+        />
 
         {/* Division Element */}
         <div

@@ -9,9 +9,14 @@
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
     "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "build:extension": "pnpm --filter frontend build:extension",
     "test": "pnpm --filter backend test && pnpm --filter frontend test",
     "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "setup": "bash scripts/setup-local.sh",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

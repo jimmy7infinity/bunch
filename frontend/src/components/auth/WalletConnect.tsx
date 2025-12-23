@@ -7,23 +7,30 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const handleTwitterLogin = () => {
+  const handleTwitterLogin = async () => {
     setLoading(true);
     
-    // Fake login - bypass auth for now
-    setTimeout(() => {
-      const fakeUser = {
-        id: 'demo-user-' + Date.now(),
-        wallet_address: walletAddress || '0xdemo',
-        username: 'demo_user',
-        display_name: 'Demo User',
-      };
+    try {
+      // Use dev login endpoint - enter any username
+      const username = prompt('Enter a username for testing:') || 'demo_user';
       
-      const fakeToken = 'demo-token-' + Date.now();
+      const response = await fetch('http://localhost:3000/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
       
-      setAuth(fakeUser, fakeToken);
+      const data = await response.json();
+      
+      if (data.access_token) {
+        setAuth(data.user, data.access_token);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Login failed. Make sure backend is running on localhost:3000');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

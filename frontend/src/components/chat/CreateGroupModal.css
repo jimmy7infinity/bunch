@@ -1,0 +1,43 @@
+.modal-overlay {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  animation: slideUp 0.3s ease-out;
+  box-shadow: 
+    -2px -2px 4px rgba(255, 255, 255, 0.04),
+    10px 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.friend-item:hover {
+  background-color: #242424 !important;
+}
+
+.modal-button-secondary:hover {
+  background-color: #242424 !important;
+  border-color: #5BC854 !important;
+}
+
+.modal-button-primary:not(:disabled):hover {
+  background-color: #242424 !important;
+}
