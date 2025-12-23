@@ -5,10 +5,8 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
 
 class WebSocketService {
   private socket: Socket | null = null;
-  private token: string | null = null;
 
   connect(token: string) {
-    this.token = token;
     
     this.socket = io(WS_URL, {
       auth: { token },

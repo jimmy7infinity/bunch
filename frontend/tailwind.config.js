@@ -30,8 +30,13 @@ export default {
         md: 'var(--radius-md)',
         sm: 'var(--radius-sm)',
       },
+      fontFamily: {
+        lalezar: ['Lalezar', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],
 }
+
+
 

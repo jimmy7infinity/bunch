@@ -139,3 +139,5 @@ Then build extension when ready to test as extension.
 
 **For now, continue testing at http://localhost:5173 - the web version works exactly the same!** 🚀
 
+
+

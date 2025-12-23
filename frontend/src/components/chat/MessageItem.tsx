@@ -17,9 +17,6 @@ export const MessageItem = ({ message, onReact, isOwnMessage }: MessageItemProps
     setShowReactions(false);
   };
 
-  const getReactionCount = (emoji: string) => {
-    return message.reactions?.[emoji]?.length || 0;
-  };
 
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>

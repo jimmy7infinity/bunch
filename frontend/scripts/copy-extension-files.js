@@ -14,3 +14,5 @@ copyFileSync(join(publicDir, 'service-worker.js'), join(distDir, 'service-worker
 
 console.log('✅ Extension files copied to dist/');
 
+
+

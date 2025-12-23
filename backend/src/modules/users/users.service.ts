@@ -9,23 +9,23 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  async create(wallet_address: string): Promise<User> {
-    // Generate username from wallet address
-    const username = `user_${wallet_address.slice(2, 10).toLowerCase()}`;
+  async createFromTwitter(twitterProfile: any): Promise<User> {
+    const username = twitterProfile.username || `user_${twitterProfile.id}`;
 
     const user = new this.userModel({
-      wallet_address: wallet_address.toLowerCase(),
+      twitter_id: twitterProfile.id,
+      twitter_username: twitterProfile.username,
+      twitter_avatar: twitterProfile.profile_image_url,
       username,
-      display_name: username,
+      display_name: twitterProfile.name || username,
+      avatar_url: twitterProfile.profile_image_url,
     });
 
     return user.save();
   }
 
-  async findByWalletAddress(wallet_address: string): Promise<User | null> {
-    return this.userModel
-      .findOne({ wallet_address: wallet_address.toLowerCase() })
-      .exec();
+  async findByTwitterId(twitter_id: string): Promise<User | null> {
+    return this.userModel.findOne({ twitter_id }).exec();
   }
 
   async findById(id: string): Promise<User> {
@@ -36,11 +36,27 @@ export class UsersService {
     return user;
   }
 
-  async findOrCreate(wallet_address: string): Promise<User> {
-    let user = await this.findByWalletAddress(wallet_address);
+  async findOrCreateFromTwitter(twitterProfile: any): Promise<User> {
+    let user = await this.findByTwitterId(twitterProfile.id);
     
     if (!user) {
-      user = await this.create(wallet_address);
+      user = await this.createFromTwitter(twitterProfile);
+    }
+
+    return user;
+  }
+
+  async updateWalletAddress(userId: string, walletAddress: string): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { wallet_address: walletAddress.toLowerCase(), wallet_verified: true },
+        { new: true }
+      )
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
     return user;
@@ -83,4 +99,6 @@ export class UsersService {
     return user;
   }
 }
+
+
 

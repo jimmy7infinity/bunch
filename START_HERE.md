@@ -230,3 +230,5 @@ cd ../frontend && npm create vite@latest . -- --template react-ts && npm install
 
 **Let me know when you've completed Steps 1-3, and I'll create all the backend files for you!** 🚀
 
+
+

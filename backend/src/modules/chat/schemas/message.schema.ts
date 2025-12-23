@@ -30,3 +30,5 @@ export const MessageSchema = SchemaFactory.createForClass(Message);
 MessageSchema.index({ created_at: -1 });
 MessageSchema.index({ sender_id: 1 });
 
+
+

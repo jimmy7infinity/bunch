@@ -5,10 +5,22 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ required: true, unique: true, lowercase: true })
-  wallet_address: string;
+  @Prop({ required: true, unique: true })
+  twitter_id: string;
 
   @Prop({ required: true, unique: true })
+  twitter_username: string;
+
+  @Prop()
+  twitter_avatar?: string;
+
+  @Prop({ unique: true, sparse: true })
+  wallet_address?: string;
+
+  @Prop({ default: false })
+  wallet_verified: boolean;
+
+  @Prop()
   username: string;
 
   @Prop()
@@ -30,7 +42,10 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Indexes
+UserSchema.index({ twitter_id: 1 });
+UserSchema.index({ twitter_username: 1 });
 UserSchema.index({ wallet_address: 1 });
-UserSchema.index({ username: 1 });
 UserSchema.index({ is_online: 1 });
+
+
 

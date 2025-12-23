@@ -9,3 +9,5 @@ chrome.action.onClicked.addListener((tab) => {
 
 console.log('🚀 PolyBanter service worker loaded');
 
+
+
