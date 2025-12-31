@@ -67,9 +67,14 @@ export class AuthController {
     const user = await this.authService.findOrCreateFromTwitter(req.user);
     const authResult = await this.authService.login(user);
     
-    // Redirect to frontend with token
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(`${frontendUrl}/auth/callback?token=${authResult.access_token}`);
+    // For now, just return the token as JSON for testing
+    // Later we'll redirect to the extension
+    res.json({
+      success: true,
+      access_token: authResult.access_token,
+      user: authResult.user,
+      message: 'Authentication successful! Copy this token to use in your extension.',
+    });
   }
 }
 

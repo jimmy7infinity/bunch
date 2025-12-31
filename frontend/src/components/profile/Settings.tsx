@@ -387,3 +387,4 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   );
 };
 
+

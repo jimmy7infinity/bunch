@@ -319,3 +319,4 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onBack, onUserClick })
   );
 };
 
+

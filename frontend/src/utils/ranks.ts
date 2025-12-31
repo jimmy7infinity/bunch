@@ -345,3 +345,4 @@ export const getStaffRanks = (): RankColors[] => {
   return getAllRanks().filter(rank => rank.category === 'staff');
 };
 
+
