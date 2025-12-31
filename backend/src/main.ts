@@ -2,14 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import session from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Session middleware for OAuth
+  // Redis client for session storage
+  const redisClient = createClient({
+    url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+  });
+  
+  redisClient.on('error', (err) => console.error('Redis Client Error', err));
+  await redisClient.connect();
+
+  // Session middleware for OAuth with Redis store
   app.use(
     session({
+      store: new RedisStore({ client: redisClient }),
       secret: process.env.JWT_SECRET || 'session-secret',
       resave: false,
       saveUninitialized: false,
