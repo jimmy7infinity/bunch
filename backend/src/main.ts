@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import session from 'express-session';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
+import { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -34,12 +35,12 @@ async function bootstrap() {
   app.use(sessionMiddleware);
   
   // Debug middleware to log session
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.includes('/auth/twitter')) {
       console.log('🔍 OAuth Request:', {
         path: req.path,
-        sessionID: req.sessionID,
-        hasSession: !!req.session,
+        sessionID: (req as any).sessionID,
+        hasSession: !!(req as any).session,
         cookies: req.headers.cookie,
       });
     }
