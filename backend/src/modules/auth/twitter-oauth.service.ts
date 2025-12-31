@@ -11,9 +11,9 @@ export class TwitterOAuthService {
   private readonly codeVerifiers = new Map<string, string>();
 
   constructor(private configService: ConfigService) {
-    this.clientId = configService.get<string>('TWITTER_CLIENT_ID');
-    this.clientSecret = configService.get<string>('TWITTER_CLIENT_SECRET');
-    this.callbackUrl = configService.get<string>('TWITTER_CALLBACK_URL');
+    this.clientId = configService.get<string>('TWITTER_CLIENT_ID') || '';
+    this.clientSecret = configService.get<string>('TWITTER_CLIENT_SECRET') || '';
+    this.callbackUrl = configService.get<string>('TWITTER_CALLBACK_URL') || '';
   }
 
   generateCodeChallenge(): { codeVerifier: string; codeChallenge: string; state: string } {
