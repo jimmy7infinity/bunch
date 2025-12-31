@@ -20,7 +20,7 @@ export const WalletConnect = () => {
         username: username,
         display_name: username,
         wallet_address: `0x${username.toLowerCase().padEnd(40, '0')}`,
-        avatar_url: null,
+        avatar_url: undefined,
       };
       
       const mockToken = 'dev_token_' + Date.now();

@@ -76,5 +76,10 @@ export class AuthService {
       throw error;
     }
   }
+
+  // Twitter OAuth: Find or create user from Twitter profile
+  async findOrCreateFromTwitter(twitterProfile: any): Promise<any> {
+    return this.usersService.findOrCreateFromTwitter(twitterProfile);
+  }
 }
 

@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WalletLoginDto } from './dto/wallet-login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -49,6 +51,25 @@ export class AuthController {
     
     const user = await this.authService.findOrCreateByUsername(body.username);
     return this.authService.login(user);
+  }
+
+  // Twitter OAuth
+  @Get('twitter')
+  @UseGuards(AuthGuard('twitter'))
+  async twitterLogin() {
+    // Initiates Twitter OAuth flow
+  }
+
+  @Get('twitter/callback')
+  @UseGuards(AuthGuard('twitter'))
+  async twitterCallback(@Req() req: any, @Res() res: Response) {
+    // Twitter returns here after authentication
+    const user = await this.authService.findOrCreateFromTwitter(req.user);
+    const authResult = await this.authService.login(user);
+    
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/auth/callback?token=${authResult.access_token}`);
   }
 }
 
