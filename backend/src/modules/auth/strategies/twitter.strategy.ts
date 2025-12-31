@@ -13,9 +13,21 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
       clientType: 'confidential',
       scope: ['tweet.read', 'users.read', 'offline.access'],
     });
+    
+    console.log('🔧 Twitter Strategy initialized:', {
+      clientID: configService.get<string>('TWITTER_CLIENT_ID'),
+      callbackURL: configService.get<string>('TWITTER_CALLBACK_URL'),
+      hasClientSecret: !!configService.get<string>('TWITTER_CLIENT_SECRET'),
+    });
   }
 
   async validate(accessToken: string, refreshToken: string, profile: any) {
+    console.log('✅ Twitter OAuth validate called:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      profile: profile,
+    });
+    
     return {
       id: profile.id,
       username: profile.username,
