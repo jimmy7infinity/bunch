@@ -72,9 +72,7 @@ export class AuthController {
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
       // Redirect to frontend with token
-      const frontendUrl = process.env.NODE_ENV === 'production' 
-        ? 'chrome-extension://YOUR_EXTENSION_ID' // Will update this later
-        : 'http://localhost:5173';
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       
       res.redirect(`${frontendUrl}?token=${authResult.access_token}`);
     } catch (error) {
