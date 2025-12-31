@@ -63,9 +63,17 @@ export class AuthController {
   @Get('twitter/callback')
   @UseGuards(AuthGuard('twitter'))
   async twitterCallback(@Req() req: any, @Res() res: Response) {
+    console.log('🔍 Twitter callback received:', {
+      hasUser: !!req.user,
+      user: req.user,
+      query: req.query,
+    });
+    
     // Twitter returns here after authentication
     const user = await this.authService.findOrCreateFromTwitter(req.user);
     const authResult = await this.authService.login(user);
+    
+    console.log('✅ User authenticated:', { userId: user._id, username: user.username });
     
     // Redirect to frontend with token
     const frontendUrl = process.env.NODE_ENV === 'production' 
