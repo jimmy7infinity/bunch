@@ -121,6 +121,19 @@ export class UsersService {
   async findByUsername(username: string): Promise<User | null> {
     return this.userModel.findOne({ username }).exec();
   }
+
+  async createDevUser(username: string, walletAddress: string): Promise<User> {
+    const user = new this.userModel({
+      wallet_address: walletAddress.toLowerCase(),
+      username: username,
+      display_name: username,
+      wallet_verified: true,
+      is_online: true,
+      twitter_id: `dev_${username}_${Date.now()}`, // Unique twitter_id for dev users
+    });
+    
+    return user.save();
+  }
 }
 
 

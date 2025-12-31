@@ -5,9 +5,12 @@ import { UserProfile } from '../profile/UserProfile';
 import { Settings } from '../profile/Settings';
 import { ProfileDropdown } from '../profile/ProfileDropdown';
 import { CreateGroupModal } from './CreateGroupModal';
+import { Leaderboard } from '../leaderboard/Leaderboard';
+import { RankedPFP } from '../common/RankedPFP';
+import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import './ChatsList.css';
 
-type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile';
+type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'leaderboard';
 
 export const ChatsList = () => {
   const { user, logout } = useAuthStore();
@@ -16,7 +19,48 @@ export const ChatsList = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [activeChatCategory, setActiveChatCategory] = useState<'global' | 'market' | 'private' | 'favorites'>('global');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const pfpRef = useRef<HTMLDivElement>(null);
+
+  // Mock chat data - will be replaced with API call
+  const [chats, setChats] = useState([
+    { id: '1', name: 'Politics', type: 'global' as const, count: 332, isFavorite: false, hasNotifications: true },
+    { id: '2', name: 'Crypto', type: 'global' as const, count: 245, isFavorite: false, hasNotifications: false },
+    { id: '3', name: 'Sports', type: 'global' as const, count: 189, isFavorite: true, hasNotifications: true },
+    { id: '4', name: 'BTC Price', type: 'market' as const, count: 156, isFavorite: false, hasNotifications: false },
+    { id: '5', name: 'ETH Trading', type: 'market' as const, count: 123, isFavorite: false, hasNotifications: true },
+    { id: '6', name: 'NFT Market', type: 'market' as const, count: 98, isFavorite: true, hasNotifications: false },
+    { id: '7', name: 'My Group Chat', type: 'private' as const, count: 12, isFavorite: false, hasNotifications: true },
+    { id: '8', name: 'Friends', type: 'private' as const, count: 8, isFavorite: false, hasNotifications: false },
+    { id: '9', name: 'Work Team', type: 'private' as const, count: 5, isFavorite: false, hasNotifications: false },
+  ]);
+  
+  const toggleFavorite = (chatId: string) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId ? { ...chat, isFavorite: !chat.isFavorite } : chat
+    ));
+  };
+  
+  const toggleNotifications = (chatId: string) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId ? { ...chat, hasNotifications: !chat.hasNotifications } : chat
+    ));
+  };
+
+  // Filter chats based on category and search
+  const filteredChats = chats.filter(chat => {
+    // First filter by category
+    const matchesCategory = activeChatCategory === 'favorites' 
+      ? chat.isFavorite 
+      : chat.type === activeChatCategory;
+    
+    // Then filter by search query
+    const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesCategory && matchesSearch;
+  });
 
   const handleCreateGroup = (groupName: string, selectedFriends: string[]) => {
     console.log('Creating group:', groupName, 'with friends:', selectedFriends);
@@ -73,6 +117,19 @@ export const ChatsList = () => {
     );
   }
 
+  // Handle leaderboard view
+  if (viewMode === 'leaderboard') {
+    return (
+      <Leaderboard
+        onBack={() => setViewMode('chats')}
+        onUserClick={(userId) => {
+          setSelectedUserId(userId);
+          setViewMode('other-profile');
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -99,6 +156,7 @@ export const ChatsList = () => {
         <div
           style={{
             width: '100%',
+            height: '35px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -115,8 +173,9 @@ export const ChatsList = () => {
             gap: '12px',
           }}
         >
-          {/* Burger Menu */}
+          {/* Leaderboard Button (Trophy Icon) */}
           <button
+            onClick={() => setViewMode('leaderboard')}
             style={{
               background: 'none',
               border: 'none',
@@ -125,9 +184,12 @@ export const ChatsList = () => {
             }}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
             </svg>
           </button>
 
@@ -143,20 +205,57 @@ export const ChatsList = () => {
           />
         </div>
 
-        {/* PAGE NAME - Center */}
-        <h1 
-          style={{
-            fontSize: '15px',
-            fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            fontWeight: '400',
-          }}
-        >
-          Global Chats
-        </h1>
+        {/* PAGE NAME - Center with Icon */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span 
+            style={{
+              fontSize: '15px',
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: '400',
+            }}
+          >
+            {activeChatCategory === 'global' && 'Global Chats'}
+            {activeChatCategory === 'market' && 'Market Chats'}
+            {activeChatCategory === 'private' && 'Private Chats'}
+            {activeChatCategory === 'favorites' && 'Favorites'}
+          </span>
+          {/* Dynamic Icon based on active category */}
+          {activeChatCategory === 'global' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          {activeChatCategory === 'market' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          )}
+          {activeChatCategory === 'private' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          )}
+          {activeChatCategory === 'favorites' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#starGradientTitle)">
+              <defs>
+                <radialGradient id="starGradientTitle" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#AE8B2A" />
+                  <stop offset="100%" stopColor="#8F6B17" />
+                </radialGradient>
+              </defs>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          )}
+        </div>
 
         {/* USER INFO - Right Side */}
         <div 
@@ -186,20 +285,10 @@ export const ChatsList = () => {
             className="user-pfp"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             style={{
-              width: '45px',
-              height: '45px',
-              borderRadius: '50%',
-              border: '1px solid #888888',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#2A2A2A',
-              overflow: 'hidden',
-              filter: 'grayscale(100%)',
               cursor: 'pointer',
             }}
           >
-            <span style={{ fontSize: '24px' }}>👤</span>
+            <RankedPFP rank="TITAN" size="tiny" showRankLabel={false} />
           </div>
         </div>
 
@@ -237,6 +326,7 @@ export const ChatsList = () => {
           <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
             {/* Button 1: Global Chats */}
             <button
+              onClick={() => setActiveChatCategory('global')}
               className="nav-button"
               style={{
                 flex: 1,
@@ -251,6 +341,7 @@ export const ChatsList = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                opacity: activeChatCategory === 'global' ? 0.5 : 1,
               }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
@@ -262,6 +353,7 @@ export const ChatsList = () => {
 
             {/* Button 2: Market Chats */}
             <button
+              onClick={() => setActiveChatCategory('market')}
               className="nav-button"
               style={{
                 flex: 1,
@@ -276,6 +368,7 @@ export const ChatsList = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                opacity: activeChatCategory === 'market' ? 0.5 : 1,
               }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
@@ -287,6 +380,7 @@ export const ChatsList = () => {
 
             {/* Button 3: Private Chats */}
             <button
+              onClick={() => setActiveChatCategory('private')}
               className="nav-button"
               style={{
                 flex: 1,
@@ -301,6 +395,7 @@ export const ChatsList = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                opacity: activeChatCategory === 'private' ? 0.5 : 1,
               }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
@@ -323,6 +418,7 @@ export const ChatsList = () => {
 
           {/* Favorites Button */}
           <button
+            onClick={() => setActiveChatCategory('favorites')}
             className="nav-button-favorite"
             style={{
               width: '40px',
@@ -337,6 +433,7 @@ export const ChatsList = () => {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
+              opacity: activeChatCategory === 'favorites' ? 0.5 : 1,
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="url(#starGradient)">
@@ -419,6 +516,8 @@ export const ChatsList = () => {
             {/* Search Input */}
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search chats…"
               style={{
                 flex: 1,
@@ -525,16 +624,52 @@ export const ChatsList = () => {
           }}>
             AI Feed
           </span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="#60F6AB">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#60F6AB" fill="none" strokeWidth="2"/>
+          {/* AI Brain/Sparkle Icon */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#60F6AB">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z"/>
           </svg>
         </button>
 
-        {/* Chat Card Example - Politics */}
-        <button
-          onClick={() => setSelectedChat({ name: 'Politics', type: 'global', count: 332 })}
-          className="chat-card"
+        {/* Dynamic Chat Cards */}
+        {isLoading ? (
+          <LoadingSkeleton type="chat-card" count={3} />
+        ) : filteredChats.length === 0 ? (
+          <div style={{
+            width: '100%',
+            padding: '60px 20px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '15px',
+          }}>
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <div>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '16px',
+                color: '#B9B7B7',
+                marginBottom: '5px',
+              }}>
+                No chats found
+              </div>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '12px',
+                color: '#707070',
+              }}>
+                {searchQuery ? 'Try a different search term' : 'No chats in this category'}
+              </div>
+            </div>
+          </div>
+        ) : (
+          filteredChats.map((chat) => (
+            <div
+              key={chat.id}
+              onClick={() => setSelectedChat({ name: chat.name, type: chat.type, count: chat.count })}
+              className="chat-card"
           style={{
             width: '100%',
             height: '140px',
@@ -576,7 +711,7 @@ export const ChatsList = () => {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}>
-                332
+                {chat.count}
               </span>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#titleGradient)" strokeWidth="2">
                 <defs>
@@ -604,13 +739,17 @@ export const ChatsList = () => {
               left: '50%',
               transform: 'translateX(-50%)',
             }}>
-              Politics
+              {chat.name}
             </span>
 
             {/* Right: Bell + Star Buttons */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* Bell Button */}
+              {/* Push Notifications Bell Button - Blue when active */}
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleNotifications(chat.id);
+                }}
                 className="chat-card-bell-button"
                 style={{
                   width: '40px',
@@ -627,20 +766,37 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientOff)">
-                  <defs>
-                    <linearGradient id="bellGradientOff" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#B3B3B3" />
-                      <stop offset="100%" stopColor="#888888" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="url(#bellGradientOff)" fill="none" strokeWidth="2"/>
-                </svg>
+                {chat.hasNotifications ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientBlueCard)">
+                    <defs>
+                      <linearGradient id="bellGradientBlueCard" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#60A5FA" />
+                        <stop offset="100%" stopColor="#3B82F6" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="url(#bellGradientBlueCard)" fill="none" strokeWidth="2"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#bellGradientOffCard)" strokeWidth="2">
+                    <defs>
+                      <linearGradient id="bellGradientOffCard" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#B3B3B3" />
+                        <stop offset="100%" stopColor="#888888" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                )}
               </button>
 
               {/* Star Button */}
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(chat.id);
+                }}
                 className="chat-card-star-button"
                 style={{
                   width: '40px',
@@ -657,8 +813,12 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#starGradientOff)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={chat.isFavorite ? "url(#starGradientOn)" : "none"} stroke={chat.isFavorite ? "none" : "url(#starGradientOff)"} strokeWidth="2">
                   <defs>
+                    <radialGradient id="starGradientOn" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#FFD700" />
+                      <stop offset="100%" stopColor="#FFA500" />
+                    </radialGradient>
                     <radialGradient id="starGradientOff" cx="50%" cy="50%" r="50%">
                       <stop offset="0%" stopColor="#B3B3B3" />
                       <stop offset="100%" stopColor="#888888" />
@@ -741,9 +901,12 @@ export const ChatsList = () => {
               </p>
             </div>
           </div>
-        </button>
+        </div>
+          ))
+        )}
         </div>
       </div>
     </div>
   );
 };
+

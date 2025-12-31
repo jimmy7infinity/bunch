@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { GroupMembersModal } from './GroupMembersModal';
+import { RankedPFP } from '../common/RankedPFP';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
@@ -9,6 +10,7 @@ interface ChatRoomProps {
   onlineCount?: number;
   onBack?: () => void;
   onUserClick?: (userId: string) => void;
+  isEmpty?: boolean; // For testing empty state
 }
 
 export const ChatRoom = ({ 
@@ -16,13 +18,237 @@ export const ChatRoom = ({
   chatType = 'global',
   onlineCount = 332,
   onBack,
-  onUserClick
+  onUserClick,
+  isEmpty = false
 }: ChatRoomProps) => {
   const { user } = useAuthStore();
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
+  const [hasAINotifications, setHasAINotifications] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    text: string;
+    sender: 'self' | 'other' | 'ai';
+    username: string;
+    time: string;
+    replyTo?: { messageId: string; username: string; preview: string };
+  }>>([
+    { id: 'ai1', text: 'Welcome to the Politics chat! This is an AI-generated insight.', sender: 'ai', username: 'AI Insight', time: '14:30' },
+    { id: 'msg1', text: 'This is an example message from another user in the chat.', sender: 'other', username: 'demo_user', time: '14:32', replyTo: { messageId: 'ai1', username: 'AI', preview: 'Welcome to the Politics chat!' } },
+    { id: 'msg2', text: 'Hey @demo_user this is my message response!', sender: 'self', username: 'You', time: '14:35' },
+  ]);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ messageId: string; username: string; preview: string } | null>(null);
+  const [showMentionPicker, setShowMentionPicker] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const reactionPickerRef = useRef<HTMLDivElement>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [messageStatus, setMessageStatus] = useState<'pending' | 'sent' | 'delivered' | 'failed'>('delivered');
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  
+  // Get search results with context
+  const searchResults = searchQuery.trim() 
+    ? messages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
+  
+  // Scroll to a specific message
+  const scrollToMessage = (messageId: string) => {
+    const messageEl = messageRefs.current[messageId];
+    if (messageEl) {
+      messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 2000);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+  
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messages]);
+  
+  // Close reaction picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showReactionPicker && reactionPickerRef.current && !reactionPickerRef.current.contains(event.target as Node)) {
+        setShowReactionPicker(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showReactionPicker]);
+  
+  // Reaction emojis
+  const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😱', '🤬', '🔫'];
+  
+  // Mock users for mentions - will be replaced with API
+  const mockChatUsers = [
+    { id: '1', username: 'demo_user', rank: 'LEGEND+' },
+    { id: '2', username: 'alice_crypto', rank: 'CAPTAIN' },
+    { id: '3', username: 'bob_trader', rank: 'HERO' },
+    { id: '4', username: 'charlie_nft', rank: 'VETERAN+' },
+    { id: '5', username: 'diana_eth', rank: 'CHAMPION' },
+  ];
+  
+  // Filter users for mention autocomplete
+  const filteredMentionUsers = mockChatUsers.filter(u => 
+    u.username.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
+  
+  // Handle message input change with @mention detection
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    const newCursor = e.target.selectionStart || 0;
+    
+    setMessage(newValue);
+    setCursorPosition(newCursor);
+    
+    // Check if we're typing an @mention
+    const textBeforeCursor = newValue.substring(0, newCursor);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      // Only show picker if @ is at start or after space, and no space after @
+      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : ' ';
+      if ((charBeforeAt === ' ' || lastAtIndex === 0) && !textAfterAt.includes(' ')) {
+        setMentionSearch(textAfterAt);
+        setShowMentionPicker(true);
+        return;
+      }
+    }
+    
+    setShowMentionPicker(false);
+  };
+  
+  // Insert mention into message
+  const insertMention = (username: string) => {
+    const textBeforeCursor = message.substring(0, cursorPosition);
+    const textAfterCursor = message.substring(cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    const newMessage = 
+      textBeforeCursor.substring(0, lastAtIndex) + 
+      `@${username} ` + 
+      textAfterCursor;
+    
+    setMessage(newMessage);
+    setShowMentionPicker(false);
+    setMentionSearch('');
+    
+    // Focus back on input
+    setTimeout(() => {
+      if (messageInputRef.current) {
+        const newCursorPos = lastAtIndex + username.length + 2;
+        messageInputRef.current.focus();
+        messageInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+  
+  // Parse message text to highlight @mentions
+  const renderMessageWithMentions = (text: string) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        return (
+          <span
+            key={index}
+            style={{
+              color: '#5BC854',
+              fontWeight: '500',
+              cursor: 'pointer',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const username = part.substring(1);
+              const mentionedUser = mockChatUsers.find(u => u.username === username);
+              if (mentionedUser) {
+                onUserClick?.(mentionedUser.id);
+              }
+            }}
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+  
+  // Mock reactions state - will be replaced with API
+  const [reactions, setReactions] = useState<{
+    [messageId: string]: {
+      [emoji: string]: { count: number; userReacted: boolean }
+    }
+  }>({
+    'msg1': {
+      '❤️': { count: 3, userReacted: false },
+      '👍': { count: 5, userReacted: true },
+    },
+    'msg2': {
+      '😂': { count: 2, userReacted: false },
+      '🔥': { count: 1, userReacted: false },
+    }
+  });
+
+  const toggleReaction = (messageId: string, emoji: string) => {
+    setReactions(prev => {
+      const messageReactions = prev[messageId] || {};
+      const currentReaction = messageReactions[emoji];
+      
+      if (currentReaction) {
+        // Reaction exists
+        if (currentReaction.userReacted) {
+          // Remove user's reaction
+          const newCount = currentReaction.count - 1;
+          if (newCount === 0) {
+            // Remove emoji entirely
+            const { [emoji]: removed, ...rest } = messageReactions;
+            return { ...prev, [messageId]: rest };
+          } else {
+            return {
+              ...prev,
+              [messageId]: {
+                ...messageReactions,
+                [emoji]: { count: newCount, userReacted: false }
+              }
+            };
+          }
+        } else {
+          // Add user's reaction
+          return {
+            ...prev,
+            [messageId]: {
+              ...messageReactions,
+              [emoji]: { count: currentReaction.count + 1, userReacted: true }
+            }
+          };
+        }
+      } else {
+        // New reaction
+        return {
+          ...prev,
+          [messageId]: {
+            ...messageReactions,
+            [emoji]: { count: 1, userReacted: true }
+          }
+        };
+      }
+    });
+    setShowReactionPicker(null);
+  };
 
   // Mock members data - will be replaced with actual API call
   const mockMembers = [
@@ -118,13 +344,16 @@ export const ChatRoom = ({
 
           {/* Search Button */}
           <button
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
             className="nav-icon-button"
             style={{
               width: '40px',
               height: '40px',
               backgroundColor: '#19191A',
               border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundImage: isSearchOpen 
+                ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #082724)'
+                : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               borderRadius: '50%',
@@ -134,12 +363,134 @@ export const ChatRoom = ({
               cursor: 'pointer',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isSearchOpen ? "#5BC854" : "#BAB9B9"} strokeWidth="2">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
         </div>
+
+        {/* Search Input - Slides in when search is active */}
+        {isSearchOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '75px',
+            left: 0,
+            right: 0,
+            backgroundColor: '#19191A',
+            padding: '10px 20px',
+            borderBottom: '1px solid #333333',
+            zIndex: 10,
+            maxHeight: '300px',
+            overflowY: 'auto',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              backgroundColor: '#242424',
+              borderRadius: '20px',
+              padding: '8px 15px',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search messages..."
+                autoFocus
+                style={{
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#CBCBCB',
+                  fontSize: '13px',
+                  fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                }}
+              />
+              {/* Close button - always visible */}
+              <button
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery('');
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            
+            {/* Search Results */}
+            {searchQuery && (
+              <div style={{ marginTop: '10px' }}>
+                <div style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '11px',
+                  color: '#707070',
+                  marginBottom: '8px',
+                }}>
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
+                </div>
+                
+                {searchResults.map((result) => {
+                  const queryLower = searchQuery.toLowerCase();
+                  const textLower = result.text.toLowerCase();
+                  const matchIndex = textLower.indexOf(queryLower);
+                  const contextStart = Math.max(0, matchIndex - 20);
+                  const contextEnd = Math.min(result.text.length, matchIndex + searchQuery.length + 30);
+                  const contextText = (contextStart > 0 ? '...' : '') + 
+                    result.text.slice(contextStart, contextEnd) + 
+                    (contextEnd < result.text.length ? '...' : '');
+                  
+                  return (
+                    <button
+                      key={result.id}
+                      onClick={() => scrollToMessage(result.id)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        backgroundColor: '#242424',
+                        border: '1px solid #333333',
+                        borderRadius: '10px',
+                        marginBottom: '6px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        display: 'block',
+                      }}
+                    >
+                      <div style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '11px',
+                        color: result.sender === 'ai' ? '#60F6AB' : '#909090',
+                        marginBottom: '4px',
+                      }}>
+                        {result.username} • {result.time}
+                      </div>
+                      <div style={{
+                        fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '12px',
+                        color: '#CBCBCB',
+                      }}>
+                        {contextText.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, i) => 
+                          part.toLowerCase() === queryLower 
+                            ? <span key={i} style={{ backgroundColor: '#5BC854', color: '#19191A', borderRadius: '2px', padding: '0 2px' }}>{part}</span>
+                            : part
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Center: Chat Name */}
         <h1 
@@ -166,7 +517,7 @@ export const ChatRoom = ({
             gap: '10px',
           }}
         >
-          {/* Bell Button */}
+          {/* Push Notifications Bell Button - Blue when active */}
           <button
             onClick={() => setHasNotifications(!hasNotifications)}
             className="nav-icon-button"
@@ -185,21 +536,77 @@ export const ChatRoom = ({
               cursor: 'pointer',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={hasNotifications ? "url(#bellGradientOn)" : "url(#bellGradientOff)"}>
-              <defs>
-                <linearGradient id="bellGradientOn" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2FC47F" />
-                  <stop offset="100%" stopColor="#27BA9F" />
-                </linearGradient>
-                <linearGradient id="bellGradientOff" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#B3B3B3" />
-                  <stop offset="100%" stopColor="#888888" />
-                </linearGradient>
-              </defs>
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke={hasNotifications ? "#2FC47F" : "#888888"} fill="none" strokeWidth="2"/>
-            </svg>
+            {hasNotifications ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientBlue)">
+                <defs>
+                  <linearGradient id="bellGradientBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#60A5FA" />
+                    <stop offset="100%" stopColor="#3B82F6" />
+                  </linearGradient>
+                </defs>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="url(#bellGradientBlue)" fill="none" strokeWidth="2"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#bellGradientOff)" strokeWidth="2">
+                <defs>
+                  <linearGradient id="bellGradientOff" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#B3B3B3" />
+                    <stop offset="100%" stopColor="#888888" />
+                  </linearGradient>
+                </defs>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            )}
           </button>
+
+          {/* AI Feed Button - Only for global/market chats - Green when active */}
+          {chatType !== 'private' && (
+            <button
+              onClick={() => setHasAINotifications(!hasAINotifications)}
+              className="nav-icon-button"
+              style={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              {hasAINotifications ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#aiGradientOn)" stroke="none">
+                  <defs>
+                    <linearGradient id="aiGradientOn" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#60F6AB" />
+                      <stop offset="100%" stopColor="#0D7A3F" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOff)" strokeWidth="2">
+                  <defs>
+                    <linearGradient id="aiGradientOff" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#B3B3B3" />
+                      <stop offset="100%" stopColor="#888888" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 2v10l4 2"/>
+                  <path d="M4.93 4.93l4.24 4.24"/>
+                  <path d="M14.83 9.17l4.24-4.24"/>
+                </svg>
+              )}
+            </button>
+          )}
 
           {/* Star Button */}
           <button
@@ -320,6 +727,7 @@ export const ChatRoom = ({
 
         {/* Chat Window */}
         <div
+          ref={chatWindowRef}
           className="chat-window"
           style={{
             width: '90%',
@@ -343,14 +751,59 @@ export const ChatRoom = ({
             flexDirection: 'column', 
             gap: '20px',
             padding: '0 20px',
+            minHeight: '100%',
+            justifyContent: 'flex-end',
           }}>
+            {isEmpty ? (
+              /* Empty State */
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '20px',
+                padding: '40px 20px',
+              }}>
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  <line x1="9" y1="10" x2="15" y2="10"/>
+                  <line x1="9" y1="14" x2="13" y2="14"/>
+                </svg>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '18px',
+                    color: '#B9B7B7',
+                    marginBottom: '8px',
+                  }}>
+                    No messages yet
+                  </div>
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '13px',
+                    color: '#707070',
+                    maxWidth: '250px',
+                  }}>
+                    Be the first to send a message in this chat
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
             {/* AI Message */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '100%',
-              gap: '4px',
-            }}>
+            <div 
+              ref={el => { messageRefs.current['ai1'] = el; }}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                width: '100%',
+                gap: '4px',
+                backgroundColor: highlightedMessageId === 'ai1' ? 'rgba(96, 246, 171, 0.1)' : 'transparent',
+                borderRadius: '20px',
+                transition: 'background-color 0.3s ease',
+              }}>
               {/* Time - centered above bubble */}
               <span style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -400,16 +853,20 @@ export const ChatRoom = ({
                   display: 'flex', 
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  height: '16px',
                 }}>
                   {/* Left: Reply + Smile */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                    <button 
+                      onClick={() => setReplyingTo({ messageId: 'ai1', username: 'AI Insight', preview: 'Welcome to the Politics chat!' })}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                    >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60F6AB" strokeWidth="2">
                         <polyline points="9 17 4 12 9 7"/>
                         <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
                       </svg>
                     </button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60F6AB" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
@@ -420,7 +877,7 @@ export const ChatRoom = ({
                   </div>
 
                   {/* Right: 3 dots */}
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="#60F6AB">
                       <circle cx="5" cy="12" r="2"/>
                       <circle cx="12" cy="12" r="2"/>
@@ -432,12 +889,17 @@ export const ChatRoom = ({
             </div>
 
             {/* Example message from other user */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              gap: '4px',
-              width: '100%',
-            }}>
+            <div 
+              ref={el => { messageRefs.current['msg1'] = el; }}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '4px',
+                width: '100%',
+                backgroundColor: highlightedMessageId === 'msg1' ? 'rgba(91, 200, 84, 0.1)' : 'transparent',
+                borderRadius: '20px',
+                transition: 'background-color 0.3s ease',
+              }}>
               {/* Time - centered above bubble */}
               <span style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -482,6 +944,40 @@ export const ChatRoom = ({
                     demo_user
                   </span>
 
+                  {/* Reply Indicator - Example showing reply to AI */}
+                  <div 
+                    onClick={() => {
+                      console.log('Navigate to original message');
+                      // TODO: Scroll to message with ID when backend is connected
+                    }}
+                    style={{
+                      borderLeft: '2px solid #707070',
+                      paddingLeft: '8px',
+                      marginBottom: '6px',
+                      opacity: 0.7,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '10px',
+                      color: '#909090',
+                      marginBottom: '2px',
+                    }}>
+                      @AI
+                    </div>
+                    <div style={{
+                      fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '11px',
+                      color: '#707070',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Welcome to the Politics chat!
+                    </div>
+                  </div>
+
                   {/* Message Text */}
                   <p style={{
                     fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -489,7 +985,7 @@ export const ChatRoom = ({
                     color: '#D3D3D3',
                     margin: '0 0 4px 0',
                   }}>
-                    This is an example message from another user in the chat.
+                    {renderMessageWithMentions('This is an example message from another user in the chat.')}
                   </p>
 
                   {/* Reply, Reaction, Menu */}
@@ -497,27 +993,73 @@ export const ChatRoom = ({
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    height: '16px',
                   }}>
-                    {/* Left: Reply + Smile */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    {/* Left: Reply + Reaction */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                      <button 
+                        onClick={() => setReplyingTo({ messageId: 'msg1', username: 'demo_user', preview: 'This is an example message...' })}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                      >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
                           <polyline points="9 17 4 12 9 7"/>
                           <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
                         </svg>
                       </button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                          <line x1="9" y1="9" x2="9.01" y2="9"/>
-                          <line x1="15" y1="9" x2="15.01" y2="9"/>
-                        </svg>
-                      </button>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
+                        <button 
+                          onClick={() => setShowReactionPicker(showReactionPicker === 'msg1' ? null : 'msg1')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                          </svg>
+                        </button>
+                        {/* Reaction Picker */}
+                        {showReactionPicker === 'msg1' && (
+                          <div 
+                            ref={reactionPickerRef}
+                            style={{
+                              position: 'absolute',
+                              bottom: '25px',
+                              left: '0',
+                              backgroundColor: '#19191A',
+                              border: '1px solid transparent',
+                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                              backgroundOrigin: 'border-box',
+                              backgroundClip: 'padding-box, border-box',
+                              borderRadius: '20px',
+                              padding: '8px',
+                              display: 'flex',
+                              gap: '8px',
+                              zIndex: 100,
+                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                            }}>
+                            {reactionEmojis.map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={() => toggleReaction('msg1', emoji)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '18px',
+                                  padding: '4px',
+                                }}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Right: 3 dots */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="#707070">
                         <circle cx="5" cy="12" r="2"/>
                         <circle cx="12" cy="12" r="2"/>
@@ -525,60 +1067,65 @@ export const ChatRoom = ({
                       </svg>
                     </button>
                   </div>
+
+                  {/* Reactions Display */}
+                  {reactions['msg1'] && Object.keys(reactions['msg1']).length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      gap: '4px',
+                      marginTop: '6px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {Object.entries(reactions['msg1']).map(([emoji, data]) => (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction('msg1', emoji)}
+                          style={{
+                            backgroundColor: data.userReacted ? '#2A3A2A' : '#242424',
+                            border: `1px solid ${data.userReacted ? '#5BC854' : '#333333'}`,
+                            borderRadius: '10px',
+                            padding: '2px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ fontSize: '12px' }}>{emoji}</span>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '11px',
+                            color: data.userReacted ? '#5BC854' : '#B9B7B7',
+                          }}>
+                            {data.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
               {/* Right: PFP + Rank */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                gap: '5px',
-              }}>
-                {/* PFP */}
-                <div
-                  className="message-pfp"
-                  onClick={() => onUserClick?.('demo_user_id')}
-                  style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    overflow: 'hidden',
-                    filter: 'grayscale(100%)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{ fontSize: '24px' }}>👤</span>
-                </div>
-
-                {/* User Rank Badge */}
-                <div
-                  className="user-rank-badge"
-                  style={{
-                    width: '50px',
-                    height: '13px',
-                    backgroundColor: '#2A2A2A',
-                    border: '2px solid transparent',
-                    backgroundImage: 'linear-gradient(#2A2A2A, #2A2A2A), linear-gradient(135deg, #888888, #555555)',
-                    backgroundOrigin: 'border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    borderRadius: '6.5px',
-                  }}
-                />
+              <div 
+                onClick={() => onUserClick?.('demo_user_id')}
+                style={{ cursor: 'pointer', flexShrink: 0 }}
+              >
+                <RankedPFP rank="LEGEND+" size="medium" showRankLabel={true} />
               </div>
             </div>
 
             {/* Example message from self */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              gap: '4px',
-              width: '100%',
-            }}>
+            <div 
+              ref={el => { messageRefs.current['msg2'] = el; }}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '4px',
+                width: '100%',
+                backgroundColor: highlightedMessageId === 'msg2' ? 'rgba(91, 200, 84, 0.1)' : 'transparent',
+                borderRadius: '20px',
+                transition: 'background-color 0.3s ease',
+              }}>
               {/* Time - centered */}
               <span style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -596,45 +1143,11 @@ export const ChatRoom = ({
                 justifyContent: 'flex-start',
               }}>
                 {/* Left: PFP + Rank */}
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  gap: '5px',
-                  flexShrink: 0,
-                }}>
-                  {/* PFP */}
-                  <div
-                    className="message-pfp"
-                    onClick={() => onUserClick?.(user?.id || 'current_user_id')}
-                    style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '50%',
-                      border: '2px solid #888888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#2A2A2A',
-                      overflow: 'hidden',
-                      filter: 'grayscale(100%)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span style={{ fontSize: '24px' }}>👤</span>
-                  </div>
-
-                  {/* User Rank Badge */}
-                  <div
-                    className="user-rank-badge"
-                    style={{
-                      width: '50px',
-                      height: '13px',
-                      backgroundColor: '#2A2A2A',
-                      border: '2px solid #888888',
-                      borderRadius: '6.5px',
-                    }}
-                  />
+                <div 
+                  onClick={() => onUserClick?.(user?.id || 'current_user_id')}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                >
+                  <RankedPFP rank="ADMIN" size="medium" showRankLabel={true} />
                 </div>
 
                 {/* Chat Bubble */}
@@ -672,32 +1185,133 @@ export const ChatRoom = ({
                     color: '#D3D3D3',
                     margin: '0 0 4px 0',
                   }}>
-                    This is my message response!
+                    {renderMessageWithMentions('Hey @demo_user this is my message response!')}
                   </p>
 
-                  {/* Reply, Delivered, Menu */}
+                  {/* Reply, Reaction, Menu */}
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}>
-                    {/* Left: Reply + Delivered */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    {/* Left: Reply + Reaction + Status */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                      <button 
+                        onClick={() => setReplyingTo({ messageId: 'msg2', username: 'You', preview: 'This is my message response!' })}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                      >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
                           <polyline points="9 17 4 12 9 7"/>
                           <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
                         </svg>
                       </button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                      </button>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
+                        <button 
+                          onClick={() => setShowReactionPicker(showReactionPicker === 'msg2' ? null : 'msg2')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                          </svg>
+                        </button>
+                        {/* Reaction Picker */}
+                        {showReactionPicker === 'msg2' && (
+                          <div 
+                            ref={reactionPickerRef}
+                            style={{
+                              position: 'absolute',
+                              bottom: '25px',
+                              left: '0',
+                              backgroundColor: '#19191A',
+                              border: '1px solid transparent',
+                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                              backgroundOrigin: 'border-box',
+                              backgroundClip: 'padding-box, border-box',
+                              borderRadius: '20px',
+                              padding: '8px',
+                              display: 'flex',
+                              gap: '8px',
+                              zIndex: 100,
+                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                            }}>
+                            {reactionEmojis.map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={() => toggleReaction('msg2', emoji)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '18px',
+                                  padding: '4px',
+                                }}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {/* Message Status Indicator */}
+                      <div style={{ display: 'flex', alignItems: 'center', height: '16px' }}>
+                        {messageStatus === 'pending' && (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2" style={{ display: 'block' }}>
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                        )}
+                        {messageStatus === 'sent' && (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2" style={{ display: 'block' }}>
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                        {messageStatus === 'delivered' && (
+                          <svg width="20" height="16" viewBox="0 0 24 16" fill="none" stroke="#5BC854" strokeWidth="2" style={{ display: 'block' }}>
+                            <polyline points="1 8 5 12 13 4"/>
+                            <polyline points="8 8 12 12 20 4"/>
+                          </svg>
+                        )}
+                        {messageStatus === 'failed' && (
+                        <button
+                          onClick={() => {
+                            console.log('Retrying message send...');
+                            setMessageStatus('pending');
+                            setTimeout(() => setMessageStatus('delivered'), 1000);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            height: '16px',
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E74C3C" strokeWidth="2" style={{ display: 'block' }}>
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                          </svg>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '10px',
+                            color: '#E74C3C',
+                            lineHeight: '16px',
+                          }}>
+                            Retry
+                          </span>
+                        </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Right: 3 dots */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
                         <circle cx="5" cy="12" r="2"/>
                         <circle cx="12" cy="12" r="2"/>
@@ -705,12 +1319,49 @@ export const ChatRoom = ({
                       </svg>
                     </button>
                   </div>
+
+                  {/* Reactions Display */}
+                  {reactions['msg2'] && Object.keys(reactions['msg2']).length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      gap: '4px',
+                      marginTop: '6px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {Object.entries(reactions['msg2']).map(([emoji, data]) => (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction('msg2', emoji)}
+                          style={{
+                            backgroundColor: data.userReacted ? '#2A3A2A' : '#242424',
+                            border: `1px solid ${data.userReacted ? '#5BC854' : '#333333'}`,
+                            borderRadius: '10px',
+                            padding: '2px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ fontSize: '12px' }}>{emoji}</span>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '11px',
+                            color: data.userReacted ? '#5BC854' : '#B9B7B7',
+                          }}>
+                            {data.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+              </>
+            )}
         </div>
-      </div>
       </div>
 
       {/* MESSAGE INPUT */}
@@ -718,70 +1369,240 @@ export const ChatRoom = ({
         style={{
           width: '100%',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
-          padding: '0 0 20px 0',
+          alignItems: 'center',
+          padding: '15px 0 20px 0',
+          gap: '10px',
         }}
       >
-        <div
-          className="message-input-container"
-          style={{
+        {/* Reply Banner */}
+        {replyingTo && (
+          <div style={{
             width: '90%',
-            height: '60px',
-            backgroundColor: '#19191A',
+            backgroundColor: '#242424',
             border: '1px solid transparent',
-            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
-            borderRadius: '30px',
+            borderRadius: '15px',
+            padding: '10px 15px',
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '10px',
-            gap: '10px',
-          }}
-        >
-          {/* Send Button */}
-          <button
-            className="send-button"
-            style={{
-              width: '40px',
-              height: '40px',
-              minWidth: '40px',
+          }}>
+            <div style={{
+              flex: 1,
+              borderLeft: '2px solid #707070',
+              paddingLeft: '10px',
+            }}>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '11px',
+                color: '#B9B7B7',
+                marginBottom: '2px',
+              }}>
+                Replying to @{replyingTo.username}
+              </div>
+              <div style={{
+                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '12px',
+                color: '#707070',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {replyingTo.preview}
+              </div>
+            </div>
+            <button
+              onClick={() => setReplyingTo(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '5px',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
+        <div style={{ width: '90%', position: 'relative' }}>
+          {/* Mention Picker */}
+          {showMentionPicker && filteredMentionUsers.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              bottom: '70px',
+              left: '0',
+              width: '100%',
+              maxHeight: '200px',
+              overflowY: 'auto',
               backgroundColor: '#19191A',
               border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #082724)',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              borderRadius: '20px',
+              borderRadius: '15px',
+              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+              zIndex: 100,
+            }}>
+              {filteredMentionUsers.map((u, index) => (
+                <button
+                  key={u.id}
+                  onClick={() => insertMention(u.username)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: 'none',
+                    border: 'none',
+                    borderTop: index > 0 ? '1px solid #333333' : 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <RankedPFP rank={u.rank} size="small" showRankLabel={false} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '13px',
+                      color: '#D3D3D3',
+                    }}>
+                      @{u.username}
+                    </div>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '10px',
+                      color: '#707070',
+                    }}>
+                      {u.rank}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            className="message-input-container"
+            style={{
+              width: '100%',
+              minHeight: '60px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '30px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
+              padding: '10px',
+              gap: '10px',
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
-              <polyline points="18 15 12 9 6 15"/>
-            </svg>
-          </button>
+            {/* Send Button */}
+            <button
+              className="send-button"
+              onClick={() => {
+                if (message.trim()) {
+                  const newMessage = {
+                    id: `msg${Date.now()}`,
+                    text: message,
+                    sender: 'self' as const,
+                    username: 'You',
+                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                    replyTo: replyingTo ? { messageId: replyingTo.messageId, username: replyingTo.username, preview: replyingTo.preview } : undefined,
+                  };
+                  setMessages(prev => [...prev, newMessage]);
+                  setMessage('');
+                  setReplyingTo(null);
+                  setMessageStatus('pending');
+                  // Simulate message delivery
+                  setTimeout(() => setMessageStatus('sent'), 500);
+                  setTimeout(() => setMessageStatus('delivered'), 1000);
+                }
+              }}
+              disabled={!message.trim()}
+              style={{
+                width: '40px',
+                height: '40px',
+                minWidth: '40px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: message.trim() 
+                  ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #082724)'
+                  : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: message.trim() ? 'pointer' : 'not-allowed',
+                opacity: message.trim() ? 1 : 0.5,
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={message.trim() ? "#5BC854" : "#707070"} strokeWidth="2">
+                <polyline points="18 15 12 9 6 15"/>
+              </svg>
+            </button>
 
-          {/* Message Input */}
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message here…"
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: '#CBCBCB',
-              fontSize: '12px',
-              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontWeight: '300',
-            }}
-            className="message-input-field"
-          />
+            {/* Message Input */}
+            <textarea
+              ref={messageInputRef}
+              value={message}
+              onChange={handleMessageChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (message.trim()) {
+                    const newMessage = {
+                      id: `msg${Date.now()}`,
+                      text: message,
+                      sender: 'self' as const,
+                      username: 'You',
+                      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                      replyTo: replyingTo ? { messageId: replyingTo.messageId, username: replyingTo.username, preview: replyingTo.preview } : undefined,
+                    };
+                    setMessages(prev => [...prev, newMessage]);
+                    setMessage('');
+                    setReplyingTo(null);
+                    setShowMentionPicker(false);
+                    setMessageStatus('pending');
+                    setTimeout(() => setMessageStatus('sent'), 500);
+                    setTimeout(() => setMessageStatus('delivered'), 1000);
+                  }
+                }
+              }}
+              placeholder="Type your message here… (use @ to mention)"
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: '#CBCBCB',
+                fontSize: '12px',
+                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontWeight: '300',
+                resize: 'none',
+                minHeight: '40px',
+                maxHeight: '120px',
+                overflowY: 'auto',
+                paddingTop: '10px',
+              }}
+              className="message-input-field"
+              rows={1}
+            />
+          </div>
         </div>
+      </div>
       </div>
 
       {/* Group Members Modal */}

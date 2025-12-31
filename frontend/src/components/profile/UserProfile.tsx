@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RankedPFP } from '../common/RankedPFP';
 import './UserProfile.css';
 
 interface UserProfileProps {
@@ -12,29 +13,31 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [bio, setBio] = useState('This is a sample bio. It has roots in a piece of classical Latin literature from 45 BC.');
   const [username, setUsername] = useState(isOwnProfile ? 'your_username' : 'jafar904');
+  const [showRequestSent, setShowRequestSent] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
 
   // Mock user data - will be replaced with actual API calls
   const userData = {
     pfp: '👤',
-    rank: 'Gold', // This will determine the stroke color
-    friendStatus: isOwnProfile ? null : 'not_friends', // 'friends', 'pending', 'not_friends'
+    rank: isOwnProfile ? 'TITAN' : 'LEGEND+', // Using actual rank names from ranks.ts
+    friendStatus: isOwnProfile ? null : 'not_friends', // 'friends', 'pending', 'not_friends', 'request_sent'
   };
 
-  // Get rank color based on rank
-  const getRankColor = (rank: string) => {
-    switch (rank) {
-      case 'Gold':
-        return '#AE8B2A';
-      case 'Silver':
-        return '#C0C0C0';
-      case 'Bronze':
-        return '#CD7F32';
-      default:
-        return '#888888';
-    }
+  const handleAddFriend = () => {
+    // TODO: Implement actual friend request API call
+    setShowRequestSent(true);
+    setTimeout(() => setShowRequestSent(false), 2000); // Hide after 2 seconds
   };
 
-  const rankColor = getRankColor(userData.rank);
+  const handleBlock = () => {
+    setShowBlockConfirm(true);
+  };
+
+  const confirmBlock = () => {
+    // TODO: Implement actual block API call
+    console.log('User blocked');
+    setShowBlockConfirm(false);
+  };
 
   return (
     <div style={{ 
@@ -82,17 +85,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           </svg>
         </button>
 
-        {/* Title */}
-        <span style={{
-          fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-          fontSize: '15px',
-          background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>
-          {isOwnProfile ? 'My Profile' : 'User Profile'}
-        </span>
+        {/* Title with Icon */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{
+            fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '15px',
+            background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            {isOwnProfile ? 'My Profile' : 'User Profile'}
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
       </div>
 
       {/* PROFILE CONTENT */}
@@ -102,43 +111,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '40px 20px',
+        padding: '45px 20px 40px 20px',
         gap: '30px',
       }}>
         {/* Profile Picture with Rank */}
         <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center',
-          gap: '10px',
           position: 'relative',
         }}>
-          <div
-            className="profile-pfp"
-            style={{
-              width: '150px',
-              height: '150px',
-              borderRadius: '50%',
-              border: `3px solid ${rankColor}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#2A2A2A',
-              overflow: 'hidden',
-              filter: 'grayscale(100%)',
-            }}
-          >
-            <span style={{ fontSize: '80px' }}>{userData.pfp}</span>
-          </div>
+          {/* RankedPFP Component - xlarge size for profile */}
+          <RankedPFP rank={userData.rank} size="xlarge" showRankLabel={true} />
 
-          {/* Edit PFP Button (only for own profile) */}
+          {/* Edit PFP Button (only for own profile) - overlapping PFP halfway down on right */}
           {isOwnProfile && (
             <button
               className="edit-pfp-button"
               style={{
                 position: 'absolute',
-                top: '0',
-                right: '0',
+                top: '75px', // Halfway down the 150px PFP
+                right: '-10px',
                 width: '40px',
                 height: '40px',
                 backgroundColor: '#19191A',
@@ -159,30 +149,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               </svg>
             </button>
           )}
-
-          {/* User Rank Badge */}
-          <div
-            className="profile-rank-badge"
-            style={{
-              width: '100px',
-              height: '26px',
-              backgroundColor: '#2A2A2A',
-              border: `3px solid ${rankColor}`,
-              borderRadius: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span style={{
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '12px',
-              color: rankColor,
-              fontWeight: '600',
-            }}>
-              {userData.rank}
-            </span>
-          </div>
         </div>
 
         {/* Username */}
@@ -217,7 +183,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           ) : (
             <span style={{
               fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '20px',
+              fontSize: '16px',
               background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -314,22 +280,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               </button>
             ) : (
               <button
+                onClick={handleAddFriend}
                 className="profile-pill-button"
                 style={{
                   flex: 1,
                   height: '40px',
                   backgroundColor: '#19191A',
                   border: '1px solid transparent',
-                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundImage: showRequestSent 
+                    ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)'
+                    : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
                   backgroundOrigin: 'border-box',
                   backgroundClip: 'padding-box, border-box',
                   borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: showRequestSent ? 'not-allowed' : 'pointer',
                   gap: '6px',
+                  opacity: showRequestSent ? 0.5 : 1,
                 }}
+                disabled={showRequestSent}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -391,6 +362,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
 
             {/* Block Button */}
             <button
+              onClick={handleBlock}
               className="profile-pill-button-danger"
               style={{
                 flex: 1,
@@ -417,17 +389,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         )}
 
         {/* Bio Section */}
-        <div style={{
-          width: '90%',
-          maxWidth: '500px',
-          backgroundColor: '#242424',
-          border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
-          borderRadius: '20px',
-          padding: '20px',
-        }}>
+        <div 
+          className="bio-section"
+          style={{
+            width: '90%',
+            maxWidth: '500px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '20px',
+            padding: '20px',
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <span style={{
               fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -483,75 +458,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           )}
         </div>
 
-        {/* Friends List (only for own profile) */}
+        {/* Friend Requests and Friends (only for own profile) */}
         {isOwnProfile && (
           <>
-            <div style={{
-              width: '90%',
-              maxWidth: '500px',
-              backgroundColor: '#242424',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '20px',
-              padding: '20px',
-            }}>
-              <span style={{
-                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '14px',
-                color: '#B9B7B7',
-                marginBottom: '15px',
-                display: 'block',
-              }}>
-                Friends (12)
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {/* Sample friend item */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px',
-                  backgroundColor: '#19191A',
-                  borderRadius: '10px',
-                }}>
-                  <div style={{
-                    width: '35px',
-                    height: '35px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    filter: 'grayscale(100%)',
-                  }}>
-                    <span style={{ fontSize: '16px' }}>👤</span>
-                  </div>
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '12px',
-                    color: '#B9B7B7',
-                  }}>
-                    friend_username
-                  </span>
-                </div>
-              </div>
-            </div>
-
             {/* Friend Requests */}
-            <div style={{
-              width: '90%',
-              maxWidth: '500px',
-              backgroundColor: '#242424',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '20px',
-              padding: '20px',
-            }}>
+            <div 
+              className="bio-section"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                padding: '20px',
+              }}
+            >
               <span style={{
                 fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: '14px',
@@ -561,15 +485,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               }}>
                 Friend Requests (2)
               </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                 {/* Sample request item */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '10px',
-                  backgroundColor: '#19191A',
-                  borderRadius: '10px',
+                  padding: '10px 0',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
@@ -627,11 +549,289 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     </button>
                   </div>
                 </div>
+                {/* Horizontal separator */}
+                <div style={{
+                  height: '1px',
+                  backgroundColor: '#333333',
+                  margin: '5px 0',
+                }} />
+                {/* Another sample request */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 0',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '35px',
+                      height: '35px',
+                      borderRadius: '50%',
+                      border: '2px solid #888888',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#2A2A2A',
+                      filter: 'grayscale(100%)',
+                    }}>
+                      <span style={{ fontSize: '16px' }}>👤</span>
+                    </div>
+                    <span style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '12px',
+                      color: '#B9B7B7',
+                    }}>
+                      another_request
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button style={{
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: '#19191A',
+                      border: '1px solid #5BC854',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </button>
+                    <button style={{
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: '#19191A',
+                      border: '1px solid #C85454',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Friends List */}
+            <div 
+              className="bio-section"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                padding: '20px',
+              }}
+            >
+              <span style={{
+                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '14px',
+                color: '#B9B7B7',
+                marginBottom: '15px',
+                display: 'block',
+              }}>
+                Friends (12)
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                {/* Sample friend items with separators */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 0',
+                }}>
+                  <div style={{
+                    width: '35px',
+                    height: '35px',
+                    borderRadius: '50%',
+                    border: '2px solid #888888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#2A2A2A',
+                    filter: 'grayscale(100%)',
+                  }}>
+                    <span style={{ fontSize: '16px' }}>👤</span>
+                  </div>
+                  <span style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '12px',
+                    color: '#B9B7B7',
+                  }}>
+                    friend_username
+                  </span>
+                </div>
+                <div style={{
+                  height: '1px',
+                  backgroundColor: '#333333',
+                  margin: '5px 0',
+                }} />
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 0',
+                }}>
+                  <div style={{
+                    width: '35px',
+                    height: '35px',
+                    borderRadius: '50%',
+                    border: '2px solid #888888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#2A2A2A',
+                    filter: 'grayscale(100%)',
+                  }}>
+                    <span style={{ fontSize: '16px' }}>👤</span>
+                  </div>
+                  <span style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '12px',
+                    color: '#B9B7B7',
+                  }}>
+                    another_friend
+                  </span>
+                </div>
               </div>
             </div>
           </>
         )}
       </div>
+
+      {/* Request Sent Popup - Bottom Middle */}
+      {showRequestSent && (
+        <div style={{
+          position: 'fixed',
+          bottom: '40px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+        }}>
+          <span style={{
+            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '16px',
+            color: '#5BC854',
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+          }}>
+            Friend Request Sent!
+          </span>
+        </div>
+      )}
+
+      {/* Block Confirmation Modal */}
+      {showBlockConfirm && (
+        <div
+          onClick={() => setShowBlockConfirm(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bio-section"
+            style={{
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              padding: '30px',
+              width: '90%',
+              maxWidth: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
+            <h2 style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '18px',
+              background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: 0,
+            }}>
+              Block User?
+            </h2>
+            <p style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '14px',
+              color: '#B9B7B7',
+              margin: 0,
+            }}>
+              Are you sure you want to block this user? They won't be able to message you or see your profile.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowBlockConfirm(false)}
+                className="nav-button"
+                style={{
+                  flex: 1,
+                  height: '45px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#B9B7B7',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBlock}
+                className="nav-button"
+                style={{
+                  flex: 1,
+                  height: '45px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #8B2A2A, #5C1717)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#C85454',
+                  cursor: 'pointer',
+                }}
+              >
+                Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

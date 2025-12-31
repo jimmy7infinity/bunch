@@ -46,7 +46,10 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   };
 
   const handleCreate = () => {
-    if (groupName.trim() && selectedFriends.size > 0) {
+    // For single friend, no group name needed
+    // For multiple friends, group name is required
+    const canCreate = selectedFriends.size === 1 || (selectedFriends.size > 1 && groupName.trim());
+    if (canCreate) {
       onCreateGroup(groupName, Array.from(selectedFriends));
       setGroupName('');
       setSelectedFriends(new Set());
@@ -75,12 +78,12 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
       }}
     >
       <div
-        className="modal-content"
+        className="modal-content bio-section"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: '#242424',
+          backgroundColor: '#19191A',
           border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
+          backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, border-box',
           borderRadius: '20px',
@@ -104,7 +107,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             backgroundClip: 'text',
             margin: 0,
           }}>
-            Create Group Chat
+            Create Chat / Group Chat
           </h2>
           <button
             onClick={onClose}
@@ -122,58 +125,84 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           </button>
         </div>
 
-        {/* Group Name Input */}
-        <div>
-          <label style={{
-            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '12px',
-            color: '#B9B7B7',
-            display: 'block',
-            marginBottom: '8px',
-          }}>
-            Group Name
-          </label>
-          <input
-            type="text"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Enter group name..."
-            style={{
-              width: '100%',
-              height: '45px',
-              backgroundColor: '#19191A',
-              border: '1px solid #333333',
-              borderRadius: '10px',
-              padding: '0 15px',
-              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '13px',
-              color: '#D3D3D3',
-              outline: 'none',
-            }}
-          />
-        </div>
+        {/* Group Name Input - only show if more than 1 friend selected */}
+        {selectedFriends.size > 1 && (
+          <div>
+            <label style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#B9B7B7',
+              display: 'block',
+              marginBottom: '8px',
+            }}>
+              Group Name
+            </label>
+            <input
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Enter group name..."
+              className="nav-button"
+              style={{
+                width: '100%',
+                height: '45px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '10px',
+                padding: '0 15px',
+                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '13px',
+                color: '#D3D3D3',
+                outline: 'none',
+              }}
+            />
+          </div>
+        )}
 
         {/* Search Friends */}
         <div>
-          <label style={{
-            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '12px',
-            color: '#B9B7B7',
-            display: 'block',
-            marginBottom: '8px',
-          }}>
-            Add Friends ({selectedFriends.size} selected)
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#B9B7B7',
+            }}>
+              Add Friends ({selectedFriends.size} selected)
+            </label>
+            {selectedFriends.size > 0 && (
+              <button
+                onClick={() => setSelectedFriends(new Set())}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#C85454',
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search friends..."
+            className="nav-button"
             style={{
               width: '100%',
               height: '40px',
               backgroundColor: '#19191A',
-              border: '1px solid #333333',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
               borderRadius: '10px',
               padding: '0 15px',
               fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -190,54 +219,64 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px',
+          gap: '0',
           maxHeight: '300px',
         }}>
-          {filteredFriends.map((friend) => (
-            <div
-              key={friend.id}
-              onClick={() => toggleFriend(friend.id)}
-              className="friend-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: selectedFriends.has(friend.id) ? '#2A3A2A' : '#19191A',
-                border: `1px solid ${selectedFriends.has(friend.id) ? '#5BC854' : '#333333'}`,
-                borderRadius: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '35px',
-                  height: '35px',
-                  borderRadius: '50%',
-                  border: '2px solid #888888',
+          {filteredFriends.map((friend, index) => (
+            <React.Fragment key={friend.id}>
+              <div
+                onClick={() => toggleFriend(friend.id)}
+                className="friend-item"
+                style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#2A2A2A',
-                  filter: 'grayscale(100%)',
-                }}>
-                  <span style={{ fontSize: '16px' }}>{friend.pfp}</span>
+                  justifyContent: 'space-between',
+                  padding: selectedFriends.has(friend.id) ? '12px' : '10px 0',
+                  backgroundColor: selectedFriends.has(friend.id) ? '#1A2A1A' : 'transparent',
+                  border: selectedFriends.has(friend.id) ? '1px solid #5BC854' : '1px solid transparent',
+                  borderRadius: selectedFriends.has(friend.id) ? '10px' : '0',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  margin: selectedFriends.has(friend.id) ? '5px 0' : '0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '35px',
+                    height: '35px',
+                    borderRadius: '50%',
+                    border: '2px solid #888888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#2A2A2A',
+                    filter: 'grayscale(100%)',
+                  }}>
+                    <span style={{ fontSize: '16px' }}>{friend.pfp}</span>
+                  </div>
+                  <span style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '13px',
+                    color: '#D3D3D3',
+                  }}>
+                    {friend.username}
+                  </span>
                 </div>
-                <span style={{
-                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '13px',
-                  color: '#D3D3D3',
-                }}>
-                  {friend.username}
-                </span>
+                {selectedFriends.has(friend.id) && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
               </div>
-              {selectedFriends.has(friend.id) && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+              {/* Horizontal separator (not for last item, and only show if not selected) */}
+              {index < filteredFriends.length - 1 && !selectedFriends.has(friend.id) && (
+                <div style={{
+                  height: '1px',
+                  backgroundColor: '#333333',
+                  margin: '5px 0',
+                }} />
               )}
-            </div>
+            </React.Fragment>
           ))}
         </div>
 
@@ -245,13 +284,16 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             onClick={onClose}
-            className="modal-button-secondary"
+            className="modal-button-secondary nav-button"
             style={{
               flex: 1,
               height: '45px',
               backgroundColor: '#19191A',
-              border: '1px solid #333333',
-              borderRadius: '10px',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
               fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
               fontSize: '14px',
               color: '#B9B7B7',
@@ -262,29 +304,30 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           </button>
           <button
             onClick={handleCreate}
-            disabled={!groupName.trim() || selectedFriends.size === 0}
-            className="modal-button-primary"
+            disabled={selectedFriends.size === 0 || (selectedFriends.size > 1 && !groupName.trim())}
+            className="modal-button-primary nav-button"
             style={{
               flex: 1,
               height: '45px',
               backgroundColor: '#19191A',
               border: '1px solid transparent',
-              backgroundImage: selectedFriends.size > 0 && groupName.trim() 
-                ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #082724)'
-                : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #333333, #1A1A1A)',
+              backgroundImage: (selectedFriends.size === 1 || (selectedFriends.size > 1 && groupName.trim()))
+                ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #3A8A3A)'
+                : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              borderRadius: '10px',
+              borderRadius: '20px',
               fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
               fontSize: '14px',
-              color: selectedFriends.size > 0 && groupName.trim() ? '#5BC854' : '#606060',
-              cursor: selectedFriends.size > 0 && groupName.trim() ? 'pointer' : 'not-allowed',
+              color: (selectedFriends.size === 1 || (selectedFriends.size > 1 && groupName.trim())) ? '#5BC854' : '#606060',
+              cursor: (selectedFriends.size === 1 || (selectedFriends.size > 1 && groupName.trim())) ? 'pointer' : 'not-allowed',
             }}
           >
-            Create Group
+            {selectedFriends.size === 1 ? 'Create Chat' : 'Create Group'}
           </button>
         </div>
       </div>
     </div>
   );
 };
+

@@ -11,23 +11,23 @@ export const WalletConnect = () => {
     setLoading(true);
     
     try {
-      // Use dev login endpoint - enter any username
-      const username = prompt('Enter a username for testing:') || 'demo_user';
+      // TEMPORARY DEV ONLY: Bypass backend auth completely
+      const username = 'demo_user';
       
-      const response = await fetch('http://localhost:3000/api/auth/dev-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
-      });
+      // Mock user data
+      const mockUser = {
+        id: `user_${Date.now()}`,
+        username: username,
+        display_name: username,
+        wallet_address: `0x${username.toLowerCase().padEnd(40, '0')}`,
+        avatar_url: null,
+      };
       
-      const data = await response.json();
+      const mockToken = 'dev_token_' + Date.now();
       
-      if (data.access_token) {
-        setAuth(data.user, data.access_token);
-      }
+      setAuth(mockUser, mockToken);
     } catch (error) {
       console.error('Login failed:', error);
-      alert('Login failed. Make sure backend is running on localhost:3000');
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export const WalletConnect = () => {
         <div style={{ width: '250px', height: '250px' }}>
           <img 
             src="/logo.png" 
-            alt="PolyBanter Logo"
+            alt="PolyBanter Logo" 
             style={{
               width: '100%',
               height: '100%',
@@ -83,7 +83,7 @@ export const WalletConnect = () => {
         >
           <img 
             src="/x-logo.png" 
-            alt="X"
+            alt="X" 
             style={{
               width: '20px',
               height: '20px',
@@ -113,7 +113,7 @@ export const WalletConnect = () => {
         >
           <img 
             src="/polymarket-logo.png" 
-            alt="Polymarket"
+            alt="Polymarket" 
             style={{
               width: '20px',
               height: '20px',

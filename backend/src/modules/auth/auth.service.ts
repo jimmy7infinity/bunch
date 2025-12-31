@@ -61,20 +61,20 @@ export class AuthService {
 
   // DEV ONLY: Find or create user by username
   async findOrCreateByUsername(username: string): Promise<any> {
+    try {
     let user = await this.usersService.findByUsername(username);
     
     if (!user) {
       // Create new user with fake wallet address for dev
       const fakeWallet = `0x${username.toLowerCase().padEnd(40, '0')}`;
-      user = await this.usersService.findOrCreate(fakeWallet);
-      // Update username via service
-      user = await this.usersService.updateProfile(
-        (user as any)._id.toString(), 
-        { display_name: username }
-      );
+        user = await this.usersService.createDevUser(username, fakeWallet);
     }
     
     return user;
+    } catch (error) {
+      console.error('Error in findOrCreateByUsername:', error);
+      throw error;
+    }
   }
 }
 

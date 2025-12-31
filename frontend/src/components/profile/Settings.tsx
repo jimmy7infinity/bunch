@@ -56,17 +56,23 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           </svg>
         </button>
 
-        {/* Title */}
-        <span style={{
-          fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-          fontSize: '15px',
-          background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>
-          Settings
-        </span>
+        {/* Title with Icon */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{
+            fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '15px',
+            background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            Settings
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+          </svg>
+        </div>
       </div>
 
       {/* SETTINGS CONTENT */}
@@ -80,17 +86,20 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         gap: '15px',
       }}>
         {/* Notifications Section */}
-        <div style={{
-          width: '90%',
-          maxWidth: '500px',
-          backgroundColor: '#242424',
-          border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
-          borderRadius: '20px',
-          padding: '20px',
-        }}>
+        <div 
+          className="bio-section"
+          style={{
+            width: '90%',
+            maxWidth: '500px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '20px',
+            padding: '20px',
+          }}
+        >
           <span style={{
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '14px',
@@ -208,17 +217,20 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         </div>
 
         {/* Privacy Section */}
-        <div style={{
-          width: '90%',
-          maxWidth: '500px',
-          backgroundColor: '#242424',
-          border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
-          borderRadius: '20px',
-          padding: '20px',
-        }}>
+        <div 
+          className="bio-section"
+          style={{
+            width: '90%',
+            maxWidth: '500px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '20px',
+            padding: '20px',
+          }}
+        >
           <span style={{
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '14px',
@@ -283,17 +295,20 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         </div>
 
         {/* Account Section */}
-        <div style={{
-          width: '90%',
-          maxWidth: '500px',
-          backgroundColor: '#242424',
-          border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
-          borderRadius: '20px',
-          padding: '20px',
-        }}>
+        <div 
+          className="bio-section"
+          style={{
+            width: '90%',
+            maxWidth: '500px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '20px',
+            padding: '20px',
+          }}
+        >
           <span style={{
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '14px',
@@ -371,3 +386,4 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
     </div>
   );
 };
+
