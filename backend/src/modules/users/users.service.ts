@@ -19,6 +19,8 @@ export class UsersService {
       username,
       display_name: twitterProfile.name || username,
       avatar_url: twitterProfile.profile_image_url,
+      is_online: true,
+      last_seen_at: new Date(),
     });
 
     return user.save();
