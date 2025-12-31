@@ -29,6 +29,9 @@ export class User {
   @Prop()
   avatar_url?: string;
 
+  @Prop()
+  bio?: string;
+
   @Prop({ default: Date.now })
   created_at: Date;
 

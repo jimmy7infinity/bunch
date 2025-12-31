@@ -88,7 +88,7 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    updates: { display_name?: string; avatar_url?: string },
+    updates: { username?: string; display_name?: string; avatar_url?: string; bio?: string },
   ): Promise<User> {
     const user = await this.userModel
       .findByIdAndUpdate(userId, updates, { new: true })
