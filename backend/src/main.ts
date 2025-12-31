@@ -28,6 +28,7 @@ async function bootstrap() {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 3600000, // 1 hour
+        sameSite: 'lax', // Allow cookie to be sent on OAuth redirects
       },
     }),
   );
