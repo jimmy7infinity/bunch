@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { TwitterStrategy } from './strategies/twitter.strategy';
+import { TwitterOAuthService } from './twitter-oauth.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -24,7 +24,7 @@ import { UsersModule } from '../users/users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, TwitterStrategy],
+  providers: [AuthService, JwtStrategy, TwitterOAuthService],
   exports: [AuthService],
 })
 export class AuthModule {}

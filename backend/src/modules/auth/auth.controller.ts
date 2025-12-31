@@ -55,32 +55,32 @@ export class AuthController {
 
   // Twitter OAuth
   @Get('twitter')
-  @UseGuards(AuthGuard('twitter'))
-  async twitterLogin() {
-    // Initiates Twitter OAuth flow
+  async twitterLogin(@Res() res: Response) {
+    const authUrl = this.authService.getTwitterAuthUrl();
+    res.redirect(authUrl);
   }
 
   @Get('twitter/callback')
-  @UseGuards(AuthGuard('twitter'))
-  async twitterCallback(@Req() req: any, @Res() res: Response) {
-    console.log('🔍 Twitter callback received:', {
-      hasUser: !!req.user,
-      user: req.user,
-      query: req.query,
-    });
-    
-    // Twitter returns here after authentication
-    const user = await this.authService.findOrCreateFromTwitter(req.user);
-    const authResult = await this.authService.login(user);
-    
-    console.log('✅ User authenticated:', { userId: user._id, username: user.username });
-    
-    // Redirect to frontend with token
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-      ? 'chrome-extension://YOUR_EXTENSION_ID' // Will update this later
-      : 'http://localhost:5173';
-    
-    res.redirect(`${frontendUrl}/auth/callback?token=${authResult.access_token}`);
+  async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    try {
+      console.log('🔍 Twitter callback received:', { code: !!code, state: !!state });
+      
+      const twitterUser = await this.authService.handleTwitterCallback(code, state);
+      const user = await this.authService.findOrCreateFromTwitter(twitterUser);
+      const authResult = await this.authService.login(user);
+      
+      console.log('✅ User authenticated:', { userId: user._id, username: user.username });
+      
+      // Redirect to frontend with token
+      const frontendUrl = process.env.NODE_ENV === 'production' 
+        ? 'chrome-extension://YOUR_EXTENSION_ID' // Will update this later
+        : 'http://localhost:5173';
+      
+      res.redirect(`${frontendUrl}?token=${authResult.access_token}`);
+    } catch (error) {
+      console.error('❌ Twitter callback error:', error);
+      res.status(500).json({ error: 'Authentication failed', details: error.message });
+    }
   }
 }
 

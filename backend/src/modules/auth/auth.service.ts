@@ -2,12 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { UsersService } from '../users/users.service';
+import { TwitterOAuthService } from './twitter-oauth.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
+    private twitterOAuthService: TwitterOAuthService,
   ) {}
 
   async validateWalletSignature(
@@ -80,6 +82,15 @@ export class AuthService {
   // Twitter OAuth: Find or create user from Twitter profile
   async findOrCreateFromTwitter(twitterProfile: any): Promise<any> {
     return this.usersService.findOrCreateFromTwitter(twitterProfile);
+  }
+
+  getTwitterAuthUrl(): string {
+    return this.twitterOAuthService.getAuthorizationUrl();
+  }
+
+  async handleTwitterCallback(code: string, state: string) {
+    const result = await this.twitterOAuthService.handleCallback(code, state);
+    return result.profile;
   }
 }
 
