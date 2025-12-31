@@ -2,50 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import session from 'express-session';
-import RedisStore from 'connect-redis';
-import { createClient } from 'redis';
-import { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Redis client for session storage
-  const redisClient = createClient({
-    url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
-  });
-  
-  redisClient.on('error', (err) => console.error('Redis Client Error', err));
-  await redisClient.connect();
-
-  // Session middleware for OAuth with Redis store
-  const sessionMiddleware = session({
-    store: new RedisStore({ client: redisClient }),
-    secret: process.env.JWT_SECRET || 'session-secret',
-    resave: false,
-    saveUninitialized: true, // Changed to true for OAuth flow
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 3600000, // 1 hour
-      sameSite: 'lax', // Allow cookie to be sent on OAuth redirects
-    },
-  });
-  
-  app.use(sessionMiddleware);
-  
-  // Debug middleware to log session
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.path.includes('/auth/twitter')) {
-      console.log('🔍 OAuth Request:', {
-        path: req.path,
-        sessionID: (req as any).sessionID,
-        hasSession: !!(req as any).session,
-        cookies: req.headers.cookie,
-      });
-    }
-    next();
-  });
+  // Minimal session for OAuth 2.0 state parameter
+  app.use(
+    session({
+      secret: process.env.JWT_SECRET || 'session-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 600000, // 10 minutes
+        sameSite: 'lax',
+      },
+    }),
+  );
 
   // Security headers
   app.use(helmet({
