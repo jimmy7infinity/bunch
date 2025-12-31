@@ -7,30 +7,10 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const handleTwitterLogin = async () => {
-    setLoading(true);
-    
-    try {
-      // TEMPORARY DEV ONLY: Bypass backend auth completely
-      const username = 'demo_user';
-      
-      // Mock user data
-      const mockUser = {
-        id: `user_${Date.now()}`,
-        username: username,
-        display_name: username,
-        wallet_address: `0x${username.toLowerCase().padEnd(40, '0')}`,
-        avatar_url: undefined,
-      };
-      
-      const mockToken = 'dev_token_' + Date.now();
-      
-      setAuth(mockUser, mockToken);
-    } catch (error) {
-      console.error('Login failed:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleTwitterLogin = () => {
+    // Redirect to backend Twitter OAuth endpoint
+    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+    window.location.href = `${apiUrl}/api/auth/twitter`;
   };
 
   return (
