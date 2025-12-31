@@ -18,20 +18,33 @@ async function bootstrap() {
   await redisClient.connect();
 
   // Session middleware for OAuth with Redis store
-  app.use(
-    session({
-      store: new RedisStore({ client: redisClient }),
-      secret: process.env.JWT_SECRET || 'session-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 3600000, // 1 hour
-        sameSite: 'lax', // Allow cookie to be sent on OAuth redirects
-      },
-    }),
-  );
+  const sessionMiddleware = session({
+    store: new RedisStore({ client: redisClient }),
+    secret: process.env.JWT_SECRET || 'session-secret',
+    resave: false,
+    saveUninitialized: true, // Changed to true for OAuth flow
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 3600000, // 1 hour
+      sameSite: 'lax', // Allow cookie to be sent on OAuth redirects
+    },
+  });
+  
+  app.use(sessionMiddleware);
+  
+  // Debug middleware to log session
+  app.use((req, res, next) => {
+    if (req.path.includes('/auth/twitter')) {
+      console.log('🔍 OAuth Request:', {
+        path: req.path,
+        sessionID: req.sessionID,
+        hasSession: !!req.session,
+        cookies: req.headers.cookie,
+      });
+    }
+    next();
+  });
 
   // Security headers
   app.use(helmet({
