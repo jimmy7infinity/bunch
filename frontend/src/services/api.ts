@@ -243,13 +243,13 @@ export const friendService = {
   },
 
   async getFriendRequests() {
-    const response = await api.get<any[]>('/users/friend-requests');
-    return response.data;
+    const response = await api.get<{ requests: any[] }>('/users/friend-requests');
+    return response.data.requests;
   },
 
   async getFriends() {
-    const response = await api.get<User[]>('/users/friends');
-    return response.data;
+    const response = await api.get<{ friends: User[] }>('/users/friends');
+    return response.data.friends;
   },
 
   async getFriendshipStatus(userId: string) {

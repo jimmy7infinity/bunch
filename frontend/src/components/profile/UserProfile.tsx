@@ -92,7 +92,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     } else if (!isOwnProfile && userId) {
       loadUserData();
     }
-  }, [userId, isOwnProfile, currentUser]);
+  }, [userId, isOwnProfile]); // Removed currentUser to prevent infinite loop
 
   // Mock user data - will be replaced with actual API calls
   const mockData = {
