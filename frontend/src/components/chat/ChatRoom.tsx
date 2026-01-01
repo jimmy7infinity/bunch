@@ -878,7 +878,7 @@ export const ChatRoom = ({
             ) : (
               <>
                 {/* Render actual messages from database */}
-                {storeMessages.map((msg) => {
+                {Array.isArray(storeMessages) && storeMessages.map((msg) => {
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
@@ -1076,9 +1076,11 @@ export const ChatRoom = ({
                                   boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                 }}
                               >
-                                <button
-                                  onClick={async () => {
+                                <div
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     try {
+                                      console.log('Deleting message:', msg._id);
                                       await websocketService.deleteMessage(msg._id);
                                       setShowMessageMenu(null);
                                     } catch (error) {
@@ -1096,9 +1098,11 @@ export const ChatRoom = ({
                                     borderRadius: '8px',
                                     fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                                   }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A2A'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
                                   Delete
-                                </button>
+                                </div>
                               </div>
                             )}
                           </button>

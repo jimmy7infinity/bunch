@@ -51,26 +51,7 @@ export class UsersController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getUserById(@Param('id') id: string) {
-    return this.usersService.findById(id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/friendship-status')
-  async getFriendshipStatus(@Request() req: any, @Param('id') userId: string) {
-    const status = await this.usersService.getFriendshipStatus(req.user.userId, userId);
-    return { status };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/friend-request')
-  async sendFriendRequest(@Request() req: any, @Param('id') userId: string) {
-    await this.usersService.sendFriendRequest(req.user.userId, userId);
-    return { success: true };
-  }
-
+  // Friend and block routes BEFORE :id route
   @UseGuards(JwtAuthGuard)
   @Get('friend-requests')
   async getFriendRequests(@Request() req: any) {
@@ -100,6 +81,33 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('blocked')
+  async getBlockedUsers(@Request() req: any) {
+    const blockedUsers = await this.usersService.getBlockedUsers(req.user.userId);
+    return { blockedUsers };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.usersService.findById(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/friendship-status')
+  async getFriendshipStatus(@Request() req: any, @Param('id') userId: string) {
+    const status = await this.usersService.getFriendshipStatus(req.user.userId, userId);
+    return { status };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/friend-request')
+  async sendFriendRequest(@Request() req: any, @Param('id') userId: string) {
+    await this.usersService.sendFriendRequest(req.user.userId, userId);
+    return { success: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id/friend')
   async removeFriend(@Request() req: any, @Param('id') userId: string) {
     await this.usersService.removeFriend(req.user.userId, userId);
@@ -118,13 +126,6 @@ export class UsersController {
   async unblockUser(@Request() req: any, @Param('id') userId: string) {
     await this.usersService.unblockUser(req.user.userId, userId);
     return { success: true };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('blocked')
-  async getBlockedUsers(@Request() req: any) {
-    const blockedUsers = await this.usersService.getBlockedUsers(req.user.userId);
-    return { blockedUsers };
   }
 }
 

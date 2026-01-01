@@ -17,14 +17,18 @@ export class UsersService {
 
   async createFromTwitter(twitterProfile: any): Promise<User> {
     const username = twitterProfile.username || `user_${twitterProfile.id}`;
+    
+    // Get high quality Twitter avatar by replacing _normal with _400x400
+    const highQualityAvatar = twitterProfile.profile_image_url
+      ?.replace('_normal', '_400x400');
 
     const user = new this.userModel({
       twitter_id: twitterProfile.id,
       twitter_username: twitterProfile.username,
-      twitter_avatar: twitterProfile.profile_image_url,
+      twitter_avatar: highQualityAvatar,
       username,
       display_name: twitterProfile.name || username,
-      avatar_url: twitterProfile.profile_image_url,
+      avatar_url: highQualityAvatar,
       is_online: true,
       last_seen_at: new Date(),
     });
