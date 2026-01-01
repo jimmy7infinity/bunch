@@ -9,9 +9,10 @@ interface UserProfileProps {
   userId: string;
   isOwnProfile: boolean;
   onBack: () => void;
+  onUserClick?: (userId: string) => void;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack }) => {
+export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack, onUserClick }) => {
   const { user: currentUser, setAuth, token } = useAuthStore();
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -802,252 +803,218 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         {isOwnProfile && (
           <>
             {/* Friend Requests */}
-            <div 
-              className="bio-section"
-              style={{
-                width: '90%',
-                maxWidth: '500px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '20px',
-                padding: '20px',
-              }}
-            >
-              <span style={{
-                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '14px',
-                color: '#B9B7B7',
-                marginBottom: '15px',
-                display: 'block',
-              }}>
-                Friend Requests (2)
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {/* Sample request item */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 0',
+            {friendRequests.length > 0 && (
+              <div 
+                className="bio-section"
+                style={{
+                  width: '90%',
+                  maxWidth: '500px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  padding: '20px',
+                }}
+              >
+                <span style={{
+                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#B9B7B7',
+                  marginBottom: '15px',
+                  display: 'block',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '35px',
-                      height: '35px',
-                      borderRadius: '50%',
-                      border: '2px solid #888888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#2A2A2A',
-                      filter: 'grayscale(100%)',
-                    }}>
-                      <span style={{ fontSize: '16px' }}>👤</span>
-                    </div>
-                    <span style={{
-                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '12px',
-                      color: '#B9B7B7',
-                    }}>
-                      request_username
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button style={{
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: '#19191A',
-                      border: '1px solid #5BC854',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </button>
-                    <button style={{
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: '#19191A',
-                      border: '1px solid #C85454',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                {/* Horizontal separator */}
-                <div style={{
-                  height: '1px',
-                  backgroundColor: '#333333',
-                  margin: '5px 0',
-                }} />
-                {/* Another sample request */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 0',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '35px',
-                      height: '35px',
-                      borderRadius: '50%',
-                      border: '2px solid #888888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#2A2A2A',
-                      filter: 'grayscale(100%)',
-                    }}>
-                      <span style={{ fontSize: '16px' }}>👤</span>
-                    </div>
-                    <span style={{
-                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '12px',
-                      color: '#B9B7B7',
-                    }}>
-                      another_request
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button style={{
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: '#19191A',
-                      border: '1px solid #5BC854',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </button>
-                    <button style={{
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: '#19191A',
-                      border: '1px solid #C85454',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
+                  Friend Requests ({friendRequests.length})
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                  {friendRequests.map((request: any, index: number) => (
+                    <React.Fragment key={request._id}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 0',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            border: '2px solid #888888',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#2A2A2A',
+                            overflow: 'hidden',
+                          }}>
+                            {request.sender_id?.avatar_url ? (
+                              <img 
+                                src={request.sender_id.avatar_url} 
+                                alt={request.sender_id.username}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '16px' }}>👤</span>
+                            )}
+                          </div>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '12px',
+                            color: '#B9B7B7',
+                          }}>
+                            {request.sender_id?.display_name || request.sender_id?.username || 'User'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await friendService.acceptFriendRequest(request._id);
+                                setFriendRequests(prev => prev.filter(r => r._id !== request._id));
+                                // Reload friends list
+                                const friendsList = await friendService.getFriends();
+                                setFriends(friendsList);
+                              } catch (error) {
+                                console.error('Failed to accept friend request:', error);
+                              }
+                            }}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              backgroundColor: '#19191A',
+                              border: '1px solid #5BC854',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await friendService.rejectFriendRequest(request._id);
+                                setFriendRequests(prev => prev.filter(r => r._id !== request._id));
+                              } catch (error) {
+                                console.error('Failed to reject friend request:', error);
+                              }
+                            }}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              backgroundColor: '#19191A',
+                              border: '1px solid #C85454',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18"/>
+                              <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      {index < friendRequests.length - 1 && (
+                        <div style={{
+                          height: '1px',
+                          backgroundColor: '#333333',
+                          margin: '5px 0',
+                        }} />
+                      )}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Friends List */}
-            <div 
-              className="bio-section"
-              style={{
-                width: '90%',
-                maxWidth: '500px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '20px',
-                padding: '20px',
-              }}
-            >
-              <span style={{
-                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '14px',
-                color: '#B9B7B7',
-                marginBottom: '15px',
-                display: 'block',
-              }}>
-                Friends (12)
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {/* Sample friend items with separators */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 0',
+            {friends.length > 0 && (
+              <div 
+                className="bio-section"
+                style={{
+                  width: '90%',
+                  maxWidth: '500px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  padding: '20px',
+                }}
+              >
+                <span style={{
+                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#B9B7B7',
+                  marginBottom: '15px',
+                  display: 'block',
                 }}>
-                  <div style={{
-                    width: '35px',
-                    height: '35px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    filter: 'grayscale(100%)',
-                  }}>
-                    <span style={{ fontSize: '16px' }}>👤</span>
-                  </div>
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '12px',
-                    color: '#B9B7B7',
-                  }}>
-                    friend_username
-                  </span>
-                </div>
-                <div style={{
-                  height: '1px',
-                  backgroundColor: '#333333',
-                  margin: '5px 0',
-                }} />
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 0',
-                }}>
-                  <div style={{
-                    width: '35px',
-                    height: '35px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    filter: 'grayscale(100%)',
-                  }}>
-                    <span style={{ fontSize: '16px' }}>👤</span>
-                  </div>
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '12px',
-                    color: '#B9B7B7',
-                  }}>
-                    another_friend
-                  </span>
+                  Friends ({friends.length})
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                  {friends.map((friend: User, index: number) => (
+                    <React.Fragment key={friend._id || friend.id}>
+                      <div 
+                        onClick={() => onUserClick?.(friend._id || friend.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 0',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{
+                          width: '35px',
+                          height: '35px',
+                          borderRadius: '50%',
+                          border: '2px solid #888888',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#2A2A2A',
+                          overflow: 'hidden',
+                        }}>
+                          {friend.avatar_url ? (
+                            <img 
+                              src={friend.avatar_url} 
+                              alt={friend.username}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '16px' }}>👤</span>
+                          )}
+                        </div>
+                        <span style={{
+                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                          fontSize: '12px',
+                          color: '#B9B7B7',
+                        }}>
+                          {friend.display_name || friend.username || 'User'}
+                        </span>
+                      </div>
+                      {index < friends.length - 1 && (
+                        <div style={{
+                          height: '1px',
+                          backgroundColor: '#333333',
+                          margin: '5px 0',
+                        }} />
+                      )}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

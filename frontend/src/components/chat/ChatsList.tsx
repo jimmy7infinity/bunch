@@ -889,7 +889,7 @@ export const ChatsList = () => {
             {chat.last_message_id?.sender_id ? (
               <RankedPFP
                 rank={chat.last_message_id.sender_id.rank || 'RECRUIT'}
-                size="tiny"
+                size="small"
                 showRankLabel={false}
                 borderOnly={true}
                 avatarUrl={chat.last_message_id.sender_id.avatar_url}

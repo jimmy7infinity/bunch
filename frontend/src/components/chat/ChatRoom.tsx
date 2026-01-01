@@ -1119,6 +1119,7 @@ export const ChatRoom = ({
                             return (
                           <div
                             style={{
+                              position: 'relative', // Add position relative for absolute children
                               backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
                               border: '1px solid transparent',
                               backgroundImage: isAI 
@@ -1130,7 +1131,7 @@ export const ChatRoom = ({
                               padding: isImageMessage ? '0' : '8px 12px', // No padding for images
                               minWidth: isImageMessage ? 'auto' : '90px',
                               maxWidth: 'calc(100% - 65px)',
-                              overflow: 'hidden', // Ensure image doesn't overflow
+                              overflow: isImageMessage ? 'hidden' : 'visible', // Only hide overflow for images
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
                               boxShadow: highlightedMessageId === msg._id 

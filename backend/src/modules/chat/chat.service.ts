@@ -133,7 +133,16 @@ export class ChatService {
   async getUserConversations(userId: string) {
     const participants = await this.participantModel
       .find({ user_id: new Types.ObjectId(userId) })
-      .populate('conversation_id')
+      .populate({
+        path: 'conversation_id',
+        populate: {
+          path: 'last_message_id',
+          populate: {
+            path: 'sender_id',
+            select: 'username display_name avatar_url rank',
+          },
+        },
+      })
       .sort({ last_read_at: -1 })
       .exec();
 
@@ -430,7 +439,7 @@ export class ChatService {
   async deleteMessage(messageId: string, userId: string): Promise<any> {
     const message = await this.messageModel
       .findOneAndUpdate(
-        { _id: messageId, sender_id: userId },
+        { _id: messageId, sender_id: new Types.ObjectId(userId) }, // Convert userId to ObjectId
         { deleted: true },
         { new: true }
       )
