@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RankedPFP } from '../common/RankedPFP';
+import { useAuthStore } from '../../stores/authStore';
+import { userService } from '../../services/api';
+import type { User } from '../../types';
 import './UserProfile.css';
 
 interface UserProfileProps {
@@ -9,15 +12,61 @@ interface UserProfileProps {
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack }) => {
+  const { user: currentUser, setAuth, token } = useAuthStore();
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [bio, setBio] = useState('This is a sample bio. It has roots in a piece of classical Latin literature from 45 BC.');
-  const [username, setUsername] = useState(isOwnProfile ? 'your_username' : 'jafar904');
+  const [bio, setBio] = useState('');
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [showRequestSent, setShowRequestSent] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userData, setUserData] = useState<User | null>(null);
+
+  // Store original values for cancel functionality
+  const [originalBio, setOriginalBio] = useState('');
+  const [originalUsername, setOriginalUsername] = useState('');
+  const [originalDisplayName, setOriginalDisplayName] = useState('');
+
+  // Load user data from backend
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true);
+        let user: User;
+        
+        if (isOwnProfile) {
+          // For own profile, use current user data
+          user = currentUser!;
+        } else {
+          // For other users, fetch their data
+          user = await userService.getUser(userId);
+        }
+        
+        setUserData(user);
+        setBio(user.bio || '');
+        setUsername(user.username || '');
+        setDisplayName(user.display_name || user.username || '');
+        setOriginalBio(user.bio || '');
+        setOriginalUsername(user.username || '');
+        setOriginalDisplayName(user.display_name || user.username || '');
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOwnProfile && currentUser) {
+      loadUserData();
+    } else if (!isOwnProfile && userId) {
+      loadUserData();
+    }
+  }, [userId, isOwnProfile, currentUser]);
 
   // Mock user data - will be replaced with actual API calls
-  const userData = {
+  const mockData = {
     pfp: '👤',
     rank: isOwnProfile ? 'TITAN' : 'LEGEND+', // Using actual rank names from ranks.ts
     friendStatus: isOwnProfile ? null : 'not_friends', // 'friends', 'pending', 'not_friends', 'request_sent'
@@ -37,6 +86,59 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     // TODO: Implement actual block API call
     console.log('User blocked');
     setShowBlockConfirm(false);
+  };
+
+  const handleSaveBio = async () => {
+    try {
+      setIsSaving(true);
+      const updatedUser = await userService.updateProfile({ bio });
+      setOriginalBio(bio);
+      setIsEditingBio(false);
+      
+      // Update auth store with new user data
+      if (currentUser && token) {
+        setAuth({ ...currentUser, bio }, token);
+      }
+    } catch (error) {
+      console.error('Failed to update bio:', error);
+      alert('Failed to update bio. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelBio = () => {
+    setBio(originalBio);
+    setIsEditingBio(false);
+  };
+
+  const handleSaveUsername = async () => {
+    try {
+      setIsSaving(true);
+      const updatedUser = await userService.updateProfile({ 
+        username,
+        display_name: displayName 
+      });
+      setOriginalUsername(username);
+      setOriginalDisplayName(displayName);
+      setIsEditingUsername(false);
+      
+      // Update auth store with new user data
+      if (currentUser && token) {
+        setAuth({ ...currentUser, username, display_name: displayName }, token);
+      }
+    } catch (error) {
+      console.error('Failed to update username:', error);
+      alert('Failed to update username. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelUsername = () => {
+    setUsername(originalUsername);
+    setDisplayName(originalDisplayName);
+    setIsEditingUsername(false);
   };
 
   return (
@@ -119,7 +221,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           position: 'relative',
         }}>
           {/* RankedPFP Component - xlarge size for profile */}
-          <RankedPFP rank={userData.rank} size="xlarge" showRankLabel={true} />
+          <RankedPFP 
+            rank={mockData.rank} 
+            size="xlarge" 
+            showRankLabel={true}
+            avatarUrl={userData?.avatar_url}
+          />
 
           {/* Edit PFP Button (only for own profile) - overlapping PFP halfway down on right */}
           {isOwnProfile && (
@@ -154,59 +261,107 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         {/* Username */}
         <div style={{ 
           display: 'flex', 
+          flexDirection: 'column',
           alignItems: 'center', 
           gap: '10px',
           width: '90%',
           maxWidth: '400px',
-          justifyContent: 'center',
         }}>
           {isEditingUsername && isOwnProfile ? (
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onBlur={() => setIsEditingUsername(false)}
-              autoFocus
-              style={{
-                backgroundColor: '#19191A',
-                border: '1px solid #333333',
-                borderRadius: '10px',
-                padding: '8px 15px',
-                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '18px',
-                color: '#D3D3D3',
-                outline: 'none',
-                textAlign: 'center',
-                maxWidth: '250px',
-              }}
-            />
+            <>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                disabled={isSaving}
+                style={{
+                  backgroundColor: '#19191A',
+                  border: '1px solid #333333',
+                  borderRadius: '10px',
+                  padding: '8px 15px',
+                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '18px',
+                  color: '#D3D3D3',
+                  outline: 'none',
+                  textAlign: 'center',
+                  width: '100%',
+                  maxWidth: '250px',
+                }}
+              />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleSaveUsername}
+                  disabled={isSaving}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #5BC854',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.5 : 1,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={handleCancelUsername}
+                  disabled={isSaving}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #C85454',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.5 : 1,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </>
           ) : (
-            <span style={{
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '16px',
-              background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              @{username}
-            </span>
-          )}
-          {isOwnProfile && !isEditingUsername && (
-            <button
-              onClick={() => setIsEditingUsername(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{
+                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '16px',
+                background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
+                @{username || 'loading...'}
+              </span>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setIsEditingUsername(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -229,7 +384,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             gap: '10px',
           }}>
             {/* Add Friend / Remove Friend Button */}
-            {userData.friendStatus === 'friends' ? (
+            {mockData.friendStatus === 'friends' ? (
               <button
                 className="profile-pill-button"
                 style={{
@@ -254,7 +409,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                   <line x1="12" y1="12" x2="18" y2="12"/>
                 </svg>
               </button>
-            ) : userData.friendStatus === 'pending' ? (
+            ) : mockData.friendStatus === 'pending' ? (
               <button
                 className="profile-pill-button"
                 style={{
@@ -312,7 +467,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             )}
 
             {/* Message / Message Request Button */}
-            {userData.friendStatus === 'friends' ? (
+            {mockData.friendStatus === 'friends' ? (
               <button
                 className="profile-pill-button-primary"
                 style={{
@@ -411,9 +566,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             }}>
               Bio
             </span>
-            {isOwnProfile && (
+            {isOwnProfile && !isEditingBio && (
               <button
-                onClick={() => setIsEditingBio(!isEditingBio)}
+                onClick={() => setIsEditingBio(true)}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -429,22 +584,70 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             )}
           </div>
           {isEditingBio ? (
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              style={{
-                width: '100%',
-                minHeight: '80px',
-                backgroundColor: '#19191A',
-                border: '1px solid #333333',
-                borderRadius: '10px',
-                padding: '10px',
-                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '12px',
-                color: '#D3D3D3',
-                resize: 'vertical',
-              }}
-            />
+            <>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                disabled={isSaving}
+                placeholder="Tell us about yourself..."
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid #333333',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#D3D3D3',
+                  resize: 'vertical',
+                  marginBottom: '10px',
+                }}
+              />
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleSaveBio}
+                  disabled={isSaving}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #5BC854',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.5 : 1,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={handleCancelBio}
+                  disabled={isSaving}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #C85454',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.5 : 1,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </>
           ) : (
             <p style={{
               fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -453,7 +656,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               margin: 0,
               lineHeight: '1.5',
             }}>
-              {bio}
+              {bio || 'No bio yet.'}
             </p>
           )}
         </div>

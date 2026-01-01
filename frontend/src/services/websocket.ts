@@ -86,31 +86,31 @@ class WebSocketService {
   }
 
   // Room management
-  joinRoom(roomId: string) {
+  joinRoom(conversationId: string) {
     if (this.socket) {
       // Leave current room first
-      if (this.currentRoomId && this.currentRoomId !== roomId) {
+      if (this.currentRoomId && this.currentRoomId !== conversationId) {
         this.leaveRoom(this.currentRoomId);
       }
-      this.socket.emit('room:join', { roomId });
-      this.currentRoomId = roomId;
+      this.socket.emit('room:join', { conversationId });
+      this.currentRoomId = conversationId;
     }
   }
 
-  leaveRoom(roomId: string) {
+  leaveRoom(conversationId: string) {
     if (this.socket) {
-      this.socket.emit('room:leave', { roomId });
-      if (this.currentRoomId === roomId) {
+      this.socket.emit('room:leave', { conversationId });
+      if (this.currentRoomId === conversationId) {
         this.currentRoomId = null;
       }
     }
   }
 
   // Message operations
-  sendMessage(text: string, replyTo?: string, mentions?: string[]) {
-    if (this.socket && this.currentRoomId) {
+  sendMessage(conversationId: string, text: string, replyTo?: string, mentions?: string[]) {
+    if (this.socket) {
       this.socket.emit('message:send', { 
-        roomId: this.currentRoomId, 
+        conversationId, 
         text,
         replyTo,
         mentions,
@@ -131,15 +131,15 @@ class WebSocketService {
   }
 
   // Typing indicators
-  startTyping() {
-    if (this.socket && this.currentRoomId) {
-      this.socket.emit('typing:start', { roomId: this.currentRoomId });
+  startTyping(conversationId: string) {
+    if (this.socket) {
+      this.socket.emit('typing:start', { conversationId });
     }
   }
 
-  stopTyping() {
-    if (this.socket && this.currentRoomId) {
-      this.socket.emit('typing:stop', { roomId: this.currentRoomId });
+  stopTyping(conversationId: string) {
+    if (this.socket) {
+      this.socket.emit('typing:stop', { conversationId });
     }
   }
 

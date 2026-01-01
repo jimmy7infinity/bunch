@@ -1,45 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { useChatStore } from '../../stores/chatStore';
+import { websocketService } from '../../services/websocket';
+import { messageService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { RankedPFP } from '../common/RankedPFP';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
-  chatName?: string;
-  chatType?: 'global' | 'market' | 'private';
-  onlineCount?: number;
+  conversation: ChatRoomType;
   onBack?: () => void;
   onUserClick?: (userId: string) => void;
-  isEmpty?: boolean; // For testing empty state
+  isEmpty?: boolean;
 }
 
 export const ChatRoom = ({ 
-  chatName = 'Politics', 
-  chatType = 'global',
-  onlineCount = 332,
+  conversation,
   onBack,
   onUserClick,
   isEmpty = false
 }: ChatRoomProps) => {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
+  const { messages: storeMessages, addMessage, setMessages: setStoreMessages, connectionStatus } = useChatStore();
   const [message, setMessage] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(conversation.is_favorite || false);
+  const [hasNotifications, setHasNotifications] = useState(conversation.has_notifications || false);
   const [hasAINotifications, setHasAINotifications] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [messages, setMessages] = useState<Array<{
-    id: string;
-    text: string;
-    sender: 'self' | 'other' | 'ai';
-    username: string;
-    time: string;
-    replyTo?: { messageId: string; username: string; preview: string };
-  }>>([
-    { id: 'ai1', text: 'Welcome to the Politics chat! This is an AI-generated insight.', sender: 'ai', username: 'AI Insight', time: '14:30' },
-    { id: 'msg1', text: 'This is an example message from another user in the chat.', sender: 'other', username: 'demo_user', time: '14:32', replyTo: { messageId: 'ai1', username: 'AI', preview: 'Welcome to the Politics chat!' } },
-    { id: 'msg2', text: 'Hey @demo_user this is my message response!', sender: 'self', username: 'You', time: '14:35' },
-  ]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+
+  const chatName = conversation.title || conversation.name || 'Chat';
+  const chatType = conversation.type;
+  const onlineCount = conversation.participant_count || 0;
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ messageId: string; username: string; preview: string } | null>(null);
@@ -55,7 +48,7 @@ export const ChatRoom = ({
   
   // Get search results with context
   const searchResults = searchQuery.trim() 
-    ? messages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? storeMessages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
   
   // Scroll to a specific message
@@ -70,12 +63,55 @@ export const ChatRoom = ({
     }
   };
   
+  // Load messages and connect to WebSocket
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        setIsLoadingMessages(true);
+        const response = await messageService.getMessages(conversation._id, 50);
+        setStoreMessages(response.data || []);
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    // Connect to WebSocket
+    if (token && !websocketService.isConnected()) {
+      websocketService.connect(token);
+    }
+
+    // Join the conversation room
+    websocketService.joinRoom(conversation._id);
+
+    // Load initial messages
+    loadMessages();
+
+    // Listen for new messages
+    const unsubscribeNew = websocketService.onMessageNew((message) => {
+      addMessage(message);
+    });
+
+    // Listen for message updates
+    const unsubscribeUpdated = websocketService.onMessageUpdated((message) => {
+      const updatedMessages = storeMessages.map(m => m._id === message._id ? message : m);
+      setStoreMessages(updatedMessages);
+    });
+
+    return () => {
+      unsubscribeNew();
+      unsubscribeUpdated();
+      websocketService.leaveRoom(conversation._id);
+    };
+  }, [conversation._id, token, addMessage, setStoreMessages]);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [storeMessages]);
   
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -439,7 +475,7 @@ export const ChatRoom = ({
                   {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
                 </div>
                 
-                {searchResults.map((result) => {
+                {searchResults.map((result: any) => {
                   const queryLower = searchQuery.toLowerCase();
                   const textLower = result.text.toLowerCase();
                   const matchIndex = textLower.indexOf(queryLower);
@@ -1511,16 +1547,15 @@ export const ChatRoom = ({
             <button
               className="send-button"
               onClick={() => {
-                if (message.trim()) {
-                  const newMessage = {
-                    id: `msg${Date.now()}`,
-                    text: message,
-                    sender: 'self' as const,
-                    username: 'You',
-                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                    replyTo: replyingTo ? { messageId: replyingTo.messageId, username: replyingTo.username, preview: replyingTo.preview } : undefined,
-                  };
-                  setMessages(prev => [...prev, newMessage]);
+                if (message.trim() && websocketService.isConnected()) {
+                  // Send via WebSocket
+                  websocketService.sendMessage(
+                    conversation._id,
+                    message,
+                    replyingTo?.messageId,
+                    // Extract mentions from message
+                    message.match(/@(\w+)/g)?.map(m => m.substring(1))
+                  );
                   setMessage('');
                   setReplyingTo(null);
                   setMessageStatus('pending');
@@ -1529,7 +1564,7 @@ export const ChatRoom = ({
                   setTimeout(() => setMessageStatus('delivered'), 1000);
                 }
               }}
-              disabled={!message.trim()}
+              disabled={!message.trim() || connectionStatus !== 'connected'}
               style={{
                 width: '40px',
                 height: '40px',
@@ -1562,16 +1597,15 @@ export const ChatRoom = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  if (message.trim()) {
-                    const newMessage = {
-                      id: `msg${Date.now()}`,
-                      text: message,
-                      sender: 'self' as const,
-                      username: 'You',
-                      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                      replyTo: replyingTo ? { messageId: replyingTo.messageId, username: replyingTo.username, preview: replyingTo.preview } : undefined,
-                    };
-                    setMessages(prev => [...prev, newMessage]);
+                  if (message.trim() && websocketService.isConnected()) {
+                    // Send via WebSocket
+                    websocketService.sendMessage(
+                      conversation._id,
+                      message,
+                      replyingTo?.messageId,
+                      // Extract mentions from message
+                      message.match(/@(\w+)/g)?.map(m => m.substring(1))
+                    );
                     setMessage('');
                     setReplyingTo(null);
                     setShowMentionPicker(false);

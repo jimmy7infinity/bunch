@@ -6,12 +6,18 @@ import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { Message, MessageSchema } from './schemas/message.schema';
+import { Conversation, ConversationSchema } from './schemas/conversation.schema';
+import { Participant, ParticipantSchema } from './schemas/participant.schema';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
+    MongooseModule.forFeature([
+      { name: Message.name, schema: MessageSchema },
+      { name: Conversation.name, schema: ConversationSchema },
+      { name: Participant.name, schema: ParticipantSchema },
+    ]),
     UsersModule,
     AuthModule,
     JwtModule.registerAsync({

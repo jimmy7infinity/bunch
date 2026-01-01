@@ -4,46 +4,51 @@ export interface User {
   username: string;
   display_name?: string;
   avatar_url?: string;
+  bio?: string;
+  status?: 'active' | 'banned' | 'suspended';
+  role?: 'user' | 'moderator' | 'admin';
   rank?: string;
   is_online?: boolean;
 }
 
 export interface Message {
   _id: string;
+  conversation_id: string;
   sender_id: User;
   text: string;
   reactions: Record<string, string[]>;
   created_at: string;
   deleted: boolean;
-  // Reply support
   reply_to?: {
     _id: string;
     sender_id: User;
-    preview: string;
+    text: string;
   };
-  // Mention tracking
   mentions?: string[];
-  // AI-generated messages
   is_ai?: boolean;
-  // Delivery status (for own messages)
   status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
-  // Room this message belongs to
-  room_id?: string;
 }
 
 export interface ChatRoom {
   _id: string;
-  name: string;
-  type: 'global' | 'market' | 'private';
+  type: 'dm' | 'group' | 'global' | 'market';
+  name?: string;
+  title?: string;
+  slug?: string;
+  market_id?: string;
+  dm_hash?: string;
   description?: string;
-  member_count: number;
+  is_private: boolean;
+  participant_count: number;
   online_count?: number;
   is_favorite?: boolean;
   has_ai_feed?: boolean;
   has_notifications?: boolean;
   last_message?: Message;
+  last_message_at?: string;
   created_at?: string;
   updated_at?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface ChatRoomMember {
@@ -68,11 +73,14 @@ export interface AuthResponse {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  has_more: boolean;
+  data?: T[];
+  messages?: T[];
+  conversations?: T[];
+  total?: number;
+  count?: number;
+  page?: number;
+  limit?: number;
+  has_more?: boolean;
 }
 
 

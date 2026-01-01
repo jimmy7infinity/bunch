@@ -36,70 +36,56 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      // Extract token from handshake
       const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
 
       if (!token) {
+        console.log('❌ No token provided');
         client.disconnect();
         return;
       }
 
-      // Verify JWT
       const payload = this.jwtService.verify(token);
       const userId = payload.sub;
 
-      // Store connection
       client.data.userId = userId;
       this.connectedUsers.set(client.id, userId);
 
-      // Update user online status
+      // Set user online
       await this.usersService.setOnlineStatus(userId, true);
 
-      // Join global room
-      client.join('global');
+      console.log(`✅ User connected: ${userId}`);
 
-      // Broadcast user online
-      this.server.emit('user:online', {
-        userId,
-        username: payload.username,
-      });
-
-      // Send online count
-      const onlineCount = await this.usersService.getOnlineCount();
-      this.server.emit('users:count', { count: onlineCount });
-
-      console.log(`✅ User ${payload.username} connected`);
+      // Send connection success
+      client.emit('connected', { userId });
     } catch (error) {
-      console.error('Connection error:', error.message);
+      console.error('Connection error:', error);
       client.disconnect();
     }
   }
 
   async handleDisconnect(client: Socket) {
-    const userId = this.connectedUsers.get(client.id);
+    try {
+      const userId = this.connectedUsers.get(client.id);
 
-    if (userId) {
-      // Update user online status
-      await this.usersService.setOnlineStatus(userId, false);
+      if (userId) {
+        this.connectedUsers.delete(client.id);
 
-      // Remove from connected users
-      this.connectedUsers.delete(client.id);
+        // Set user offline
+        await this.usersService.setOnlineStatus(userId, false);
 
-      // Broadcast user offline
-      this.server.emit('user:offline', { userId });
-
-      // Send updated online count
-      const onlineCount = await this.usersService.getOnlineCount();
-      this.server.emit('users:count', { count: onlineCount });
-
-      console.log(`❌ User disconnected`);
+        console.log(`❌ User disconnected: ${userId}`);
+      }
+    } catch (error) {
+      console.error('Disconnect error:', error);
     }
   }
 
-  @SubscribeMessage('message:send')
-  async handleMessage(
+  // ==================== ROOM MANAGEMENT ====================
+
+  @SubscribeMessage('room:join')
+  async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { text: string },
+    @MessageBody() data: { conversationId: string },
   ) {
     try {
       const userId = client.data.userId;
@@ -108,22 +94,118 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { error: 'Unauthorized' };
       }
 
-      // Create message in database
-      const message = await this.chatService.createMessage(userId, data.text);
+      const { conversationId } = data;
 
-      // Populate sender info
-      const populatedMessage = await (message as any).populate(
-        'sender_id',
-        'username display_name avatar_url',
+      // Get conversation
+      const conversation = await this.chatService.getConversation(conversationId);
+
+      // For private conversations, check if user is participant
+      if (conversation.type === 'dm' || conversation.type === 'group') {
+        const isParticipant = await this.chatService.isParticipant(conversationId, userId);
+        if (!isParticipant) {
+          return { error: 'Not a participant' };
+        }
+      }
+
+      // For global/market chats, auto-join
+      if (conversation.type === 'global' || conversation.type === 'market') {
+        await this.chatService.joinConversation(conversationId, userId);
+      }
+
+      // Join socket room
+      client.join(`conversation:${conversationId}`);
+
+      // Get participants
+      const participants = await this.chatService.getParticipants(conversationId);
+
+      // Broadcast user joined
+      this.server.to(`conversation:${conversationId}`).emit('room:user_joined', {
+        conversationId,
+        userId,
+      });
+
+      return {
+        success: true,
+        conversation,
+        participants: participants.map(p => p.user_id),
+      };
+    } catch (error) {
+      console.error('Join room error:', error);
+      return { error: 'Failed to join room' };
+    }
+  }
+
+  @SubscribeMessage('room:leave')
+  async handleLeaveRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string },
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      if (!userId) {
+        return { error: 'Unauthorized' };
+      }
+
+      const { conversationId } = data;
+
+      // Leave socket room
+      client.leave(`conversation:${conversationId}`);
+
+      // Update last read
+      await this.chatService.updateLastRead(conversationId, userId);
+
+      // Broadcast user left
+      this.server.to(`conversation:${conversationId}`).emit('room:user_left', {
+        conversationId,
+        userId,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Leave room error:', error);
+      return { error: 'Failed to leave room' };
+    }
+  }
+
+  // ==================== MESSAGE HANDLING ====================
+
+  @SubscribeMessage('message:send')
+  async handleMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string; text: string; replyTo?: string; mentions?: string[] },
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      if (!userId) {
+        return { error: 'Unauthorized' };
+      }
+
+      const { conversationId, text, replyTo, mentions } = data;
+
+      // Create message in database
+      const message = await this.chatService.createMessage(
+        conversationId,
+        userId,
+        text,
+        replyTo,
+        mentions,
       );
 
-      // Broadcast to all clients in global room
-      this.server.to('global').emit('message:new', populatedMessage);
+      // Populate sender info
+      const populatedMessage = await (message as any).populate([
+        { path: 'sender_id', select: 'username display_name avatar_url' },
+        { path: 'reply_to', select: 'text sender_id', populate: { path: 'sender_id', select: 'username' } },
+      ]);
+
+      // Broadcast to all clients in conversation
+      this.server.to(`conversation:${conversationId}`).emit('message:new', populatedMessage);
 
       return { success: true, message: populatedMessage };
     } catch (error) {
       console.error('Message send error:', error);
-      return { error: 'Failed to send message' };
+      return { error: error.message || 'Failed to send message' };
     }
   }
 
@@ -139,40 +221,130 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { error: 'Unauthorized' };
       }
 
+      const { messageId, emoji } = data;
+
       // Add/remove reaction
-      const message = await this.chatService.addReaction(
-        data.messageId,
-        userId,
-        data.emoji,
+      const message = await this.chatService.addReaction(messageId, userId, emoji);
+
+      // Populate sender info
+      const populatedMessage = await (message as any).populate(
+        'sender_id',
+        'username display_name avatar_url',
       );
 
+      // Get conversation ID to broadcast to correct room
+      const conversationId = populatedMessage.conversation_id.toString();
+
       // Broadcast reaction update
-      this.server.to('global').emit('message:reaction', {
-        messageId: data.messageId,
-        reactions: message.reactions,
+      this.server.to(`conversation:${conversationId}`).emit('message:reaction', {
+        messageId,
+        reactions: Object.fromEntries(populatedMessage.reactions),
       });
 
       return { success: true };
     } catch (error) {
       console.error('Reaction error:', error);
-      return { error: 'Failed to add reaction' };
+      return { error: 'Failed to react' };
     }
   }
 
+  @SubscribeMessage('message:delete')
+  async handleDeleteMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { messageId: string },
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      if (!userId) {
+        return { error: 'Unauthorized' };
+      }
+
+      const { messageId } = data;
+
+      // Delete message
+      await this.chatService.deleteMessage(messageId, userId);
+
+      // Note: We'd need to get the conversation ID first to broadcast properly
+      // For now, we'll emit to the client only
+      client.emit('message:deleted', { messageId });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Delete message error:', error);
+      return { error: 'Failed to delete message' };
+    }
+  }
+
+  // ==================== TYPING INDICATORS ====================
+
   @SubscribeMessage('typing:start')
-  handleTypingStart(@ConnectedSocket() client: Socket) {
-    const userId = client.data.userId;
-    if (userId) {
-      client.broadcast.to('global').emit('user:typing', { userId, typing: true });
+  async handleTypingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string },
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      if (!userId) {
+        return { error: 'Unauthorized' };
+      }
+
+      const { conversationId } = data;
+
+      // Get user info
+      const user = await this.usersService.findById(userId);
+
+      // Broadcast to others in the room
+      client.to(`conversation:${conversationId}`).emit('user:typing', {
+        conversationId,
+        user: {
+          id: (user as any)._id,
+          username: user.username,
+          display_name: user.display_name,
+        },
+        typing: true,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Typing start error:', error);
+      return { error: 'Failed to send typing indicator' };
     }
   }
 
   @SubscribeMessage('typing:stop')
-  handleTypingStop(@ConnectedSocket() client: Socket) {
-    const userId = client.data.userId;
-    if (userId) {
-      client.broadcast.to('global').emit('user:typing', { userId, typing: false });
+  async handleTypingStop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string },
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      if (!userId) {
+        return { error: 'Unauthorized' };
+      }
+
+      const { conversationId } = data;
+
+      // Get user info
+      const user = await this.usersService.findById(userId);
+
+      // Broadcast to others in the room
+      client.to(`conversation:${conversationId}`).emit('user:typing', {
+        conversationId,
+        user: {
+          id: (user as any)._id,
+          username: user.username,
+          display_name: user.display_name,
+        },
+        typing: false,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Typing stop error:', error);
+      return { error: 'Failed to send typing indicator' };
     }
   }
 }
-

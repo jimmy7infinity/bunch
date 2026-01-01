@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { ChatRoom } from './ChatRoom';
 import { UserProfile } from '../profile/UserProfile';
@@ -8,13 +8,15 @@ import { CreateGroupModal } from './CreateGroupModal';
 import { Leaderboard } from '../leaderboard/Leaderboard';
 import { RankedPFP } from '../common/RankedPFP';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
+import { roomService } from '../../services/api';
+import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatsList.css';
 
 type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'leaderboard';
 
 export const ChatsList = () => {
   const { user, logout } = useAuthStore();
-  const [selectedChat, setSelectedChat] = useState<{ name: string; type: 'global' | 'market' | 'private'; count: number } | null>(null);
+  const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -22,44 +24,55 @@ export const ChatsList = () => {
   const [activeChatCategory, setActiveChatCategory] = useState<'global' | 'market' | 'private' | 'favorites'>('global');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chats, setChats] = useState<ChatRoomType[]>([]);
   const pfpRef = useRef<HTMLDivElement>(null);
 
-  // Mock chat data - will be replaced with API call
-  const [chats, setChats] = useState([
-    { id: '1', name: 'Politics', type: 'global' as const, count: 332, isFavorite: false, hasNotifications: true },
-    { id: '2', name: 'Crypto', type: 'global' as const, count: 245, isFavorite: false, hasNotifications: false },
-    { id: '3', name: 'Sports', type: 'global' as const, count: 189, isFavorite: true, hasNotifications: true },
-    { id: '4', name: 'BTC Price', type: 'market' as const, count: 156, isFavorite: false, hasNotifications: false },
-    { id: '5', name: 'ETH Trading', type: 'market' as const, count: 123, isFavorite: false, hasNotifications: true },
-    { id: '6', name: 'NFT Market', type: 'market' as const, count: 98, isFavorite: true, hasNotifications: false },
-    { id: '7', name: 'My Group Chat', type: 'private' as const, count: 12, isFavorite: false, hasNotifications: true },
-    { id: '8', name: 'Friends', type: 'private' as const, count: 8, isFavorite: false, hasNotifications: false },
-    { id: '9', name: 'Work Team', type: 'private' as const, count: 5, isFavorite: false, hasNotifications: false },
-  ]);
+  // Load chats from API
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
+        setIsLoading(true);
+        const rooms = await roomService.getRooms(activeChatCategory);
+        setChats(rooms);
+      } catch (error) {
+        console.error('Failed to load chats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadChats();
+  }, [activeChatCategory]);
   
-  const toggleFavorite = (chatId: string) => {
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId ? { ...chat, isFavorite: !chat.isFavorite } : chat
-    ));
+  const toggleFavorite = async (chatId: string) => {
+    try {
+      const result = await roomService.toggleFavorite(chatId);
+      setChats(prev => prev.map(chat => 
+        chat._id === chatId ? { ...chat, is_favorite: result.is_favorite } : chat
+      ));
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    }
   };
   
-  const toggleNotifications = (chatId: string) => {
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId ? { ...chat, hasNotifications: !chat.hasNotifications } : chat
-    ));
+  const toggleNotifications = async (chatId: string) => {
+    try {
+      const result = await roomService.toggleNotifications(chatId);
+      setChats(prev => prev.map(chat => 
+        chat._id === chatId ? { ...chat, has_notifications: result.has_notifications } : chat
+      ));
+    } catch (error) {
+      console.error('Failed to toggle notifications:', error);
+    }
   };
 
   // Filter chats based on category and search
   const filteredChats = chats.filter(chat => {
-    // First filter by category
-    const matchesCategory = activeChatCategory === 'favorites' 
-      ? chat.isFavorite 
-      : chat.type === activeChatCategory;
+    // Filter by search query
+    const chatName = chat.title || chat.name || '';
+    const matchesSearch = chatName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Then filter by search query
-    const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesCategory && matchesSearch;
+    return matchesSearch;
   });
 
   const handleCreateGroup = (groupName: string, selectedFriends: string[]) => {
@@ -71,9 +84,7 @@ export const ChatsList = () => {
   if (selectedChat && viewMode === 'chats') {
     return (
       <ChatRoom 
-        chatName={selectedChat.name}
-        chatType={selectedChat.type}
-        onlineCount={selectedChat.count}
+        conversation={selectedChat}
         onBack={() => setSelectedChat(null)}
         onUserClick={(userId) => {
           setSelectedUserId(userId);
@@ -288,7 +299,12 @@ export const ChatsList = () => {
               cursor: 'pointer',
             }}
           >
-            <RankedPFP rank="TITAN" size="tiny" showRankLabel={false} />
+            <RankedPFP 
+              rank="TITAN" 
+              size="tiny" 
+              showRankLabel={false}
+              avatarUrl={user?.avatar_url}
+            />
           </div>
         </div>
 
@@ -667,8 +683,8 @@ export const ChatsList = () => {
         ) : (
           filteredChats.map((chat) => (
             <div
-              key={chat.id}
-              onClick={() => setSelectedChat({ name: chat.name, type: chat.type, count: chat.count })}
+              key={chat._id}
+              onClick={() => setSelectedChat(chat)}
               className="chat-card"
           style={{
             width: '100%',
@@ -711,7 +727,7 @@ export const ChatsList = () => {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}>
-                {chat.count}
+                {chat.participant_count || 0}
               </span>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#titleGradient)" strokeWidth="2">
                 <defs>
@@ -739,7 +755,7 @@ export const ChatsList = () => {
               left: '50%',
               transform: 'translateX(-50%)',
             }}>
-              {chat.name}
+              {chat.title || chat.name || 'Untitled'}
             </span>
 
             {/* Right: Bell + Star Buttons */}
@@ -748,7 +764,7 @@ export const ChatsList = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleNotifications(chat.id);
+                  toggleNotifications(chat._id);
                 }}
                 className="chat-card-bell-button"
                 style={{
@@ -766,7 +782,7 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                {chat.hasNotifications ? (
+                {chat.has_notifications ? (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientBlueCard)">
                     <defs>
                       <linearGradient id="bellGradientBlueCard" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -795,7 +811,7 @@ export const ChatsList = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleFavorite(chat.id);
+                  toggleFavorite(chat._id);
                 }}
                 className="chat-card-star-button"
                 style={{
@@ -813,7 +829,7 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={chat.isFavorite ? "url(#starGradientOn)" : "none"} stroke={chat.isFavorite ? "none" : "url(#starGradientOff)"} strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={chat.is_favorite ? "url(#starGradientOn)" : "none"} stroke={chat.is_favorite ? "none" : "url(#starGradientOff)"} strokeWidth="2">
                   <defs>
                     <radialGradient id="starGradientOn" cx="50%" cy="50%" r="50%">
                       <stop offset="0%" stopColor="#FFD700" />
@@ -897,7 +913,7 @@ export const ChatsList = () => {
                 whiteSpace: 'nowrap',
                 width: '100%',
               }}>
-                It is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.
+                {chat.last_message?.text || chat.metadata?.description || 'No messages yet'}
               </p>
             </div>
           </div>

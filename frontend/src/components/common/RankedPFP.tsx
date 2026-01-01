@@ -4,6 +4,7 @@ import { getRankColors } from '../../utils/ranks';
 interface RankedPFPProps {
   rank: string;
   pfpEmoji?: string;
+  avatarUrl?: string;
   size?: 'tiny' | 'small' | 'medium' | 'chat' | 'large' | 'xlarge' | 'xlarge125' | 'xxlarge';
   showRankLabel?: boolean;
 }
@@ -23,6 +24,7 @@ const SIZES = {
 export const RankedPFP: React.FC<RankedPFPProps> = ({ 
   rank, 
   pfpEmoji = '👤',
+  avatarUrl,
   size = 'medium',
   showRankLabel = true,
 }) => {
@@ -86,9 +88,22 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               filter: 'grayscale(100%)',
+              overflow: 'hidden',
             }}
           >
-            <span style={{ fontSize: `${emojiSize}px`, lineHeight: 1 }}>{pfpEmoji}</span>
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="Profile" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover' 
+                }}
+              />
+            ) : (
+              <span style={{ fontSize: `${emojiSize}px`, lineHeight: 1 }}>{pfpEmoji}</span>
+            )}
           </div>
         </div>
         

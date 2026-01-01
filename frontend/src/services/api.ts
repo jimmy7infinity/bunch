@@ -66,79 +66,116 @@ export const authService = {
 };
 
 export const messageService = {
-  async getMessages(roomId: string, limit = 50, before?: string) {
-    const response = await api.get<PaginatedResponse<Message>>(`/rooms/${roomId}/messages`, {
+  async getMessages(conversationId: string, limit = 50, before?: string) {
+    const response = await api.get<{ messages: Message[]; count: number }>(`/conversations/${conversationId}/messages`, {
       params: { limit, before },
     });
-    return response.data;
+    return { 
+      data: response.data.messages, 
+      total: response.data.count, 
+      page: 1, 
+      limit, 
+      has_more: response.data.messages.length === limit 
+    };
   },
 
-  async sendMessage(roomId: string, text: string, replyTo?: string, mentions?: string[]) {
-    const response = await api.post<Message>(`/rooms/${roomId}/messages`, { 
+  async sendMessage(conversationId: string, text: string, replyTo?: string, mentions?: string[]) {
+    const response = await api.post<{ message: Message }>(`/conversations/${conversationId}/messages`, { 
       text, 
-      reply_to: replyTo,
+      replyTo,
       mentions,
     });
-    return response.data;
+    return response.data.message;
   },
 
   async reactToMessage(messageId: string, emoji: string) {
-    const response = await api.post<Message>(`/messages/${messageId}/react`, { emoji });
-    return response.data;
+    const response = await api.post<{ message: Message }>(`/conversations/messages/${messageId}/react`, { emoji });
+    return response.data.message;
   },
 
   async deleteMessage(messageId: string) {
-    const response = await api.delete(`/messages/${messageId}`);
+    const response = await api.delete(`/conversations/messages/${messageId}`);
     return response.data;
   },
 
   async searchMessages(roomId: string, query: string, limit = 20) {
-    const response = await api.get<PaginatedResponse<Message>>(`/rooms/${roomId}/messages/search`, {
-      params: { query, limit },
-    });
-    return response.data;
+    // Not implemented yet on backend
+    return { data: [], total: 0, page: 1, limit, has_more: false };
   },
 };
 
 export const roomService = {
   async getRooms(type?: 'global' | 'market' | 'private' | 'favorites') {
-    const response = await api.get<ChatRoom[]>('/rooms', {
-      params: { type },
-    });
-    return response.data;
+    if (type === 'global') {
+      const response = await api.get<{ conversations: ChatRoom[] }>('/conversations/global');
+      return response.data.conversations;
+    }
+    if (type === 'favorites' || type === 'private') {
+      const response = await api.get<{ conversations: any[] }>('/conversations/my');
+      return response.data.conversations
+        .map((c: any) => c.conversation)
+        .filter((c: ChatRoom) => {
+          if (type === 'favorites') return c.is_favorite;
+          if (type === 'private') return c.type === 'dm' || c.type === 'group';
+          return true;
+        });
+    }
+    // Get all user's conversations
+    const response = await api.get<{ conversations: any[] }>('/conversations/my');
+    return response.data.conversations.map((c: any) => c.conversation);
   },
 
   async getRoom(roomId: string) {
-    const response = await api.get<ChatRoom>(`/rooms/${roomId}`);
-    return response.data;
+    const response = await api.get<{ conversation: ChatRoom }>(`/conversations/${roomId}`);
+    return response.data.conversation;
   },
 
   async getRoomMembers(roomId: string) {
-    const response = await api.get<ChatRoomMember[]>(`/rooms/${roomId}/members`);
-    return response.data;
+    const response = await api.get<{ participants: ChatRoomMember[] }>(`/conversations/${roomId}/participants`);
+    return response.data.participants;
   },
 
   async createPrivateRoom(name: string, memberIds: string[]) {
-    const response = await api.post<ChatRoom>('/rooms', {
-      name,
-      type: 'private',
-      members: memberIds,
+    const response = await api.post<{ conversation: ChatRoom }>('/conversations/group', {
+      title: name,
+      memberIds,
     });
-    return response.data;
+    return response.data.conversation;
+  },
+
+  async getOrCreateDM(userId: string) {
+    const response = await api.post<{ conversation: ChatRoom }>('/conversations/dm', {
+      userId,
+    });
+    return response.data.conversation;
+  },
+
+  async getOrCreateMarketChat(marketId: string, title: string, metadata?: Record<string, any>) {
+    const response = await api.post<{ conversation: ChatRoom }>('/conversations/market', {
+      marketId,
+      title,
+      metadata,
+    });
+    return response.data.conversation;
   },
 
   async toggleFavorite(roomId: string) {
-    const response = await api.post<{ is_favorite: boolean }>(`/rooms/${roomId}/favorite`);
+    const response = await api.patch<{ is_favorite: boolean }>(`/conversations/${roomId}/favorite`);
     return response.data;
   },
 
   async toggleNotifications(roomId: string) {
-    const response = await api.post<{ has_notifications: boolean }>(`/rooms/${roomId}/notifications`);
+    const response = await api.patch<{ has_notifications: boolean }>(`/conversations/${roomId}/notifications`);
     return response.data;
   },
 
   async toggleAIFeed(roomId: string) {
-    const response = await api.post<{ has_ai_feed: boolean }>(`/rooms/${roomId}/ai-feed`);
+    // Not implemented yet
+    return { has_ai_feed: false };
+  },
+
+  async joinRoom(roomId: string) {
+    const response = await api.post<{ success: boolean }>(`/conversations/${roomId}/join`);
     return response.data;
   },
 };
@@ -159,7 +196,7 @@ export const userService = {
     return response.data;
   },
 
-  async updateProfile(data: { display_name?: string; avatar_url?: string }) {
+  async updateProfile(data: { display_name?: string; avatar_url?: string; bio?: string; username?: string }) {
     const response = await api.patch<User>('/users/me', data);
     return response.data;
   },

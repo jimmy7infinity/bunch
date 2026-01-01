@@ -1,27 +1,168 @@
 import {
   Controller,
   Get,
+  Post,
   Query,
   UseGuards,
-  Post,
   Body,
   Request,
   Param,
+  Delete,
+  Patch,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller('messages')
+@Controller('conversations')
+@UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(private chatService: ChatService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Get()
+  // ==================== CONVERSATION ENDPOINTS ====================
+
+  /**
+   * Get all conversations for the current user
+   */
+  @Get('my')
+  async getMyConversations(@Request() req: any) {
+    const conversations = await this.chatService.getUserConversations(req.user.userId);
+    return { conversations };
+  }
+
+  /**
+   * Get all global chats
+   */
+  @Get('global')
+  async getGlobalChats() {
+    const conversations = await this.chatService.getGlobalChats();
+    return { conversations };
+  }
+
+  /**
+   * Search market chats
+   */
+  @Get('market/search')
+  async searchMarketChats(@Query('q') query: string, @Query('limit') limit?: number) {
+    const conversations = await this.chatService.searchMarketChats(query, limit ? parseInt(limit.toString()) : 20);
+    return { conversations };
+  }
+
+  /**
+   * Get or create a market chat
+   */
+  @Post('market')
+  async getOrCreateMarketChat(
+    @Body() body: { marketId: string; title: string; metadata?: Record<string, any> },
+  ) {
+    const conversation = await this.chatService.findOrCreateMarketChat(
+      body.marketId,
+      body.title,
+      body.metadata,
+    );
+    return { conversation };
+  }
+
+  /**
+   * Get or create a DM with another user
+   */
+  @Post('dm')
+  async getOrCreateDM(@Request() req: any, @Body() body: { userId: string }) {
+    const conversation = await this.chatService.findOrCreateDM(req.user.userId, body.userId);
+    return { conversation };
+  }
+
+  /**
+   * Create a group chat
+   */
+  @Post('group')
+  async createGroupChat(
+    @Request() req: any,
+    @Body() body: { title: string; memberIds: string[] },
+  ) {
+    const conversation = await this.chatService.createGroupChat(
+      body.title,
+      req.user.userId,
+      body.memberIds,
+    );
+    return { conversation };
+  }
+
+  /**
+   * Get a specific conversation
+   */
+  @Get(':id')
+  async getConversation(@Param('id') id: string) {
+    const conversation = await this.chatService.getConversation(id);
+    return { conversation };
+  }
+
+  /**
+   * Get participants of a conversation
+   */
+  @Get(':id/participants')
+  async getParticipants(@Param('id') id: string) {
+    const participants = await this.chatService.getParticipants(id);
+    return { participants };
+  }
+
+  /**
+   * Join a conversation
+   */
+  @Post(':id/join')
+  async joinConversation(@Request() req: any, @Param('id') id: string) {
+    const participant = await this.chatService.joinConversation(id, req.user.userId);
+    return { success: true, participant };
+  }
+
+  /**
+   * Leave a conversation
+   */
+  @Post(':id/leave')
+  async leaveConversation(@Request() req: any, @Param('id') id: string) {
+    const success = await this.chatService.leaveConversation(id, req.user.userId);
+    return { success };
+  }
+
+  /**
+   * Toggle mute on a conversation
+   */
+  @Patch(':id/mute')
+  async toggleMute(@Request() req: any, @Param('id') id: string) {
+    const muted = await this.chatService.toggleMute(id, req.user.userId);
+    return { muted };
+  }
+
+  /**
+   * Toggle favorite on a conversation
+   */
+  @Patch(':id/favorite')
+  async toggleFavorite(@Request() req: any, @Param('id') id: string) {
+    const is_favorite = await this.chatService.toggleFavorite(id, req.user.userId);
+    return { is_favorite };
+  }
+
+  /**
+   * Toggle notifications on a conversation
+   */
+  @Patch(':id/notifications')
+  async toggleNotifications(@Request() req: any, @Param('id') id: string) {
+    const has_notifications = await this.chatService.toggleNotifications(id, req.user.userId);
+    return { has_notifications };
+  }
+
+  // ==================== MESSAGE ENDPOINTS ====================
+
+  /**
+   * Get messages from a conversation
+   */
+  @Get(':id/messages')
   async getMessages(
+    @Param('id') id: string,
     @Query('limit') limit?: number,
     @Query('before') before?: string,
   ) {
     const messages = await this.chatService.getMessages(
+      id,
       limit ? parseInt(limit.toString()) : 50,
       before ? new Date(before) : undefined,
     );
@@ -32,31 +173,63 @@ export class ChatController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async sendMessage(@Request() req: any, @Body() body: { text: string }) {
+  /**
+   * Send a message to a conversation
+   */
+  @Post(':id/messages')
+  async sendMessage(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: { text: string; replyTo?: string; mentions?: string[] },
+  ) {
     const message = await this.chatService.createMessage(
+      id,
       req.user.userId,
       body.text,
+      body.replyTo,
+      body.mentions,
     );
 
-    return message;
+    return { message };
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/react')
+  /**
+   * React to a message
+   */
+  @Post('messages/:messageId/react')
   async reactToMessage(
     @Request() req: any,
-    @Param('id') messageId: string,
+    @Param('messageId') messageId: string,
     @Body() body: { emoji: string },
   ) {
-    const message = await this.chatService.addReaction(
-      messageId,
-      req.user.userId,
-      body.emoji,
-    );
+    const message = await this.chatService.addReaction(messageId, req.user.userId, body.emoji);
+    return { message };
+  }
 
-    return message;
+  /**
+   * Delete a message
+   */
+  @Delete('messages/:messageId')
+  async deleteMessage(@Request() req: any, @Param('messageId') messageId: string) {
+    await this.chatService.deleteMessage(messageId, req.user.userId);
+    return { success: true };
+  }
+
+  /**
+   * Get unread count for a conversation
+   */
+  @Get(':id/unread')
+  async getUnreadCount(@Request() req: any, @Param('id') id: string) {
+    const count = await this.chatService.getUnreadCount(id, req.user.userId);
+    return { count };
+  }
+
+  /**
+   * Mark conversation as read
+   */
+  @Post(':id/read')
+  async markAsRead(@Request() req: any, @Param('id') id: string) {
+    await this.chatService.updateLastRead(id, req.user.userId);
+    return { success: true };
   }
 }
-
