@@ -1226,6 +1226,11 @@ export const ChatRoom = ({
                       {Object.entries(msg.reactions).map(([emoji, userIds]) => {
                         const currentUserId = user?._id || user?.id || '';
                         const userHasReacted = Array.isArray(userIds) && userIds.includes(currentUserId);
+                        const reactionCount = Array.isArray(userIds) ? userIds.length : 0;
+                        
+                        // Don't show reactions with 0 count
+                        if (reactionCount === 0) return null;
+                        
                         return (
                           <button
                             key={emoji}
@@ -1243,7 +1248,7 @@ export const ChatRoom = ({
                             }}
                           >
                             <span>{emoji}</span>
-                            <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
+                            <span style={{ fontSize: '10px', color: '#909090' }}>{reactionCount}</span>
                           </button>
                         );
                       })}

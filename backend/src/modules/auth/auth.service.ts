@@ -48,11 +48,15 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       user: {
+        _id: (user as any)._id.toString(),
         id: (user as any)._id.toString(),
         wallet_address: user.wallet_address,
         username: user.username,
         display_name: user.display_name,
         avatar_url: user.avatar_url,
+        bio: user.bio,
+        rank: user.rank || 'RECRUIT',
+        is_online: user.is_online,
       },
     };
   }
