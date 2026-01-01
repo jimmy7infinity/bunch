@@ -816,8 +816,12 @@ export const ChatRoom = ({
                   const isAI = msg.is_ai === true;
                   const senderRank = msg.sender_id?.rank || 'RECRUIT';
                   
-                  // Get rank colors for border
+                  // Get rank colors for border - only use custom colors for + ranks and staff
                   const rankColors = getRankColors(senderRank);
+                  const hasSpecialRank = senderRank.includes('+') || ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank);
+                  const borderGradient = hasSpecialRank
+                    ? `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`
+                    : 'linear-gradient(135deg, #707070, #333333)';
                   
                   return (
             <div 
@@ -874,12 +878,12 @@ export const ChatRoom = ({
                               border: '1px solid transparent',
                               backgroundImage: isAI 
                                 ? 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)'
-                                : `linear-gradient(${isOwnMessage ? '#5A5A5A' : '#242424'}, ${isOwnMessage ? '#5A5A5A' : '#242424'}), linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`,
+                                : `linear-gradient(${isOwnMessage ? '#5A5A5A' : '#242424'}, ${isOwnMessage ? '#5A5A5A' : '#242424'}), ${borderGradient}`,
                               backgroundOrigin: 'border-box',
                               backgroundClip: 'padding-box, border-box',
                               borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
                               padding: '8px 12px',
-                              minWidth: '180px',
+                              minWidth: '90px',
                               maxWidth: 'calc(100% - 65px)',
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
@@ -916,166 +920,285 @@ export const ChatRoom = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}>
-                    {/* Left: Reply + Reaction */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
-                              {!isAI && (
-                                <>
-                      <button 
-                                    onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                      >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                          <polyline points="9 17 4 12 9 7"/>
-                          <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-                        </svg>
-                      </button>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
-                        <button 
-                                      onClick={() => setShowReactionPicker(showReactionPicker === msg._id ? null : msg._id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                        >
-                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                            <line x1="9" y1="9" x2="9.01" y2="9"/>
-                            <line x1="15" y1="9" x2="15.01" y2="9"/>
-                          </svg>
-                        </button>
-                                    {showReactionPicker === msg._id && (
-                          <div 
-                            ref={reactionPickerRef}
-                            style={{
-                              position: 'absolute',
-                              bottom: '25px',
-                              left: '0',
-                              backgroundColor: '#19191A',
-                              border: '1px solid transparent',
-                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                              backgroundOrigin: 'border-box',
-                              backgroundClip: 'padding-box, border-box',
-                              borderRadius: '20px',
-                              padding: '8px',
-                              display: 'flex',
-                              gap: '8px',
-                              zIndex: 100,
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                            }}>
-                            {reactionEmojis.map(emoji => (
-                              <button
-                                key={emoji}
-                                            onClick={() => toggleReaction(msg._id, emoji)}
+                    {/* For self messages: 3 dots on left, reply+react on right */}
+                    {/* For other messages: reply+react on left, 3 dots on right */}
+                    
+                    {isOwnMessage ? (
+                      <>
+                        {/* Left: 3 dots menu */}
+                        {!isAI && (
+                          <button 
+                            onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              padding: 0, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              height: '16px', 
+                              position: 'relative',
+                              marginRight: '20px',
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
+                              <circle cx="5" cy="12" r="2"/>
+                              <circle cx="12" cy="12" r="2"/>
+                              <circle cx="19" cy="12" r="2"/>
+                            </svg>
+                            {showMessageMenu === msg._id && (
+                              <div 
+                                ref={messageMenuRef}
                                 style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '18px',
-                                  padding: '4px',
+                                  position: 'absolute',
+                                  bottom: '20px',
+                                  left: '0',
+                                  backgroundColor: '#19191A',
+                                  border: '1px solid transparent',
+                                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                  backgroundOrigin: 'border-box',
+                                  backgroundClip: 'padding-box, border-box',
+                                  borderRadius: '15px',
+                                  padding: '8px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px',
+                                  minWidth: '120px',
+                                  zIndex: 100,
+                                  boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                 }}
                               >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await websocketService.deleteMessage(msg._id);
+                                      setShowMessageMenu(null);
+                                    } catch (error) {
+                                      console.error('Failed to delete message:', error);
+                                    }
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#FF4444',
+                                    cursor: 'pointer',
+                                    padding: '6px 10px',
+                                    textAlign: 'left',
+                                    fontSize: '12px',
+                                    borderRadius: '8px',
+                                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </button>
                         )}
-                      </div>
-                                </>
-                  )}
-                </div>
-
-                            {/* Right: Menu - positioned after curved corner */}
-                            {!isAI && (
+                        
+                        {/* Right: Reply + Reaction */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                          {!isAI && (
+                            <>
                               <button 
-                                onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
-                                style={{ 
-                                  background: 'none', 
-                                  border: 'none', 
-                                  cursor: 'pointer', 
-                                  padding: 0, 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  height: '16px', 
-                                  position: 'relative',
-                                  marginLeft: isOwnMessage ? '0' : '20px',
-                                  marginRight: isOwnMessage ? '20px' : '0',
-                                }}
+                                onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
-                                  <circle cx="5" cy="12" r="2"/>
-                                  <circle cx="12" cy="12" r="2"/>
-                                  <circle cx="19" cy="12" r="2"/>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                  <polyline points="9 17 4 12 9 7"/>
+                                  <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
                                 </svg>
-                                {showMessageMenu === msg._id && (
+                              </button>
+                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
+                                <button 
+                                  onClick={() => setShowReactionPicker(showReactionPicker === msg._id ? null : msg._id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                                  </svg>
+                                </button>
+                                {showReactionPicker === msg._id && (
                                   <div 
-                                    ref={messageMenuRef}
+                                    ref={reactionPickerRef}
                                     style={{
                                       position: 'absolute',
-                                      bottom: '20px',
+                                      bottom: '25px',
                                       right: '0',
                                       backgroundColor: '#19191A',
                                       border: '1px solid transparent',
                                       backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
                                       backgroundOrigin: 'border-box',
                                       backgroundClip: 'padding-box, border-box',
-                                      borderRadius: '15px',
+                                      borderRadius: '20px',
                                       padding: '8px',
                                       display: 'flex',
-                                      flexDirection: 'column',
-                                      gap: '4px',
-                                      minWidth: '120px',
+                                      gap: '8px',
                                       zIndex: 100,
                                       boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                                    }}
-                                  >
-                                    {isOwnMessage ? (
+                                    }}>
+                                    {reactionEmojis.map(emoji => (
                                       <button
-                                        onClick={async () => {
-                                          try {
-                                            await websocketService.deleteMessage(msg._id);
-                                            setShowMessageMenu(null);
-                                          } catch (error) {
-                                            console.error('Failed to delete message:', error);
-                                          }
-                                        }}
+                                        key={emoji}
+                                        onClick={() => toggleReaction(msg._id, emoji)}
                                         style={{
                                           background: 'none',
                                           border: 'none',
-                                          color: '#FF4444',
                                           cursor: 'pointer',
-                                          padding: '6px 10px',
-                                          textAlign: 'left',
-                                          fontSize: '12px',
-                                          borderRadius: '8px',
-                                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                          fontSize: '18px',
+                                          padding: '4px',
                                         }}
                                       >
-                                        Delete
+                                        {emoji}
                                       </button>
-                                    ) : (
-                                      <button
-                                        onClick={() => {
-                                          // TODO: Implement report functionality
-                                          console.log('Report message:', msg._id);
-                                          setShowMessageMenu(null);
-                                        }}
-                                        style={{
-                                          background: 'none',
-                                          border: 'none',
-                                          color: '#FF4444',
-                                          cursor: 'pointer',
-                                          padding: '6px 10px',
-                                          textAlign: 'left',
-                                          fontSize: '12px',
-                                          borderRadius: '8px',
-                                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                                        }}
-                                      >
-                                        Report
-                                      </button>
-                                    )}
+                                    ))}
                                   </div>
                                 )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Left: Reply + Reaction */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                          {!isAI && (
+                            <>
+                              <button 
+                                onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                  <polyline points="9 17 4 12 9 7"/>
+                                  <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+                                </svg>
                               </button>
+                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
+                                <button 
+                                  onClick={() => setShowReactionPicker(showReactionPicker === msg._id ? null : msg._id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                                  </svg>
+                                </button>
+                                {showReactionPicker === msg._id && (
+                                  <div 
+                                    ref={reactionPickerRef}
+                                    style={{
+                                      position: 'absolute',
+                                      bottom: '25px',
+                                      left: '0',
+                                      backgroundColor: '#19191A',
+                                      border: '1px solid transparent',
+                                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                      backgroundOrigin: 'border-box',
+                                      backgroundClip: 'padding-box, border-box',
+                                      borderRadius: '20px',
+                                      padding: '8px',
+                                      display: 'flex',
+                                      gap: '8px',
+                                      zIndex: 100,
+                                      boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                                    }}>
+                                    {reactionEmojis.map(emoji => (
+                                      <button
+                                        key={emoji}
+                                        onClick={() => toggleReaction(msg._id, emoji)}
+                                        style={{
+                                          background: 'none',
+                                          border: 'none',
+                                          cursor: 'pointer',
+                                          fontSize: '18px',
+                                          padding: '4px',
+                                        }}
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Right: 3 dots menu - positioned after curved corner */}
+                        {!isAI && (
+                          <button 
+                            onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              padding: 0, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              height: '16px', 
+                              position: 'relative',
+                              marginLeft: '20px',
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
+                              <circle cx="5" cy="12" r="2"/>
+                              <circle cx="12" cy="12" r="2"/>
+                              <circle cx="19" cy="12" r="2"/>
+                            </svg>
+                            {showMessageMenu === msg._id && (
+                              <div 
+                                ref={messageMenuRef}
+                                style={{
+                                  position: 'absolute',
+                                  bottom: '20px',
+                                  right: '0',
+                                  backgroundColor: '#19191A',
+                                  border: '1px solid transparent',
+                                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                  backgroundOrigin: 'border-box',
+                                  backgroundClip: 'padding-box, border-box',
+                                  borderRadius: '15px',
+                                  padding: '8px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px',
+                                  minWidth: '120px',
+                                  zIndex: 100,
+                                  boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                                }}
+                              >
+                                <button
+                                  onClick={() => {
+                                    // TODO: Implement report functionality
+                                    console.log('Report message:', msg._id);
+                                    setShowMessageMenu(null);
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#FF4444',
+                                    cursor: 'pointer',
+                                    padding: '6px 10px',
+                                    textAlign: 'left',
+                                    fontSize: '12px',
+                                    borderRadius: '8px',
+                                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  }}
+                                >
+                                  Report
+                                </button>
+                              </div>
                             )}
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* Reactions Display - with full-width background */}
