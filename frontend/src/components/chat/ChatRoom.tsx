@@ -921,11 +921,12 @@ export const ChatRoom = ({
                                 : 'linear-gradient(#242424, #242424), linear-gradient(135deg, #918E8E, #484646)'),
                             backgroundOrigin: 'border-box',
                             backgroundClip: 'padding-box, border-box',
-                            borderRadius: isOwnMessage ? '32.5px 32.5px 32.5px 0' : (isAI ? '20px' : '32.5px 32.5px 0 32.5px'),
+                            borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
                             padding: '8px 12px',
                             maxWidth: 'calc(100% - 65px)',
                             wordWrap: 'break-word',
                             whiteSpace: 'pre-wrap',
+                            boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                           }}
                         >
                   {/* Username */}
@@ -1112,10 +1113,11 @@ export const ChatRoom = ({
                 })}
               </>
             )}
-      </div>
+          </div>
+        </div>
 
-          {/* Mention Picker Dropdown */}
-          {showMentionPicker && (
+        {/* Mention Picker Dropdown */}
+        {showMentionPicker && (
       <div 
               ref={mentionPickerRef}
         style={{
@@ -1191,23 +1193,23 @@ export const ChatRoom = ({
             </div>
           )}
 
-          <div
-            className="message-input-container"
-            style={{
-              width: '100%',
-              minHeight: '60px',
-              backgroundColor: '#19191A',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px',
-              gap: '10px',
-            }}
-          >
+        <div
+          className="message-input-container"
+          style={{
+            width: '100%',
+            minHeight: '60px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '30px',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '10px',
+            gap: '10px',
+          }}
+        >
             {/* Send Button */}
             <button
               className="send-button"
