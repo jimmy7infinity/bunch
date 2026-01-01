@@ -246,30 +246,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       }
     }
   };
-          return;
-        }
-      }
-      
-      const updatedUser = await userService.updateProfile({ 
-        username,
-        display_name: displayName 
-      });
-      setOriginalUsername(username);
-      setOriginalDisplayName(displayName);
-      setIsEditingUsername(false);
-      
-      // Update local userData and auth store with full updated user data
-      setUserData(updatedUser);
-      if (currentUser && token) {
-        setAuth({ ...currentUser, ...updatedUser }, token);
-      }
-    } catch (error) {
-      console.error('Failed to update username:', error);
-      alert('Failed to update username. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleCancelUsername = () => {
     setUsername(originalUsername);
