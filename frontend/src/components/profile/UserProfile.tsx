@@ -342,6 +342,25 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         padding: '45px 20px 40px 20px',
         gap: '30px',
       }}>
+        {isLoading ? (
+          /* Loading State */
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '14px',
+              color: '#707070',
+            }}>
+              Loading profile...
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Profile Picture with Rank */}
         <div style={{ 
           position: 'relative',
@@ -400,7 +419,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           )}
         </div>
 
-        {/* Username */}
+        {/* Username and Display Name */}
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column',
@@ -412,6 +431,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         }}>
           {isEditingUsername && isOwnProfile ? (
             <>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Display Name"
+                disabled={isSaving}
+                style={{
+                  backgroundColor: '#19191A',
+                  border: '1px solid #333333',
+                  borderRadius: '10px',
+                  padding: '8px 15px',
+                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '18px',
+                  color: '#D3D3D3',
+                  outline: 'none',
+                  textAlign: 'center',
+                  width: '100%',
+                  maxWidth: '250px',
+                  marginBottom: '5px',
+                }}
+              />
               <input
                 type="text"
                 value={username}
@@ -485,8 +525,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}>
-                @{username || 'loading...'}
+                {displayName || username || 'loading...'}
+                {displayName && displayName !== username && (
+                  <>
+                    <span style={{ color: '#505050' }}>|</span>
+                    <span style={{ opacity: 0.7 }}>@{username}</span>
+                  </>
+                )}
+                {!displayName && <>@{username || 'loading...'}</>}
               </span>
               {isOwnProfile && (
                 <button
@@ -639,23 +689,25 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             ) : (
               <button
                 className="profile-pill-button"
+                disabled={true}
                 style={{
                   flex: 1,
                   height: '40px',
                   backgroundColor: '#19191A',
                   border: '1px solid transparent',
-                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #505050, #2A2A2A)',
                   backgroundOrigin: 'border-box',
                   backgroundClip: 'padding-box, border-box',
                   borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: 'not-allowed',
                   gap: '6px',
+                  opacity: 0.5,
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </button>
@@ -1042,6 +1094,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               )}
             </div>
           </>
+        )}
+        </>
         )}
       </div>
 

@@ -174,6 +174,23 @@ export class ChatService {
   }
 
   /**
+   * Get all market chats
+   */
+  async getMarketChats() {
+    return this.conversationModel
+      .find({ type: 'market' })
+      .populate({
+        path: 'last_message_id',
+        populate: {
+          path: 'sender_id',
+          select: 'username display_name avatar_url rank',
+        },
+      })
+      .sort({ last_message_at: -1 })
+      .exec();
+  }
+
+  /**
    * Search market chats
    */
   async searchMarketChats(query: string, limit = 20) {

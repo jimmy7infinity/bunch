@@ -39,6 +39,15 @@ export class ChatController {
   }
 
   /**
+   * Get all market chats
+   */
+  @Get('market')
+  async getMarketChats() {
+    const conversations = await this.chatService.getMarketChats();
+    return { conversations };
+  }
+
+  /**
    * Search market chats
    */
   @Get('market/search')

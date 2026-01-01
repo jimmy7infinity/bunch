@@ -943,6 +943,8 @@ export const ChatsList = () => {
                 alignItems: 'center',
                 padding: '0 15px',
                 overflow: 'hidden',
+                justifyContent: 'space-between',
+                gap: '8px',
               }}
             >
               <p style={{
@@ -953,10 +955,21 @@ export const ChatsList = () => {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                width: '100%',
+                flex: 1,
               }}>
                 {chat.last_message_id?.text || chat.metadata?.description || 'No messages yet'}
               </p>
+              {chat.last_message_id?.created_at && (
+                <span style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '10px',
+                  color: '#606060',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}>
+                  {new Date(chat.last_message_id.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </span>
+              )}
             </div>
           </div>
         </div>

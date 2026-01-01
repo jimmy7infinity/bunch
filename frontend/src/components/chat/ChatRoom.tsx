@@ -346,6 +346,13 @@ export const ChatRoom = ({
       setReplyingTo(null);
       setShowMentionPicker(false);
       setMentionSearch('');
+      
+      // Scroll to bottom after sending
+      setTimeout(() => {
+        if (chatWindowRef.current) {
+          chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+        }
+      }, 50);
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
@@ -360,6 +367,35 @@ export const ChatRoom = ({
     }
     
     try {
+      // Create optimistic message for GIF
+      const optimisticMessage = {
+        _id: `temp-${Date.now()}`,
+        conversation_id: conversation._id,
+        sender_id: {
+          _id: user?._id || user?.id || '',
+          id: user?.id || '',
+          username: user?.username || 'You',
+          display_name: user?.display_name || user?.username || 'You',
+          avatar_url: user?.avatar_url,
+          rank: user?.rank || 'RECRUIT',
+          wallet_address: user?.wallet_address || '',
+        },
+        text: gifUrl,
+        reactions: {},
+        created_at: new Date().toISOString(),
+        deleted: false,
+        reply_to: replyingTo ? {
+          _id: replyingTo.messageId,
+          sender_id: { username: replyingTo.username } as any,
+          preview: replyingTo.preview,
+        } : undefined,
+        mentions: [],
+        status: 'pending' as const,
+      };
+      
+      // Add optimistically to UI
+      addMessage(optimisticMessage);
+      
       websocketService.sendMessage(
         conversation._id,
         gifUrl,
@@ -368,6 +404,13 @@ export const ChatRoom = ({
       );
       
       setReplyingTo(null);
+      
+      // Scroll to bottom after sending GIF
+      setTimeout(() => {
+        if (chatWindowRef.current) {
+          chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+        }
+      }, 50);
     } catch (error) {
       console.error('Failed to send GIF:', error);
       alert('Failed to send GIF. Please try again.');
@@ -397,6 +440,35 @@ export const ChatRoom = ({
     try {
       const imageUrl = await mediaService.uploadImage(file);
       
+      // Create optimistic message for image
+      const optimisticMessage = {
+        _id: `temp-${Date.now()}`,
+        conversation_id: conversation._id,
+        sender_id: {
+          _id: user?._id || user?.id || '',
+          id: user?.id || '',
+          username: user?.username || 'You',
+          display_name: user?.display_name || user?.username || 'You',
+          avatar_url: user?.avatar_url,
+          rank: user?.rank || 'RECRUIT',
+          wallet_address: user?.wallet_address || '',
+        },
+        text: imageUrl,
+        reactions: {},
+        created_at: new Date().toISOString(),
+        deleted: false,
+        reply_to: replyingTo ? {
+          _id: replyingTo.messageId,
+          sender_id: { username: replyingTo.username } as any,
+          preview: replyingTo.preview,
+        } : undefined,
+        mentions: [],
+        status: 'pending' as const,
+      };
+      
+      // Add optimistically to UI
+      addMessage(optimisticMessage);
+      
       // Send image URL as message
       websocketService.sendMessage(
         conversation._id,
@@ -406,6 +478,13 @@ export const ChatRoom = ({
       );
       
       setReplyingTo(null);
+      
+      // Scroll to bottom after sending image
+      setTimeout(() => {
+        if (chatWindowRef.current) {
+          chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+        }
+      }, 50);
     } catch (error) {
       console.error('Failed to upload image:', error);
       alert('Failed to upload image. Please try again.');

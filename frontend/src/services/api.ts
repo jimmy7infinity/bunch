@@ -111,11 +111,9 @@ export const roomService = {
       return response.data.conversations;
     }
     if (type === 'market') {
-      // Market chats are from user's conversations, filtered by type === 'market'
-      const response = await api.get<{ conversations: any[] }>('/conversations/my');
-      return response.data.conversations
-        .map((c: any) => c.conversation)
-        .filter((c: ChatRoom) => c.type === 'market');
+      // Use the new market endpoint that returns all market chats
+      const response = await api.get<{ conversations: ChatRoom[] }>('/conversations/market');
+      return response.data.conversations;
     }
     if (type === 'favorites' || type === 'private') {
       const response = await api.get<{ conversations: any[] }>('/conversations/my');
@@ -208,7 +206,7 @@ export const userService = {
     return response.data;
   },
 
-  async checkUsername(username: string) {
+  async checkUsernameAvailable(username: string) {
     const response = await api.get<{ available: boolean }>(`/users/check-username/${username}`);
     return response.data.available;
   },
