@@ -974,7 +974,24 @@ export const ChatRoom = ({
             minHeight: '100%',
             justifyContent: 'flex-end',
           }}>
-            {isEmpty ? (
+            {isLoadingMessages ? (
+              /* Loading State */
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#707070',
+                }}>
+                  Loading messages...
+                </div>
+              </div>
+            ) : isEmpty ? (
               /* Empty State */
               <div style={{
                 width: '100%',

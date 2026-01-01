@@ -761,58 +761,56 @@ export const ChatsList = () => {
 
             {/* Right: AI Insights + Star Buttons */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* AI Insights Button - Purple when active */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleAiFeed(chat._id); // Toggle AI feed for this chat
-                }}
-                className="chat-card-ai-button"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#19191A',
-                  border: '1px solid transparent',
-                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                {chat.has_ai_feed ? (
-                  // AI Active - Purple gradient sparkle with multiple points
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#aiGradientPurpleCard)">
-                    <defs>
-                      <linearGradient id="aiGradientPurpleCard" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#A78BFA" />
-                        <stop offset="100%" stopColor="#7C3AED" />
-                      </linearGradient>
-                    </defs>
-                    {/* AI Sparkle - 4-pointed star */}
-                    <path d="M12 1L13.5 7.5L20 9L13.5 10.5L12 17L10.5 10.5L4 9L10.5 7.5L12 1Z"/>
-                    <path d="M16 4L16.75 6.25L19 7L16.75 7.75L16 10L15.25 7.75L13 7L15.25 6.25L16 4Z"/>
-                    <path d="M8 14L8.75 16.25L11 17L8.75 17.75L8 20L7.25 17.75L5 17L7.25 16.25L8 14Z"/>
-                  </svg>
-                ) : (
-                  // AI Inactive - Grey sparkle
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOffCard)" strokeWidth="1.5">
-                    <defs>
-                      <linearGradient id="aiGradientOffCard" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#B3B3B3" />
-                        <stop offset="100%" stopColor="#888888" />
-                      </linearGradient>
-                    </defs>
-                    {/* AI Sparkle - 4-pointed star outline */}
-                    <path d="M12 1L13.5 7.5L20 9L13.5 10.5L12 17L10.5 10.5L4 9L10.5 7.5L12 1Z"/>
-                    <path d="M16 4L16.75 6.25L19 7L16.75 7.75L16 10L15.25 7.75L13 7L15.25 6.25L16 4Z"/>
-                    <path d="M8 14L8.75 16.25L11 17L8.75 17.75L8 20L7.25 17.75L5 17L7.25 16.25L8 14Z"/>
-                  </svg>
-                )}
-              </button>
+              {/* AI Insights Button - Only for global and market chats */}
+              {(chat.type === 'global' || chat.type === 'market') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleAiFeed(chat._id);
+                  }}
+                  className="chat-card-ai-button"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid transparent',
+                    backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                    backgroundOrigin: 'border-box',
+                    backgroundClip: 'padding-box, border-box',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {chat.has_ai_feed ? (
+                    // AI Active - Green gradient globe
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#aiGradientOnCard)" stroke="none">
+                      <defs>
+                        <linearGradient id="aiGradientOnCard" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#60F6AB" />
+                          <stop offset="100%" stopColor="#0D7A3F" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z"/>
+                    </svg>
+                  ) : (
+                    // AI Inactive - Grey globe outline
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOffCard2)" strokeWidth="2">
+                      <defs>
+                        <linearGradient id="aiGradientOffCard2" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#B3B3B3" />
+                          <stop offset="100%" stopColor="#888888" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 2v10l4 2"/>
+                      <path d="M4.93 4.93l4.24 4.24"/>
+                    </svg>
+                  )}
+                </button>
+              )}
 
               {/* Star Button */}
               <button
