@@ -171,17 +171,11 @@ export const ChatRoom = ({
   }, [showReactionPicker, showMessageMenu]);
   
   // Reaction emojis
-  const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😱', '🤬', '🔫'];
+  const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😮', '🤬', '🔫'];
   
   // Mock users for mentions - will be replaced with API
-  const mockChatUsers = [
-    { id: '1', username: 'demo_user', rank: 'LEGEND+' },
-    { id: '2', username: 'alice_crypto', rank: 'CAPTAIN' },
-    { id: '3', username: 'bob_trader', rank: 'HERO' },
-    { id: '4', username: 'charlie_nft', rank: 'VETERAN+' },
-    { id: '5', username: 'diana_eth', rank: 'CHAMPION' },
-  ];
   
+  // Use participants as mentionable users
   const mentionableUsers = participants;
   
   // Filter users for mention autocomplete
@@ -238,6 +232,35 @@ export const ChatRoom = ({
         messageInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
       }
     }, 0);
+  };
+  
+  // Handle sending messages
+  const handleSendMessage = () => {
+    if (!message.trim() || connectionStatus !== 'connected') return;
+    
+    try {
+      // Extract mentions
+      const mentions = message.match(/@(\w+)/g)?.map(m => m.substring(1)) || [];
+      
+      // Send via WebSocket
+      websocketService.sendMessage(
+        conversation._id,
+        message.trim(),
+        replyingTo?.messageId,
+        mentions
+      );
+      
+      // Clear input and reset state
+      setMessage('');
+      setReplyingTo(null);
+      setShowMentionPicker(false);
+      setMentionSearch('');
+      
+      // Message will be added via WebSocket event
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message. Please try again.');
+    }
   };
   
   // Parse message text to highlight @mentions
@@ -933,6 +956,46 @@ export const ChatRoom = ({
                             {isOwnMessage ? 'You' : senderName}
                           </span>
 
+                          {/* Reply Preview - clickable to scroll to original message */}
+                          {msg.reply_to && (
+                            <div
+                              onClick={() => {
+                                if (msg.reply_to?._id) {
+                                  scrollToMessage(msg.reply_to._id);
+                                }
+                              }}
+                              style={{
+                                backgroundColor: '#2A2A2A',
+                                borderLeft: '3px solid #5BC854',
+                                padding: '6px 10px',
+                                marginBottom: '6px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#333333'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2A2A2A'}
+                            >
+                              <div style={{ 
+                                fontSize: '10px', 
+                                color: '#5BC854',
+                                marginBottom: '2px',
+                                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                              }}>
+                                {msg.reply_to.sender_id?.display_name || msg.reply_to.sender_id?.username || 'User'}
+                              </div>
+                              <div style={{ 
+                                fontSize: '11px', 
+                                color: '#909090',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                              }}>
+                                {msg.reply_to.preview || msg.reply_to.text || 'Message'}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Message Text */}
                           <p style={{
                             fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1369,6 +1432,59 @@ export const ChatRoom = ({
             </div>
           )}
 
+        {/* Reply Preview */}
+        {replyingTo && (
+          <div style={{
+            width: '90%',
+            backgroundColor: '#242424',
+            border: '1px solid #333',
+            borderRadius: '10px',
+            padding: '8px 12px',
+            marginBottom: '5px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                fontSize: '11px', 
+                color: '#5BC854',
+                marginBottom: '2px',
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}>
+                Replying to @{replyingTo.username}
+              </div>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#909090',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}>
+                {replyingTo.preview}
+              </div>
+            </div>
+            <button
+              onClick={() => setReplyingTo(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
         <div
           className="message-input-container"
           style={{
@@ -1390,24 +1506,7 @@ export const ChatRoom = ({
             {/* Send Button */}
             <button
               className="send-button"
-              onClick={() => {
-                if (message.trim() && websocketService.isConnected()) {
-                  // Send via WebSocket
-                  websocketService.sendMessage(
-                    conversation._id,
-                    message,
-                    replyingTo?.messageId,
-                    // Extract mentions from message
-                    message.match(/@(\w+)/g)?.map(m => m.substring(1))
-                  );
-                  setMessage('');
-                  setReplyingTo(null);
-                  setMessageStatus('pending');
-                  // Simulate message delivery
-                  setTimeout(() => setMessageStatus('sent'), 500);
-                  setTimeout(() => setMessageStatus('delivered'), 1000);
-                }
-              }}
+              onClick={handleSendMessage}
               disabled={!message.trim() || connectionStatus !== 'connected'}
               style={{
                 width: '40px',
@@ -1441,22 +1540,7 @@ export const ChatRoom = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  if (message.trim() && websocketService.isConnected()) {
-                    // Send via WebSocket
-                    websocketService.sendMessage(
-                      conversation._id,
-                      message,
-                      replyingTo?.messageId,
-                      // Extract mentions from message
-                      message.match(/@(\w+)/g)?.map(m => m.substring(1))
-                    );
-                    setMessage('');
-                    setReplyingTo(null);
-                    setShowMentionPicker(false);
-                    setMessageStatus('pending');
-                    setTimeout(() => setMessageStatus('sent'), 500);
-                    setTimeout(() => setMessageStatus('delivered'), 1000);
-                  }
+                  handleSendMessage();
                 }
               }}
               placeholder="Type your message here… (use @ to mention)"
