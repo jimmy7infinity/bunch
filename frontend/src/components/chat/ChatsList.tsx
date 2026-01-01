@@ -55,14 +55,14 @@ export const ChatsList = () => {
     }
   };
   
-  const toggleNotifications = async (chatId: string) => {
+  const toggleAiFeed = async (chatId: string) => {
     try {
       const result = await roomService.toggleNotifications(chatId);
     setChats(prev => prev.map(chat => 
-        chat._id === chatId ? { ...chat, has_notifications: result.has_notifications } : chat
+        chat._id === chatId ? { ...chat, has_ai_feed: result.has_notifications } : chat
     ));
     } catch (error) {
-      console.error('Failed to toggle notifications:', error);
+      console.error('Failed to toggle AI feed:', error);
     }
   };
 
@@ -765,7 +765,7 @@ export const ChatsList = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleNotifications(chat._id); // Reusing same toggle for now, will rename later
+                  toggleAiFeed(chat._id); // Toggle AI feed for this chat
                 }}
                 className="chat-card-ai-button"
                 style={{
@@ -783,8 +783,8 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                {chat.has_notifications ? (
-                  // AI Active - Purple gradient sparkle
+                {chat.has_ai_feed ? (
+                  // AI Active - Purple gradient sparkle with multiple points
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#aiGradientPurpleCard)">
                     <defs>
                       <linearGradient id="aiGradientPurpleCard" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -792,18 +792,24 @@ export const ChatsList = () => {
                         <stop offset="100%" stopColor="#7C3AED" />
                       </linearGradient>
                     </defs>
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                    {/* AI Sparkle - 4-pointed star */}
+                    <path d="M12 1L13.5 7.5L20 9L13.5 10.5L12 17L10.5 10.5L4 9L10.5 7.5L12 1Z"/>
+                    <path d="M16 4L16.75 6.25L19 7L16.75 7.75L16 10L15.25 7.75L13 7L15.25 6.25L16 4Z"/>
+                    <path d="M8 14L8.75 16.25L11 17L8.75 17.75L8 20L7.25 17.75L5 17L7.25 16.25L8 14Z"/>
                   </svg>
                 ) : (
                   // AI Inactive - Grey sparkle
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOffCard)" strokeWidth="2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOffCard)" strokeWidth="1.5">
                     <defs>
                       <linearGradient id="aiGradientOffCard" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#B3B3B3" />
                         <stop offset="100%" stopColor="#888888" />
                       </linearGradient>
                     </defs>
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                    {/* AI Sparkle - 4-pointed star outline */}
+                    <path d="M12 1L13.5 7.5L20 9L13.5 10.5L12 17L10.5 10.5L4 9L10.5 7.5L12 1Z"/>
+                    <path d="M16 4L16.75 6.25L19 7L16.75 7.75L16 10L15.25 7.75L13 7L15.25 6.25L16 4Z"/>
+                    <path d="M8 14L8.75 16.25L11 17L8.75 17.75L8 20L7.25 17.75L5 17L7.25 16.25L8 14Z"/>
                   </svg>
                 )}
               </button>
