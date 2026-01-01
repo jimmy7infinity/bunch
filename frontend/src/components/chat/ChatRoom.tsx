@@ -39,12 +39,6 @@ export const ChatRoom = ({
   // Use actual message count instead of isEmpty prop
   const isEmpty = !isLoadingMessages && storeMessages.length === 0;
   
-  console.log('ChatRoom DEBUG:', { 
-    conversationId: conversation._id, 
-    messageCount: storeMessages.length,
-    isEmpty, 
-    isLoadingMessages 
-  });
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ messageId: string; username: string; preview: string } | null>(null);
@@ -63,7 +57,9 @@ export const ChatRoom = ({
   const [showMessageMenu, setShowMessageMenu] = useState<string | null>(null);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showMediaMenu, setShowMediaMenu] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const mediaMenuRef = useRef<HTMLDivElement>(null);
   
   // Get search results with context
   const searchResults = searchQuery.trim() 
@@ -169,11 +165,14 @@ export const ChatRoom = ({
       if (showMessageMenu && messageMenuRef.current && !messageMenuRef.current.contains(event.target as Node)) {
         setShowMessageMenu(null);
       }
+      if (showMediaMenu && mediaMenuRef.current && !mediaMenuRef.current.contains(event.target as Node)) {
+        setShowMediaMenu(false);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showReactionPicker, showMessageMenu]);
+  }, [showReactionPicker, showMessageMenu, showMediaMenu]);
   
   // Reaction emojis
   const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😮', '🤬', '🔫'];
@@ -241,27 +240,22 @@ export const ChatRoom = ({
   
   // Handle sending messages
   const handleSendMessage = () => {
-    console.log('handleSendMessage called', { 
-      messageLength: message.trim().length, 
-      connectionStatus,
-      isConnected: websocketService.isConnected()
-    });
+    const isConnected = websocketService.isConnected();
     
     if (!message.trim()) {
-      console.log('Message is empty, not sending');
       return;
     }
     
-    if (connectionStatus !== 'connected') {
-      console.log('Not connected, status:', connectionStatus);
+    // Use websocketService.isConnected() instead of connectionStatus
+    if (!isConnected) {
+      console.error('WebSocket not connected!');
+      alert('Not connected to chat server. Please refresh the page.');
       return;
     }
     
     try {
       // Extract mentions
       const mentions = message.match(/@(\w+)/g)?.map(m => m.substring(1)) || [];
-      
-      console.log('Sending message:', { text: message.trim(), mentions, replyTo: replyingTo?.messageId });
       
       // Send via WebSocket
       websocketService.sendMessage(
@@ -276,8 +270,6 @@ export const ChatRoom = ({
       setReplyingTo(null);
       setShowMentionPicker(false);
       setMentionSearch('');
-      
-      console.log('Message sent successfully');
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
@@ -286,7 +278,10 @@ export const ChatRoom = ({
   
   // Handle sending GIF
   const handleSendGif = (gifUrl: string) => {
-    if (connectionStatus !== 'connected') return;
+    if (!websocketService.isConnected()) {
+      alert('Not connected to chat server. Please refresh the page.');
+      return;
+    }
     
     try {
       websocketService.sendMessage(
@@ -1600,61 +1595,113 @@ export const ChatRoom = ({
             gap: '10px',
           }}
         >
-            {/* GIF Button */}
-            <button
-              onClick={() => setShowGifPicker(true)}
-              disabled={connectionStatus !== 'connected'}
-              style={{
-                width: '40px',
-                height: '40px',
-                minWidth: '40px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: connectionStatus === 'connected' ? 'pointer' : 'not-allowed',
-                opacity: connectionStatus === 'connected' ? 1 : 0.5,
-              }}
-            >
-              <span style={{ fontSize: '20px' }}>GIF</span>
-            </button>
+            {/* Media Button (GIF + Image) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowMediaMenu(!showMediaMenu)}
+                disabled={isUploadingImage}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  minWidth: '40px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: isUploadingImage ? 'not-allowed' : 'pointer',
+                  opacity: isUploadingImage ? 0.5 : 1,
+                }}
+              >
+                {isUploadingImage ? (
+                  <span style={{ fontSize: '12px', color: '#5BC854' }}>...</span>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#909090" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                )}
+              </button>
 
-            {/* Image Upload Button */}
-            <button
-              onClick={() => imageInputRef.current?.click()}
-              disabled={connectionStatus !== 'connected' || isUploadingImage}
-              style={{
-                width: '40px',
-                height: '40px',
-                minWidth: '40px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: (connectionStatus === 'connected' && !isUploadingImage) ? 'pointer' : 'not-allowed',
-                opacity: (connectionStatus === 'connected' && !isUploadingImage) ? 1 : 0.5,
-              }}
-            >
-              {isUploadingImage ? (
-                <span style={{ fontSize: '12px', color: '#5BC854' }}>...</span>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#909090" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
+              {/* Media Menu Popup */}
+              {showMediaMenu && (
+                <div
+                  ref={mediaMenuRef}
+                  style={{
+                    position: 'absolute',
+                    bottom: '50px',
+                    left: '0',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #333',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                    zIndex: 100,
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setShowMediaMenu(false);
+                      setShowGifPicker(true);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#D3D3D3',
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '14px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#242424'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span style={{ fontSize: '16px' }}>GIF</span>
+                    <span>Search GIFs</span>
+                  </button>
+                  <div style={{ height: '1px', backgroundColor: '#333' }} />
+                  <button
+                    onClick={() => {
+                      setShowMediaMenu(false);
+                      imageInputRef.current?.click();
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#D3D3D3',
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '14px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#242424'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#909090" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span>Upload Image</span>
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
             <input
               ref={imageInputRef}
               type="file"
@@ -1666,11 +1713,8 @@ export const ChatRoom = ({
             {/* Send Button */}
             <button
               className="send-button"
-              onClick={() => {
-                console.log('SEND BUTTON CLICKED!', { message, connectionStatus });
-                handleSendMessage();
-              }}
-              disabled={!message.trim() || connectionStatus !== 'connected'}
+              onClick={handleSendMessage}
+              disabled={!message.trim()}
               style={{
                 width: '40px',
                 height: '40px',
@@ -1701,10 +1745,8 @@ export const ChatRoom = ({
               value={message}
               onChange={handleMessageChange}
               onKeyDown={(e) => {
-                console.log('KEY DOWN:', e.key);
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  console.log('ENTER PRESSED, sending message');
                   handleSendMessage();
                 }
               }}
