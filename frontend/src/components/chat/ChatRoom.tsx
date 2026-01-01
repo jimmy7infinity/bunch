@@ -5,20 +5,19 @@ import { websocketService } from '../../services/websocket';
 import { messageService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { RankedPFP } from '../common/RankedPFP';
+import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
   conversation: ChatRoomType;
   onBack?: () => void;
   onUserClick?: (userId: string) => void;
-  isEmpty?: boolean;
 }
 
 export const ChatRoom = ({ 
   conversation,
   onBack,
   onUserClick,
-  isEmpty: _isEmpty
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
   const { messages: storeMessages, addMessage, setMessages: setStoreMessages, connectionStatus } = useChatStore();
@@ -51,10 +50,13 @@ export const ChatRoom = ({
   const [cursorPosition, setCursorPosition] = useState(0);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const reactionPickerRef = useRef<HTMLDivElement>(null);
+  const mentionPickerRef = useRef<HTMLDivElement>(null);
+  const messageMenuRef = useRef<HTMLDivElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [messageStatus, setMessageStatus] = useState<'pending' | 'sent' | 'delivered' | 'failed'>('delivered');
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [showMessageMenu, setShowMessageMenu] = useState<string | null>(null);
   
   // Get search results with context
   const searchResults = searchQuery.trim() 
@@ -146,6 +148,8 @@ export const ChatRoom = ({
     { id: '4', username: 'charlie_nft', rank: 'VETERAN+' },
     { id: '5', username: 'diana_eth', rank: 'CHAMPION' },
   ];
+  
+  const mentionableUsers = mockChatUsers;
   
   // Filter users for mention autocomplete
   const filteredMentionUsers = mockChatUsers.filter(u => 
@@ -323,7 +327,8 @@ export const ChatRoom = ({
             <line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
         );
-      case 'private':
+      case 'dm':
+      case 'group':
         return (
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -608,7 +613,7 @@ export const ChatRoom = ({
           </button>
 
           {/* AI Feed Button - Only for global/market chats - Green when active */}
-          {chatType !== 'private' && (
+          {(chatType === 'global' || chatType === 'market') && (
             <button
               onClick={() => setHasAINotifications(!hasAINotifications)}
               className="nav-icon-button"
@@ -839,8 +844,8 @@ export const ChatRoom = ({
             ) : (
               <>
                 {/* Render actual messages from database */}
-                {storeMessages.map((msg, index) => {
-                  const isOwnMessage = msg.sender_id?.id === user?.id || msg.sender_id?._id === user?.id;
+                {storeMessages.map((msg) => {
+                  const isOwnMessage = msg.sender_id?.id === user?.id || (msg.sender_id as any)?._id === user?.id;
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
                   
@@ -880,7 +885,7 @@ export const ChatRoom = ({
                         {/* PFP */}
                         {!isAI && (
                           <div
-                            onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?.id || msg.sender_id?._id)}
+                            onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?.id || (msg.sender_id as any)?._id)}
                             style={{
                               width: '35px',
                               height: '35px',
@@ -1157,7 +1162,7 @@ export const ChatRoom = ({
                     justifyContent: 'center',
                     fontSize: '14px',
                   }}>
-                    {u.pfp}
+                    👤
                   </div>
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div>{u.username}</div>
@@ -1168,620 +1173,6 @@ export const ChatRoom = ({
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
-                    }}>
-                      {u.rank}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div
-            className="message-input-container"
-            style={{
-              width: '100%',
-              minHeight: '60px',
-              backgroundColor: '#19191A',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px',
-              gap: '10px',
-            }}
-          >
-            {/* Send Button */}
-            <button
-              className="send-button"
-              onClick={() => {
-                if (message.trim() && websocketService.isConnected()) {
-                transition: 'background-color 0.3s ease',
-              }}>
-              {/* Time - centered above bubble */}
-              <span style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '10px',
-                color: '#707070',
-                textAlign: 'center',
-              }}>
-                14:32
-              </span>
-
-              <div style={{ 
-                display: 'flex', 
-                gap: '5px',
-                alignItems: 'flex-end',
-                justifyContent: 'flex-end',
-              }}>
-                {/* Chat Bubble */}
-                <div
-                  className="chat-bubble-other"
-                  style={{
-                    backgroundColor: '#242424',
-                    border: '1px solid transparent',
-                    backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-                    backgroundOrigin: 'border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    borderRadius: '32.5px 32.5px 0 32.5px',
-                    padding: '8px 12px',
-                    maxWidth: 'calc(100% - 65px)',
-                    wordWrap: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {/* Username */}
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '10px',
-                    color: '#606060',
-                    display: 'block',
-                    marginBottom: '4px',
-                    textAlign: 'center',
-                  }}>
-                    demo_user
-                  </span>
-
-                  {/* Reply Indicator - Example showing reply to AI */}
-                  <div 
-                    onClick={() => {
-                      console.log('Navigate to original message');
-                      // TODO: Scroll to message with ID when backend is connected
-                    }}
-                    style={{
-                      borderLeft: '2px solid #707070',
-                      paddingLeft: '8px',
-                      marginBottom: '6px',
-                      opacity: 0.7,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{
-                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '10px',
-                      color: '#909090',
-                      marginBottom: '2px',
-                    }}>
-                      @AI
-                    </div>
-                    <div style={{
-                      fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '11px',
-                      color: '#707070',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      Welcome to the Politics chat!
-                    </div>
-                  </div>
-
-                  {/* Message Text */}
-                  <p style={{
-                    fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '12px',
-                    color: '#D3D3D3',
-                    margin: '0 0 4px 0',
-                  }}>
-                    {renderMessageWithMentions('This is an example message from another user in the chat.')}
-                  </p>
-
-                  {/* Reply, Reaction, Menu */}
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    height: '16px',
-                  }}>
-                    {/* Left: Reply + Reaction */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
-                      <button 
-                        onClick={() => setReplyingTo({ messageId: 'msg1', username: 'demo_user', preview: 'This is an example message...' })}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                          <polyline points="9 17 4 12 9 7"/>
-                          <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-                        </svg>
-                      </button>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
-                        <button 
-                          onClick={() => setShowReactionPicker(showReactionPicker === 'msg1' ? null : 'msg1')}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                            <line x1="9" y1="9" x2="9.01" y2="9"/>
-                            <line x1="15" y1="9" x2="15.01" y2="9"/>
-                          </svg>
-                        </button>
-                        {/* Reaction Picker */}
-                        {showReactionPicker === 'msg1' && (
-                          <div 
-                            ref={reactionPickerRef}
-                            style={{
-                              position: 'absolute',
-                              bottom: '25px',
-                              left: '0',
-                              backgroundColor: '#19191A',
-                              border: '1px solid transparent',
-                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                              backgroundOrigin: 'border-box',
-                              backgroundClip: 'padding-box, border-box',
-                              borderRadius: '20px',
-                              padding: '8px',
-                              display: 'flex',
-                              gap: '8px',
-                              zIndex: 100,
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                            }}>
-                            {reactionEmojis.map(emoji => (
-                              <button
-                                key={emoji}
-                                onClick={() => toggleReaction('msg1', emoji)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '18px',
-                                  padding: '4px',
-                                }}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: 3 dots */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#707070">
-                        <circle cx="5" cy="12" r="2"/>
-                        <circle cx="12" cy="12" r="2"/>
-                        <circle cx="19" cy="12" r="2"/>
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Reactions Display */}
-                  {reactions['msg1'] && Object.keys(reactions['msg1']).length > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      gap: '4px',
-                      marginTop: '6px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {Object.entries(reactions['msg1']).map(([emoji, data]) => (
-                        <button
-                          key={emoji}
-                          onClick={() => toggleReaction('msg1', emoji)}
-                          style={{
-                            backgroundColor: data.userReacted ? '#2A3A2A' : '#242424',
-                            border: `1px solid ${data.userReacted ? '#5BC854' : '#333333'}`,
-                            borderRadius: '10px',
-                            padding: '2px 6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontSize: '12px' }}>{emoji}</span>
-                          <span style={{
-                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                            fontSize: '11px',
-                            color: data.userReacted ? '#5BC854' : '#B9B7B7',
-                          }}>
-                            {data.count}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-              {/* Right: PFP + Rank */}
-              <div 
-                onClick={() => onUserClick?.('demo_user_id')}
-                style={{ cursor: 'pointer', flexShrink: 0 }}
-              >
-                <RankedPFP rank="LEGEND+" size="medium" showRankLabel={true} />
-              </div>
-            </div>
-
-            {/* Example message from self */}
-            <div 
-              ref={el => { messageRefs.current['msg2'] = el; }}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: '4px',
-                width: '100%',
-                backgroundColor: highlightedMessageId === 'msg2' ? 'rgba(91, 200, 84, 0.1)' : 'transparent',
-                borderRadius: '20px',
-                transition: 'background-color 0.3s ease',
-              }}>
-              {/* Time - centered */}
-              <span style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '10px',
-                color: '#707070',
-                textAlign: 'center',
-              }}>
-                14:35
-              </span>
-
-              <div style={{ 
-                display: 'flex', 
-                gap: '5px',
-                alignItems: 'flex-end',
-                justifyContent: 'flex-start',
-              }}>
-                {/* Left: PFP + Rank */}
-                <div 
-                  onClick={() => onUserClick?.(user?.id || 'current_user_id')}
-                  style={{ cursor: 'pointer', flexShrink: 0 }}
-                >
-                  <RankedPFP rank="ADMIN" size="medium" showRankLabel={true} />
-                </div>
-
-                {/* Chat Bubble */}
-                <div
-                  className="chat-bubble-self"
-                  style={{
-                    backgroundColor: '#5A5A5A',
-                    border: '1px solid transparent',
-                    backgroundImage: 'linear-gradient(#5A5A5A, #5A5A5A), linear-gradient(135deg, #707070, #333333)',
-                    backgroundOrigin: 'border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    borderRadius: '32.5px 32.5px 32.5px 0',
-                    padding: '8px 12px',
-                    maxWidth: 'calc(100% - 65px)',
-                    wordWrap: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {/* Username */}
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '10px',
-                    color: '#909090',
-                    display: 'block',
-                    marginBottom: '4px',
-                    textAlign: 'center',
-                  }}>
-                    You
-                  </span>
-
-                  {/* Message Text */}
-                  <p style={{
-                    fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '12px',
-                    color: '#D3D3D3',
-                    margin: '0 0 4px 0',
-                  }}>
-                    {renderMessageWithMentions('Hey @demo_user this is my message response!')}
-                  </p>
-
-                  {/* Reply, Reaction, Menu */}
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                    {/* Left: Reply + Reaction + Status */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
-                      <button 
-                        onClick={() => setReplyingTo({ messageId: 'msg2', username: 'You', preview: 'This is my message response!' })}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                          <polyline points="9 17 4 12 9 7"/>
-                          <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-                        </svg>
-                      </button>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
-                        <button 
-                          onClick={() => setShowReactionPicker(showReactionPicker === 'msg2' ? null : 'msg2')}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                            <line x1="9" y1="9" x2="9.01" y2="9"/>
-                            <line x1="15" y1="9" x2="15.01" y2="9"/>
-                          </svg>
-                        </button>
-                        {/* Reaction Picker */}
-                        {showReactionPicker === 'msg2' && (
-                          <div 
-                            ref={reactionPickerRef}
-                            style={{
-                              position: 'absolute',
-                              bottom: '25px',
-                              left: '0',
-                              backgroundColor: '#19191A',
-                              border: '1px solid transparent',
-                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                              backgroundOrigin: 'border-box',
-                              backgroundClip: 'padding-box, border-box',
-                              borderRadius: '20px',
-                              padding: '8px',
-                              display: 'flex',
-                              gap: '8px',
-                              zIndex: 100,
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                            }}>
-                            {reactionEmojis.map(emoji => (
-                              <button
-                                key={emoji}
-                                onClick={() => toggleReaction('msg2', emoji)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '18px',
-                                  padding: '4px',
-                                }}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {/* Message Status Indicator */}
-                      <div style={{ display: 'flex', alignItems: 'center', height: '16px' }}>
-                        {messageStatus === 'pending' && (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2" style={{ display: 'block' }}>
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                          </svg>
-                        )}
-                        {messageStatus === 'sent' && (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2" style={{ display: 'block' }}>
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        )}
-                        {messageStatus === 'delivered' && (
-                          <svg width="20" height="16" viewBox="0 0 24 16" fill="none" stroke="#5BC854" strokeWidth="2" style={{ display: 'block' }}>
-                            <polyline points="1 8 5 12 13 4"/>
-                            <polyline points="8 8 12 12 20 4"/>
-                          </svg>
-                        )}
-                        {messageStatus === 'failed' && (
-                        <button
-                          onClick={() => {
-                            console.log('Retrying message send...');
-                            setMessageStatus('pending');
-                            setTimeout(() => setMessageStatus('delivered'), 1000);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            height: '16px',
-                          }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E74C3C" strokeWidth="2" style={{ display: 'block' }}>
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
-                          </svg>
-                          <span style={{
-                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                            fontSize: '10px',
-                            color: '#E74C3C',
-                            lineHeight: '16px',
-                          }}>
-                            Retry
-                          </span>
-                        </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: 3 dots */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
-                        <circle cx="5" cy="12" r="2"/>
-                        <circle cx="12" cy="12" r="2"/>
-                        <circle cx="19" cy="12" r="2"/>
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Reactions Display */}
-                  {reactions['msg2'] && Object.keys(reactions['msg2']).length > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      gap: '4px',
-                      marginTop: '6px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {Object.entries(reactions['msg2']).map(([emoji, data]) => (
-                        <button
-                          key={emoji}
-                          onClick={() => toggleReaction('msg2', emoji)}
-                          style={{
-                            backgroundColor: data.userReacted ? '#2A3A2A' : '#242424',
-                            border: `1px solid ${data.userReacted ? '#5BC854' : '#333333'}`,
-                            borderRadius: '10px',
-                            padding: '2px 6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontSize: '12px' }}>{emoji}</span>
-                          <span style={{
-                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                            fontSize: '11px',
-                            color: data.userReacted ? '#5BC854' : '#B9B7B7',
-                          }}>
-                            {data.count}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-              </>
-            )}
-        </div>
-      </div>
-
-      {/* MESSAGE INPUT */}
-      <div 
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '15px 0 20px 0',
-          gap: '10px',
-        }}
-      >
-        {/* Reply Banner */}
-        {replyingTo && (
-          <div style={{
-            width: '90%',
-            backgroundColor: '#242424',
-            border: '1px solid transparent',
-            backgroundImage: 'linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'padding-box, border-box',
-            borderRadius: '15px',
-            padding: '10px 15px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-            <div style={{
-              flex: 1,
-              borderLeft: '2px solid #707070',
-              paddingLeft: '10px',
-            }}>
-              <div style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '11px',
-                color: '#B9B7B7',
-                marginBottom: '2px',
-              }}>
-                Replying to @{replyingTo.username}
-              </div>
-              <div style={{
-                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '12px',
-                color: '#707070',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {replyingTo.preview}
-              </div>
-            </div>
-            <button
-              onClick={() => setReplyingTo(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '5px',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-        )}
-
-        <div style={{ width: '90%', position: 'relative' }}>
-          {/* Mention Picker */}
-          {showMentionPicker && filteredMentionUsers.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '70px',
-              left: '0',
-              width: '100%',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              backgroundColor: '#19191A',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '15px',
-              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-              zIndex: 100,
-            }}>
-              {filteredMentionUsers.map((u, index) => (
-                <button
-                  key={u.id}
-                  onClick={() => insertMention(u.username)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    background: 'none',
-                    border: 'none',
-                    borderTop: index > 0 ? '1px solid #333333' : 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <RankedPFP rank={u.rank} size="small" showRankLabel={false} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '13px',
-                      color: '#D3D3D3',
-                    }}>
-                      @{u.username}
-                    </div>
-                    <div style={{
-                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: '10px',
-                      color: '#707070',
                     }}>
                       {u.rank}
                     </div>
@@ -1901,7 +1292,6 @@ export const ChatRoom = ({
             />
           </div>
         </div>
-      </div>
       </div>
 
       {/* Group Members Modal */}
