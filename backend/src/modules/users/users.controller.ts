@@ -36,6 +36,7 @@ export class UsersController {
       return {
         _id: (updatedUser as any)._id.toString(),
         id: (updatedUser as any)._id.toString(),
+        wallet_address: updatedUser.wallet_address,
         username: updatedUser.username,
         display_name: updatedUser.display_name,
         avatar_url: updatedUser.avatar_url,
