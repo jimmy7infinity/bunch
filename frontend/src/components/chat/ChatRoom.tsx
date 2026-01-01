@@ -49,6 +49,7 @@ export const ChatRoom = ({
   const [showMentionPicker, setShowMentionPicker] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [participants, setParticipants] = useState<any[]>([]);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const reactionPickerRef = useRef<HTMLDivElement>(null);
   const mentionPickerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +126,27 @@ export const ChatRoom = ({
       websocketService.leaveRoom(conversation._id);
     };
   }, [conversation._id, token, addMessage, setStoreMessages]);
+
+  // Load participants when messages change
+  useEffect(() => {
+    const uniqueUsers = new Map();
+    storeMessages.forEach(msg => {
+      if (msg.sender_id && typeof msg.sender_id === 'object') {
+        const userId = msg.sender_id._id || msg.sender_id.id;
+        if (userId && !uniqueUsers.has(userId)) {
+          uniqueUsers.set(userId, {
+            _id: userId,
+            id: userId,
+            username: msg.sender_id.username,
+            display_name: msg.sender_id.display_name,
+            avatar_url: msg.sender_id.avatar_url,
+            rank: msg.sender_id.rank || 'RECRUIT',
+          });
+        }
+      }
+    });
+    setParticipants(Array.from(uniqueUsers.values()));
+  }, [storeMessages]);
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -160,11 +182,11 @@ export const ChatRoom = ({
     { id: '5', username: 'diana_eth', rank: 'CHAMPION' },
   ];
   
-  const mentionableUsers = mockChatUsers;
+  const mentionableUsers = participants;
   
   // Filter users for mention autocomplete
-  const filteredMentionUsers = mockChatUsers.filter(u => 
-    u.username.toLowerCase().includes(mentionSearch.toLowerCase())
+  const filteredMentionUsers = participants.filter(u => 
+    u.username?.toLowerCase().includes(mentionSearch.toLowerCase())
   );
   
   // Handle message input change with @mention detection
@@ -1286,12 +1308,24 @@ export const ChatRoom = ({
                 boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
               }}
             >
-              {mentionableUsers.map((u) => (
+              {filteredMentionUsers.length === 0 ? (
+                <div style={{ 
+                  padding: '10px', 
+                  color: '#707070', 
+                  textAlign: 'center',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '13px',
+                }}>
+                  No users found
+                </div>
+              ) : (
+                filteredMentionUsers.map((u) => (
                 <button
-                  key={u.id}
+                  key={u._id || u.id}
                   onClick={() => {
-                    setMessage(prev => prev + u.username + ' ');
+                    insertMention(u.username);
                     setShowMentionPicker(false);
+                    setMentionSearch('');
                   }}
                   style={{
                     width: '100%',
@@ -1310,21 +1344,14 @@ export const ChatRoom = ({
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#242424'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                    <div style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    backgroundColor: '#2A2A2A',
-                    border: '1px solid #888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    }}>
-                    👤
-                    </div>
+                  <RankedPFP
+                    rank={u.rank || 'RECRUIT'}
+                    size="tiny"
+                    showRankLabel={false}
+                    avatarUrl={u.avatar_url}
+                  />
                   <div style={{ flex: 1, textAlign: 'left' }}>
-                    <div>{u.username}</div>
+                    <div>{u.display_name || u.username}</div>
                     <div style={{
                       fontSize: '10px',
                       color: '#707070',
@@ -1333,11 +1360,12 @@ export const ChatRoom = ({
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
                     }}>
-                      {u.rank}
+                      {u.rank || 'RECRUIT'}
                     </div>
                   </div>
                 </button>
-              ))}
+                ))
+              )}
             </div>
           )}
 
