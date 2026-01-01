@@ -66,6 +66,9 @@ export const ChatRoom = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaMenuRef = useRef<HTMLDivElement>(null);
   
+  // Use a ref to track the current conversation ID to prevent switching during operations
+  const currentConversationIdRef = useRef<string>(conversation._id);
+  
   // Get search results with context
   const searchResults = searchQuery.trim() 
     ? storeMessages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -85,6 +88,10 @@ export const ChatRoom = ({
   
   // Load messages and connect to WebSocket
   useEffect(() => {
+    // Update the current conversation ref
+    currentConversationIdRef.current = conversation._id;
+    console.log('[ChatRoom] Conversation changed to:', conversation._id, conversation.title || conversation.name);
+    
     // Clear messages immediately when conversation changes to prevent showing old chat
     setStoreMessages([]);
     setIsLoadingMessages(true);
@@ -366,59 +373,71 @@ export const ChatRoom = ({
       return;
     }
     
-    // Close the GIF picker first to prevent UI switching
+    // Use ref to get the conversation ID at the time of sending
+    const conversationIdAtSendTime = currentConversationIdRef.current;
+    
+    // Close the GIF picker BEFORE doing anything else
     setShowGifPicker(false);
     
-    try {
-      // Create optimistic message for GIF
-      const optimisticMessage = {
-        _id: `temp-${Date.now()}`,
-        conversation_id: conversation._id,
-        sender_id: {
-          _id: user?._id || user?.id || '',
-          id: user?.id || '',
-          username: user?.username || 'You',
-          display_name: user?.display_name || user?.username || 'You',
-          avatar_url: user?.avatar_url,
-          rank: user?.rank || 'RECRUIT',
-          wallet_address: user?.wallet_address || '',
-        },
-        text: gifUrl,
-        reactions: {},
-        created_at: new Date().toISOString(),
-        deleted: false,
-        reply_to: replyingTo ? {
-          _id: replyingTo.messageId,
-          sender_id: { username: replyingTo.username } as any,
-          preview: replyingTo.preview,
-        } : undefined,
-        mentions: [],
-        status: 'pending' as const,
-      };
-      
-      // Add optimistically to UI
-      addMessage(optimisticMessage);
-      
-      // Send via WebSocket
-      websocketService.sendMessage(
-        conversation._id,
-        gifUrl,
-        replyingTo?.messageId,
-        []
-      );
-      
-      setReplyingTo(null);
-      
-      // Scroll to bottom after sending GIF
-      setTimeout(() => {
-        if (chatWindowRef.current) {
-          chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    // Use setTimeout to ensure the picker closes and state updates before sending
+    setTimeout(() => {
+      try {
+        // Double-check we're still in the same conversation
+        if (conversationIdAtSendTime !== currentConversationIdRef.current) {
+          console.warn('Conversation changed while sending GIF, aborting');
+          return;
         }
-      }, 50);
-    } catch (error) {
-      console.error('Failed to send GIF:', error);
-      alert('Failed to send GIF. Please try again.');
-    }
+        
+        // Create optimistic message for GIF
+        const optimisticMessage = {
+          _id: `temp-${Date.now()}`,
+          conversation_id: conversationIdAtSendTime,
+          sender_id: {
+            _id: user?._id || user?.id || '',
+            id: user?.id || '',
+            username: user?.username || 'You',
+            display_name: user?.display_name || user?.username || 'You',
+            avatar_url: user?.avatar_url,
+            rank: user?.rank || 'RECRUIT',
+            wallet_address: user?.wallet_address || '',
+          },
+          text: gifUrl,
+          reactions: {},
+          created_at: new Date().toISOString(),
+          deleted: false,
+          reply_to: replyingTo ? {
+            _id: replyingTo.messageId,
+            sender_id: { username: replyingTo.username } as any,
+            preview: replyingTo.preview,
+          } : undefined,
+          mentions: [],
+          status: 'pending' as const,
+        };
+        
+        // Add optimistically to UI
+        addMessage(optimisticMessage);
+        
+        // Send via WebSocket
+        websocketService.sendMessage(
+          conversationIdAtSendTime,
+          gifUrl,
+          replyingTo?.messageId,
+          []
+        );
+        
+        setReplyingTo(null);
+        
+        // Scroll to bottom after sending GIF
+        setTimeout(() => {
+          if (chatWindowRef.current && currentConversationIdRef.current === conversationIdAtSendTime) {
+            chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+          }
+        }, 50);
+      } catch (error) {
+        console.error('Failed to send GIF:', error);
+        alert('Failed to send GIF. Please try again.');
+      }
+    }, 10);
   };
   
   // Handle image upload
