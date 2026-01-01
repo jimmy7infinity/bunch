@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { tenorService, type TenorGif } from '../../services/tenor';
+import { mediaService } from '../../services/api';
+
+interface TenorGif {
+  id: string;
+  title: string;
+  media_formats: {
+    gif: {
+      url: string;
+      dims: [number, number];
+      size: number;
+    };
+    tinygif: {
+      url: string;
+      dims: [number, number];
+      size: number;
+    };
+  };
+}
 
 interface GifPickerProps {
   isOpen: boolean;
@@ -11,26 +28,19 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
   const [searchQuery, setSearchQuery] = useState('');
   const [gifs, setGifs] = useState<TenorGif[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [trendingTerms, setTrendingTerms] = useState<string[]>([]);
 
-  // Load featured/trending GIFs on mount
+  // Load featured GIFs on mount
   useEffect(() => {
     if (isOpen) {
       loadFeaturedGifs();
-      loadTrendingTerms();
     }
   }, [isOpen]);
 
   const loadFeaturedGifs = async () => {
     setIsLoading(true);
-    const featured = await tenorService.getFeaturedGifs(30);
+    const featured = await mediaService.getFeaturedGifs();
     setGifs(featured);
     setIsLoading(false);
-  };
-
-  const loadTrendingTerms = async () => {
-    const terms = await tenorService.getTrendingSearchTerms();
-    setTrendingTerms(terms.slice(0, 10));
   };
 
   const handleSearch = async (query: string) => {
@@ -40,7 +50,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
       return;
     }
     setIsLoading(true);
-    const results = await tenorService.searchGifs(query, 30);
+    const results = await mediaService.searchGifs(query);
     setGifs(results);
     setIsLoading(false);
   };
@@ -132,36 +142,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
             }}
           />
 
-          {/* Trending Terms */}
-          {!searchQuery && trendingTerms.length > 0 && (
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              marginTop: '10px',
-              flexWrap: 'wrap',
-            }}>
-              {trendingTerms.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => handleSearch(term)}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: '#242424',
-                    border: '1px solid #5BC854',
-                    borderRadius: '15px',
-                    color: '#5BC854',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A2A'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#242424'}
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Trending Terms - Removed, backend doesn't provide this yet */}
         </div>
 
         {/* GIF Grid */}

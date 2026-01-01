@@ -268,6 +268,34 @@ export const blockService = {
   },
 };
 
+// Media service for GIFs and images
+export const mediaService = {
+  async searchGifs(query: string) {
+    const response = await api.post('/media/search-gifs', null, {
+      params: { q: query }
+    });
+    return response.data.results || [];
+  },
+
+  async getFeaturedGifs() {
+    const response = await api.post('/media/featured-gifs');
+    return response.data.results || [];
+  },
+
+  async uploadImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/media/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data.url;
+  },
+};
+
 export default api;
 
 

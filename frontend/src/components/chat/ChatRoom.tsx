@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { websocketService } from '../../services/websocket';
-import { messageService } from '../../services/api';
-import { cloudinaryService } from '../../services/cloudinary';
+import { messageService, mediaService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
@@ -303,11 +302,23 @@ export const ChatRoom = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (!cloudinaryService.isValidImageFile(file)) return;
+    // Validate file
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      alert('Image must be less than 10MB');
+      return;
+    }
     
     setIsUploadingImage(true);
     try {
-      const imageUrl = await cloudinaryService.uploadImage(file);
+      const imageUrl = await mediaService.uploadImage(file);
       
       // Send image URL as message
       websocketService.sendMessage(
@@ -1667,7 +1678,6 @@ export const ChatRoom = ({
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <span style={{ fontSize: '16px' }}>GIF</span>
-                    <span>Search GIFs</span>
                   </button>
                   <div style={{ height: '1px', backgroundColor: '#333' }} />
                   <button
@@ -1697,7 +1707,6 @@ export const ChatRoom = ({
                       <circle cx="8.5" cy="8.5" r="1.5"/>
                       <polyline points="21 15 16 10 5 21"/>
                     </svg>
-                    <span>Upload Image</span>
                   </button>
                 </div>
               )}
@@ -1745,7 +1754,12 @@ export const ChatRoom = ({
               value={message}
               onChange={handleMessageChange}
               onKeyDown={(e) => {
+                // If mention picker is open and Enter is pressed, close it and let message send
                 if (e.key === 'Enter' && !e.shiftKey) {
+                  if (showMentionPicker) {
+                    setShowMentionPicker(false);
+                    setMentionSearch('');
+                  }
                   e.preventDefault();
                   handleSendMessage();
                 }
