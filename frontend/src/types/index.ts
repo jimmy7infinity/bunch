@@ -43,7 +43,8 @@ export interface ChatRoom {
   is_favorite?: boolean;
   has_ai_feed?: boolean;
   has_notifications?: boolean;
-  last_message?: Message;
+  last_message?: Message; // Legacy, kept for compatibility
+  last_message_id?: Message; // New populated field
   created_at?: string;
   updated_at?: string;
 }

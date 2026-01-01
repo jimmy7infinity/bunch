@@ -34,6 +34,9 @@ export class Conversation {
   @Prop()
   last_message_at?: Date;
 
+  @Prop({ type: Types.ObjectId, ref: 'Message' })
+  last_message_id?: Types.ObjectId;
+
   @Prop({ type: Object, default: {} })
   metadata?: Record<string, any>;
 

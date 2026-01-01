@@ -153,6 +153,13 @@ export class ChatService {
   async getGlobalChats() {
     return this.conversationModel
       .find({ type: 'global' })
+      .populate({
+        path: 'last_message_id',
+        populate: {
+          path: 'sender_id',
+          select: 'username display_name avatar_url rank',
+        },
+      })
       .sort({ last_message_at: -1 })
       .exec();
   }
@@ -350,9 +357,10 @@ export class ChatService {
 
     await message.save();
 
-    // Update conversation's last_message_at
+    // Update conversation's last_message_at and last_message_id
     await this.conversationModel.findByIdAndUpdate(conversationId, {
       last_message_at: new Date(),
+      last_message_id: message._id,
     }).exec();
 
     return message;

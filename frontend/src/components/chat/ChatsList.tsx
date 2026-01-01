@@ -758,15 +758,15 @@ export const ChatsList = () => {
               {chat.title || chat.name || 'Untitled'}
             </span>
 
-            {/* Right: Bell + Star Buttons */}
+            {/* Right: AI Insights + Star Buttons */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* Push Notifications Bell Button - Blue when active */}
+              {/* AI Insights Button - Purple when active */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleNotifications(chat._id);
+                  toggleNotifications(chat._id); // Reusing same toggle for now, will rename later
                 }}
-                className="chat-card-bell-button"
+                className="chat-card-ai-button"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -783,26 +783,26 @@ export const ChatsList = () => {
                 }}
               >
                 {chat.has_notifications ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientBlueCard)">
+                  // AI Active - Purple gradient sparkle
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#aiGradientPurpleCard)">
                     <defs>
-                      <linearGradient id="bellGradientBlueCard" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#60A5FA" />
-                        <stop offset="100%" stopColor="#3B82F6" />
+                      <linearGradient id="aiGradientPurpleCard" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#A78BFA" />
+                        <stop offset="100%" stopColor="#7C3AED" />
                       </linearGradient>
                     </defs>
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="url(#bellGradientBlueCard)" fill="none" strokeWidth="2"/>
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#bellGradientOffCard)" strokeWidth="2">
+                  // AI Inactive - Grey sparkle
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#aiGradientOffCard)" strokeWidth="2">
                     <defs>
-                      <linearGradient id="bellGradientOffCard" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <linearGradient id="aiGradientOffCard" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#B3B3B3" />
                         <stop offset="100%" stopColor="#888888" />
                       </linearGradient>
                     </defs>
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                   </svg>
                 )}
               </button>
@@ -866,12 +866,12 @@ export const ChatsList = () => {
             }}
           >
             {/* Last Message Sender PFP with Rank Border */}
-            {chat.last_message?.sender_id ? (
+            {chat.last_message_id?.sender_id ? (
               <RankedPFP
-                rank={chat.last_message.sender_id.rank || 'RECRUIT'}
+                rank={chat.last_message_id.sender_id.rank || 'RECRUIT'}
                 size="tiny"
                 showRankLabel={false}
-                avatarUrl={chat.last_message.sender_id.avatar_url}
+                avatarUrl={chat.last_message_id.sender_id.avatar_url}
               />
             ) : (
               <div
@@ -921,7 +921,7 @@ export const ChatsList = () => {
                 whiteSpace: 'nowrap',
                 width: '100%',
               }}>
-                {chat.last_message?.text || chat.metadata?.description || 'No messages yet'}
+                {chat.last_message_id?.text || chat.metadata?.description || 'No messages yet'}
               </p>
             </div>
           </div>
