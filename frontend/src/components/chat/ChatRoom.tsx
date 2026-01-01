@@ -1059,7 +1059,11 @@ export const ChatRoom = ({
                           </div>
                         )}
 
-                          {/* Message Bubble */}
+                          {/* Check if message is an image/GIF */}
+                          {(() => {
+                            const isImageMessage = msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com');
+                            
+                            return (
                           <div
                             style={{
                               backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
@@ -1070,9 +1074,10 @@ export const ChatRoom = ({
                               backgroundOrigin: 'border-box',
                               backgroundClip: 'padding-box, border-box',
                               borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
-                              padding: '8px 12px',
-                              minWidth: '90px',
+                              padding: isImageMessage ? '0' : '8px 12px', // No padding for images
+                              minWidth: isImageMessage ? 'auto' : '90px',
                               maxWidth: 'calc(100% - 65px)',
+                              overflow: 'hidden', // Ensure image doesn't overflow
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
                               boxShadow: highlightedMessageId === msg._id 
@@ -1081,6 +1086,8 @@ export const ChatRoom = ({
                               transition: 'box-shadow 0.3s ease',
                             }}
                           >
+                          {!isImageMessage && (
+                            <>
                           {/* Username - positioned at start of straight edge */}
                           <span style={{
                             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1134,24 +1141,37 @@ export const ChatRoom = ({
                               </div>
                             </div>
                           )}
+                          </>
+                          )}
 
                           {/* Message Content - Image, GIF, or Text */}
                           {msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com') ? (
+                            // Image/GIF - flush with bubble edges
                             <img
                               src={msg.text}
                               alt="Shared media"
                               style={{
-                                maxWidth: '100%',
+                                width: '100%',
                                 maxHeight: '300px',
-                                borderRadius: '10px',
-                                marginBottom: '4px',
+                                objectFit: 'cover',
+                                borderRadius: isOwnMessage ? '20px 20px 0 20px' : (isAI ? '10px' : '20px 20px 20px 0'),
+                                display: 'block',
+                                margin: '0',
+                                padding: '0',
                               }}
                               onError={(e) => {
                                 // If image fails to load, show as text instead
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement?.appendChild(
-                                  document.createTextNode(msg.text)
-                                );
+                                const textNode = document.createElement('p');
+                                textNode.textContent = msg.text;
+                                textNode.style.cssText = `
+                                  font-family: Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif;
+                                  font-size: 12px;
+                                  color: ${isAI ? '#60F6AB' : '#D3D3D3'};
+                                  margin: 0 0 4px 0;
+                                  padding: 8px 12px;
+                                `;
+                                e.currentTarget.parentElement?.appendChild(textNode);
                               }}
                             />
                           ) : (
@@ -1503,9 +1523,10 @@ export const ChatRoom = ({
                     </div>
                   )}
                 </div>
+                            );
+                          })()}
               </div>
             </div>
-                  );
                 })}
               </>
             )}
