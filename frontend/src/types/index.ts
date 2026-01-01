@@ -12,6 +12,7 @@ export interface User {
 
 export interface Message {
   _id: string;
+  conversation_id: string; // Add conversation ID to track which conversation this message belongs to
   sender_id: User;
   text: string;
   reactions: Record<string, string[]>;

@@ -30,6 +30,12 @@ export const ChatRoom = ({
     deleteMessage: deleteStoreMessage,
     updateMessageReactions 
   } = useChatStore();
+  
+  // Filter messages to only show messages for THIS conversation
+  const conversationMessages = storeMessages.filter(
+    msg => msg.conversation_id === conversation._id
+  );
+  
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(conversation.is_favorite || false);
   const [hasNotifications, setHasNotifications] = useState(conversation.has_notifications || false);
@@ -43,7 +49,7 @@ export const ChatRoom = ({
   const onlineCount = conversation.participant_count || 0;
   
   // Use actual message count instead of isEmpty prop
-  const isEmpty = !isLoadingMessages && storeMessages.length === 0;
+  const isEmpty = !isLoadingMessages && conversationMessages.length === 0;
   
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
@@ -71,7 +77,7 @@ export const ChatRoom = ({
   
   // Get search results with context
   const searchResults = searchQuery.trim() 
-    ? storeMessages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? conversationMessages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
   
   // Scroll to a specific message
@@ -127,24 +133,27 @@ export const ChatRoom = ({
 
     // Listen for new messages
     const unsubscribeNew = websocketService.onMessageNew((message) => {
-      // Check if this is replacing an optimistic message
-      // Remove any temp messages from the same sender with similar timestamp (within 2 seconds)
-      const currentMessages = storeMessages;
+      console.log('[ChatRoom] Received new message for conversation:', message.conversation_id);
+      
+      // Get current messages from the store
+      const currentMessages = useChatStore.getState().messages;
+      
       if (!Array.isArray(currentMessages)) {
         setStoreMessages([message]);
         return;
       }
       
-      // Remove temp messages that match
+      // Remove temp messages that match this real message
       const filtered = currentMessages.filter(m => {
         if (!m._id.startsWith('temp-')) return true; // Keep real messages
         
-        // Remove if same sender and text
+        // Remove if same sender, text, and conversation
+        const isSameConversation = m.conversation_id === message.conversation_id;
         const isSameSender = (m.sender_id?._id === message.sender_id?._id || m.sender_id?.id === message.sender_id?.id);
         const isSameText = m.text === message.text;
         const timeDiff = Math.abs(new Date(m.created_at).getTime() - new Date(message.created_at).getTime());
         
-        return !(isSameSender && isSameText && timeDiff < 5000); // Remove if match
+        return !(isSameConversation && isSameSender && isSameText && timeDiff < 5000);
       });
       
       // Add the new real message
@@ -179,7 +188,7 @@ export const ChatRoom = ({
   // Load participants when messages change
   useEffect(() => {
     const uniqueUsers = new Map();
-    storeMessages.forEach(msg => {
+    conversationMessages.forEach(msg => {
       if (msg.sender_id && typeof msg.sender_id === 'object') {
         const userId = msg.sender_id._id || msg.sender_id.id;
         if (userId && !uniqueUsers.has(userId)) {
@@ -195,11 +204,11 @@ export const ChatRoom = ({
       }
     });
     setParticipants(Array.from(uniqueUsers.values()));
-  }, [storeMessages]);
+  }, [conversationMessages]);
   
   // Auto-scroll to bottom only when appropriate (new messages, not reactions/deletes)
   useEffect(() => {
-    if (!chatWindowRef.current || storeMessages.length === 0) return;
+    if (!chatWindowRef.current || conversationMessages.length === 0) return;
     
     const chatWindow = chatWindowRef.current;
     const isNearBottom = chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight < 100;
@@ -209,7 +218,7 @@ export const ChatRoom = ({
     if (isNearBottom) {
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-  }, [storeMessages.length]); // Only trigger on message count change, not on every update
+  }, [conversationMessages.length]); // Only trigger on message count change, not on every update
   
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -555,7 +564,7 @@ export const ChatRoom = ({
     if (!user) return;
     
     const currentUserId = user._id || user.id || '';
-    const message = storeMessages.find(m => m._id === messageId);
+    const message = conversationMessages.find(m => m._id === messageId);
     
     if (!message) return;
     
@@ -1146,7 +1155,7 @@ export const ChatRoom = ({
             ) : (
               <>
                 {/* Render actual messages from database */}
-                {Array.isArray(storeMessages) && storeMessages.map((msg) => {
+                {Array.isArray(conversationMessages) && conversationMessages.map((msg) => {
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
