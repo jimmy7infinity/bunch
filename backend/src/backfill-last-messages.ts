@@ -39,12 +39,12 @@ async function backfillLastMessages() {
         // Update the conversation with the last message
         await conversationModel.findByIdAndUpdate(conversation._id, {
           last_message_id: lastMessage._id,
-          last_message_at: lastMessage.createdAt || lastMessage.created_at,
+          last_message_at: lastMessage.created_at,
         }).exec();
         
         updated++;
         console.log(
-          `✓ Updated conversation "${conversation.title || conversation._id}" with last message from ${lastMessage.createdAt || lastMessage.created_at}`,
+          `✓ Updated conversation "${conversation.title || conversation._id}" with last message from ${lastMessage.created_at}`,
         );
       } else {
         skipped++;
