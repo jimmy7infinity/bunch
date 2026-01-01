@@ -85,9 +85,12 @@ export const ChatRoom = ({
   
   // Load messages and connect to WebSocket
   useEffect(() => {
+    // Clear messages immediately when conversation changes to prevent showing old chat
+    setStoreMessages([]);
+    setIsLoadingMessages(true);
+    
     const loadMessages = async () => {
       try {
-        setIsLoadingMessages(true);
         const response = await messageService.getMessages(conversation._id, 50);
         setStoreMessages(response.data || []);
       } catch (error) {
@@ -1042,10 +1045,9 @@ export const ChatRoom = ({
                 marginLeft: isOwnMessage ? '0' : (isAI ? '0' : '93px'),
                 marginRight: isOwnMessage ? '93px' : '0',
               }}>
-                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                {/* Delivery status ticks for own messages */}
+                {/* Delivery status ticks for own messages - before time */}
                 {isOwnMessage && (
-                  <span style={{ marginLeft: '4px', fontSize: '10px' }}>
+                  <span style={{ marginRight: '4px', fontSize: '10px' }}>
                     {msg.status === 'pending' && '○'} {/* Single circle - sending */}
                     {msg.status === 'sent' && '✓'} {/* Single tick - sent */}
                     {(msg.status === 'delivered' || !msg.status) && '✓✓'} {/* Double tick - delivered */}
@@ -1053,6 +1055,7 @@ export const ChatRoom = ({
                     {msg.status === 'failed' && '✗'} {/* X - failed */}
                   </span>
                 )}
+                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
 
                       {/* Message Container */}
