@@ -329,9 +329,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           display: 'flex', 
           flexDirection: 'column',
           alignItems: 'center', 
-          gap: '10px',
+          gap: '5px',
           width: '90%',
           maxWidth: '400px',
+          marginTop: '-5px',
         }}>
           {isEditingUsername && isOwnProfile ? (
             <>
@@ -419,6 +420,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginTop: '1px',
                   }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
@@ -580,40 +584,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                 </svg>
               </button>
             )}
-
-            {/* Message Button - only enabled for friends */}
-            <button
-              onClick={() => {
-                if (friendshipStatus === 'friends') {
-                  // TODO: Open DM with this user
-                  alert('Opening DM... (to be implemented)');
-                }
-              }}
-              className="profile-pill-button"
-              disabled={friendshipStatus !== 'friends'}
-              style={{
-                flex: 1,
-                height: '40px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: friendshipStatus === 'friends' 
-                  ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #3A8B3E)'
-                  : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #404040, #2A2A2A)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: friendshipStatus === 'friends' ? 'pointer' : 'not-allowed',
-                gap: '6px',
-                opacity: friendshipStatus === 'friends' ? 1 : 0.5,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={friendshipStatus === 'friends' ? '#5BC854' : '#666'} strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </button>
 
             {/* Block Button */}
             <button
