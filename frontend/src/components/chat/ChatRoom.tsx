@@ -865,14 +865,14 @@ export const ChatRoom = ({
                 borderRadius: '20px',
                 transition: 'background-color 0.3s ease',
               }}>
-              {/* Time - positioned above bubble */}
+              {/* Time - positioned above the straight part of bubble */}
               <span style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: '10px',
                 color: '#707070',
                 alignSelf: isOwnMessage ? 'flex-end' : (isAI ? 'center' : 'flex-start'),
-                marginLeft: isOwnMessage ? '0' : (isAI ? '0' : '60px'),
-                marginRight: isOwnMessage ? '60px' : '0',
+                marginLeft: isOwnMessage ? '0' : (isAI ? '0' : '93px'),
+                marginRight: isOwnMessage ? '93px' : '0',
               }}>
                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
@@ -900,64 +900,49 @@ export const ChatRoom = ({
                           </div>
                         )}
 
-                        {/* Message Bubble and Username Container */}
-                        <div style={{ flex: 1, maxWidth: 'calc(100% - 65px)', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: isOwnMessage ? 'flex-end' : 'flex-start' }}>
-                          {/* Username - outside bubble for self, inside for others */}
-                          {isOwnMessage && (
-                            <span style={{
-                              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                              fontSize: '10px',
-                              color: '#909090',
-                              marginRight: '12px',
-                            }}>
-                              You
-                            </span>
-                          )}
+                        {/* Message Bubble */}
+                        <div
+                          style={{
+                            backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
+                            border: '1px solid transparent',
+                            backgroundImage: isAI 
+                              ? 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)'
+                              : (isOwnMessage 
+                                ? 'linear-gradient(#5A5A5A, #5A5A5A), linear-gradient(135deg, #707070, #333333)'
+                                : 'linear-gradient(#242424, #242424), linear-gradient(135deg, #918E8E, #484646)'),
+                            backgroundOrigin: 'border-box',
+                            backgroundClip: 'padding-box, border-box',
+                            borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
+                            padding: '8px 12px',
+                            maxWidth: 'calc(100% - 65px)',
+                            wordWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                          }}
+                        >
+                          {/* Username - positioned at start of straight edge */}
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '10px',
+                            color: isAI ? '#60F6AB' : '#909090',
+                            display: 'block',
+                            marginBottom: '4px',
+                            marginLeft: isOwnMessage ? '0' : (isAI ? '0' : '20px'),
+                            marginRight: isOwnMessage ? '20px' : '0',
+                            textAlign: isAI ? 'center' : (isOwnMessage ? 'right' : 'left'),
+                          }}>
+                            {isOwnMessage ? 'You' : senderName}
+                          </span>
 
-                          {/* Message Bubble */}
-                          <div
-                            style={{
-                              backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
-                              border: '1px solid transparent',
-                              backgroundImage: isAI 
-                                ? 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)'
-                                : (isOwnMessage 
-                                  ? 'linear-gradient(#5A5A5A, #5A5A5A), linear-gradient(135deg, #707070, #333333)'
-                                  : 'linear-gradient(#242424, #242424), linear-gradient(135deg, #918E8E, #484646)'),
-                              backgroundOrigin: 'border-box',
-                              backgroundClip: 'padding-box, border-box',
-                              borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
-                              padding: '8px 12px',
-                              maxWidth: '100%',
-                              wordWrap: 'break-word',
-                              whiteSpace: 'pre-wrap',
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                            }}
-                          >
-                            {/* Username - inside bubble for others and AI */}
-                            {!isOwnMessage && (
-                              <span style={{
-                                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                                fontSize: '10px',
-                                color: isAI ? '#60F6AB' : '#909090',
-                                display: 'block',
-                                marginBottom: '4px',
-                                marginLeft: isAI ? '0' : '20px',
-                                textAlign: isAI ? 'center' : 'left',
-                              }}>
-                                {senderName}
-                              </span>
-                            )}
-
-                            {/* Message Text */}
-                            <p style={{
-                              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                              fontSize: '12px',
-                              color: isAI ? '#60F6AB' : '#D3D3D3',
-                              margin: '0 0 4px 0',
-                            }}>
-                              {renderMessageWithMentions(msg.text)}
-                            </p>
+                          {/* Message Text */}
+                          <p style={{
+                            fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '12px',
+                            color: isAI ? '#60F6AB' : '#D3D3D3',
+                            margin: '0 0 4px 0',
+                          }}>
+                            {renderMessageWithMentions(msg.text)}
+                          </p>
 
                   {/* Reply, Reaction, Menu */}
                   <div style={{ 
@@ -1137,9 +1122,8 @@ export const ChatRoom = ({
                       ))}
                     </div>
                   )}
-                          </div>
-                        </div>
-                      </div>
+                </div>
+              </div>
             </div>
                   );
                 })}
