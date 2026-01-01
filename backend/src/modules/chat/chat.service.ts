@@ -419,13 +419,16 @@ export class ChatService {
   /**
    * Delete a message
    */
-  async deleteMessage(messageId: string, userId: string): Promise<void> {
-    await this.messageModel
+  async deleteMessage(messageId: string, userId: string): Promise<any> {
+    const message = await this.messageModel
       .findOneAndUpdate(
         { _id: messageId, sender_id: userId },
         { deleted: true },
+        { new: true }
       )
       .exec();
+    
+    return message;
   }
 
   /**

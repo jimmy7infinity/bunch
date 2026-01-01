@@ -104,7 +104,26 @@ export const ChatRoom = ({
 
     // Listen for new messages
     const unsubscribeNew = websocketService.onMessageNew((message) => {
-      addMessage(message);
+      // Check if this is replacing an optimistic message
+      // Remove any temp messages from the same sender with similar timestamp (within 2 seconds)
+      setStoreMessages(prev => {
+        if (!Array.isArray(prev)) return [message];
+        
+        // Remove temp messages that match
+        const filtered = prev.filter(m => {
+          if (!m._id.startsWith('temp-')) return true; // Keep real messages
+          
+          // Remove if same sender and text
+          const isSameSender = (m.sender_id?._id === message.sender_id?._id || m.sender_id?.id === message.sender_id?.id);
+          const isSameText = m.text === message.text;
+          const timeDiff = Math.abs(new Date(m.created_at).getTime() - new Date(message.created_at).getTime());
+          
+          return !(isSameSender && isSameText && timeDiff < 5000); // Remove if match
+        });
+        
+        // Add the new real message
+        return [...filtered, message];
+      });
     });
 
     // Listen for message updates
@@ -114,15 +133,28 @@ export const ChatRoom = ({
 
     // Listen for reaction updates
     const unsubscribeReaction = websocketService.onMessageReaction((data) => {
-      setStoreMessages(prev => prev.map(m => 
-        m._id === data.messageId ? { ...m, reactions: data.reactions } : m
-      ));
+      setStoreMessages(prev => {
+        if (!Array.isArray(prev)) return [];
+        return prev.map(m => 
+          m._id === data.messageId ? { ...m, reactions: data.reactions } : m
+        );
+      });
+    });
+
+    // Listen for deleted messages
+    const unsubscribeDeleted = websocketService.onMessageDeleted((data) => {
+      setStoreMessages(prev => {
+        if (!Array.isArray(prev)) return [];
+        return prev.filter(m => m._id !== data.messageId);
+      });
+      setShowMessageMenu(null); // Close menu if open
     });
 
     return () => {
       unsubscribeNew();
       unsubscribeUpdated();
       unsubscribeReaction();
+      unsubscribeDeleted();
       websocketService.leaveRoom(conversation._id);
     };
   }, [conversation._id, token, addMessage, setStoreMessages]);
@@ -255,6 +287,35 @@ export const ChatRoom = ({
     try {
       // Extract mentions
       const mentions = message.match(/@(\w+)/g)?.map(m => m.substring(1)) || [];
+      
+      // Create optimistic message
+      const optimisticMessage = {
+        _id: `temp-${Date.now()}`, // Temporary ID
+        conversation_id: conversation._id,
+        sender_id: {
+          _id: currentUser?._id || currentUser?.id || '',
+          id: currentUser?.id || '',
+          username: currentUser?.username || 'You',
+          display_name: currentUser?.display_name || currentUser?.username || 'You',
+          avatar_url: currentUser?.avatar_url,
+          rank: currentUser?.rank || 'RECRUIT',
+          wallet_address: currentUser?.wallet_address || '',
+        },
+        text: message.trim(),
+        reactions: {},
+        created_at: new Date().toISOString(),
+        deleted: false,
+        reply_to: replyingTo ? {
+          _id: replyingTo.messageId,
+          sender_id: { username: replyingTo.username } as any,
+          preview: replyingTo.preview,
+        } : undefined,
+        mentions,
+        status: 'pending' as const, // Mark as pending
+      };
+      
+      // Add optimistically to UI
+      addMessage(optimisticMessage);
       
       // Send via WebSocket
       websocketService.sendMessage(

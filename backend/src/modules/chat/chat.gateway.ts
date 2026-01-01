@@ -262,12 +262,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const { messageId } = data;
 
-      // Delete message
-      await this.chatService.deleteMessage(messageId, userId);
+      // Delete message and get the message to find conversation
+      const deletedMessage = await this.chatService.deleteMessage(messageId, userId);
+      
+      if (!deletedMessage) {
+        return { error: 'Message not found or unauthorized' };
+      }
 
-      // Note: We'd need to get the conversation ID first to broadcast properly
-      // For now, we'll emit to the client only
-      client.emit('message:deleted', { messageId });
+      // Broadcast to all users in the conversation
+      const conversationId = deletedMessage.conversation_id.toString();
+      this.server.to(`conversation:${conversationId}`).emit('message:deleted', { messageId });
 
       return { success: true };
     } catch (error) {
