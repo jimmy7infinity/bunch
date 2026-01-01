@@ -303,6 +303,7 @@ export const ChatsList = () => {
               rank={user?.rank || 'RECRUIT'} 
               size="tiny" 
               showRankLabel={false}
+              borderOnly={true}
               avatarUrl={user?.avatar_url}
             />
           </div>
@@ -865,12 +866,13 @@ export const ChatsList = () => {
               padding: '0 20px',
             }}
           >
-            {/* Last Message Sender PFP with Rank Border */}
+            {/* Last Message Sender PFP with Rank Border (borderOnly mode) */}
             {chat.last_message_id?.sender_id ? (
               <RankedPFP
                 rank={chat.last_message_id.sender_id.rank || 'RECRUIT'}
                 size="tiny"
                 showRankLabel={false}
+                borderOnly={true}
                 avatarUrl={chat.last_message_id.sender_id.avatar_url}
               />
             ) : (

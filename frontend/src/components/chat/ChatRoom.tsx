@@ -1527,7 +1527,6 @@ export const ChatRoom = ({
                           })()}
               </div>
             </div>
-                })}
               </>
             )}
           </div>

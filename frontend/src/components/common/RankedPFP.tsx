@@ -7,6 +7,8 @@ interface RankedPFPProps {
   avatarUrl?: string;
   size?: 'tiny' | 'small' | 'medium' | 'chat' | 'large' | 'xlarge' | 'xlarge125' | 'xxlarge';
   showRankLabel?: boolean;
+  borderOnly?: boolean; // Only show colored border, no accent or rank label
+  borderColor?: string; // Override border color (for borderOnly mode)
 }
 
 // Base size is 50x50 from Figma
@@ -27,6 +29,8 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
   avatarUrl,
   size = 'medium',
   showRankLabel = true,
+  borderOnly = false,
+  borderColor,
 }) => {
   const rankColors = getRankColors(rank);
   const scale = SIZES[size];
@@ -53,12 +57,17 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
   const shadowScale = Math.min(scale, 2); // Cap shadow scaling at 2x
   const pfpShadow = `${-1 * shadowScale}px ${-1 * shadowScale}px ${2 * shadowScale}px 0 rgba(255, 255, 255, 0.08), ${10 * shadowScale}px ${10 * shadowScale}px ${20 * shadowScale}px 0 rgba(0, 0, 0, 0.25)`;
 
+  // Determine border style
+  const borderStyle = borderColor 
+    ? borderColor // Use provided solid color
+    : `linear-gradient(135deg, ${rankColors.pfpBorder.topLeft}, ${rankColors.pfpBorder.bottomRight})`; // Use rank gradient
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: `${gap}px`,
+      gap: borderOnly ? 0 : `${gap}px`, // No gap in borderOnly mode
     }}>
       {/* PFP with gradient border and rank accent */}
       <div style={{ 
@@ -71,7 +80,7 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
             width: `${pfpSize}px`,
             height: `${pfpSize}px`,
             borderRadius: '50%',
-            background: `linear-gradient(135deg, ${rankColors.pfpBorder.topLeft}, ${rankColors.pfpBorder.bottomRight})`,
+            background: borderStyle,
             padding: `${borderWidth}px`,
             display: 'flex',
             alignItems: 'center',
@@ -106,8 +115,8 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
           </div>
         </div>
         
-        {/* Rank Accent Overlay */}
-        {rankColors.hasAccent && rankColors.accentFile && (
+        {/* Rank Accent Overlay - hidden in borderOnly mode */}
+        {!borderOnly && rankColors.hasAccent && rankColors.accentFile && (
           <div
             style={{
               position: 'absolute',
@@ -132,8 +141,8 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
         )}
       </div>
 
-      {/* Rank Label */}
-      {showRankLabel && (
+      {/* Rank Label - hidden in borderOnly mode */}
+      {!borderOnly && showRankLabel && (
         <div
           style={{
             width: `${rankWidth}px`, // Fixed width, not minWidth
