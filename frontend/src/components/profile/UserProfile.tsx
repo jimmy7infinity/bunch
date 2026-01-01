@@ -521,22 +521,38 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               <span style={{
                 fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: '16px',
-                background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}>
-                {displayName || username || 'loading...'}
+                <span style={{
+                  background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>
+                  {displayName || username || 'loading...'}
+                </span>
                 {displayName && displayName !== username && (
                   <>
                     <span style={{ color: '#505050' }}>|</span>
-                    <span style={{ opacity: 0.7 }}>@{username}</span>
+                    <span style={{
+                      background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      opacity: 0.7,
+                    }}>@{username}</span>
                   </>
                 )}
-                {!displayName && <>@{username || 'loading...'}</>}
+                {!displayName && (
+                  <span style={{
+                    background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>@{username || 'loading...'}</span>
+                )}
               </span>
               {isOwnProfile && (
                 <button

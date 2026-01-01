@@ -173,7 +173,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
                   key={gif.id}
                   onClick={() => {
                     onSelectGif(gif.media_formats.gif.url);
-                    onClose();
+                    // Don't call onClose() here - let parent handle it
                   }}
                   style={{
                     cursor: 'pointer',

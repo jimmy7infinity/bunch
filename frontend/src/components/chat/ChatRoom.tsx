@@ -366,6 +366,9 @@ export const ChatRoom = ({
       return;
     }
     
+    // Close the GIF picker first to prevent UI switching
+    setShowGifPicker(false);
+    
     try {
       // Create optimistic message for GIF
       const optimisticMessage = {
@@ -396,6 +399,7 @@ export const ChatRoom = ({
       // Add optimistically to UI
       addMessage(optimisticMessage);
       
+      // Send via WebSocket
       websocketService.sendMessage(
         conversation._id,
         gifUrl,
