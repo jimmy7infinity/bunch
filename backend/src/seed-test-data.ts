@@ -59,6 +59,7 @@ async function seed() {
         bio: 'ETH maxi | DeFi researcher',
         status: 'active',
         role: 'user',
+        rank: 'LEGEND+',
         is_online: true,
       },
       {
@@ -70,6 +71,7 @@ async function seed() {
         bio: 'Day trader | Options strategist',
         status: 'active',
         role: 'moderator',
+        rank: 'TITAN',
         is_online: true,
       },
       {
@@ -81,6 +83,7 @@ async function seed() {
         bio: 'NFT collector | Web3 builder',
         status: 'active',
         role: 'user',
+        rank: 'LEGEND',
         is_online: false,
       },
       {
@@ -92,6 +95,7 @@ async function seed() {
         bio: 'Smart contract developer',
         status: 'active',
         role: 'user',
+        rank: 'DIAMOND',
         is_online: true,
       },
       {
@@ -103,6 +107,7 @@ async function seed() {
         bio: 'Risk analyst | Market maker',
         status: 'active',
         role: 'user',
+        rank: 'PLATINUM',
         is_online: false,
       },
       {
@@ -114,6 +119,7 @@ async function seed() {
         bio: 'HODL since 2013',
         status: 'active',
         role: 'user',
+        rank: 'GOLD',
         is_online: true,
       },
       {
@@ -125,6 +131,7 @@ async function seed() {
         bio: 'Data scientist | ML engineer',
         status: 'active',
         role: 'user',
+        rank: 'SILVER',
         is_online: true,
       },
       {
@@ -136,6 +143,7 @@ async function seed() {
         bio: 'Whale watcher | Macro investor',
         status: 'active',
         role: 'user',
+        rank: 'BRONZE',
         is_online: false,
       },
       {
@@ -147,6 +155,7 @@ async function seed() {
         bio: 'AI researcher | Prediction models',
         status: 'active',
         role: 'user',
+        rank: 'SILVER',
         is_online: true,
       },
       {
@@ -158,6 +167,7 @@ async function seed() {
         bio: 'Controversial takes',
         status: 'active',
         role: 'user',
+        rank: 'BRONZE',
         is_online: true,
       },
       {
@@ -169,6 +179,7 @@ async function seed() {
         bio: 'Crypto promoter',
         status: 'suspended',
         role: 'user',
+        rank: 'BRONZE',
         suspended_until: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
         is_online: false,
       },

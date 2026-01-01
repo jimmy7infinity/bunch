@@ -47,9 +47,9 @@ export const ChatsList = () => {
   const toggleFavorite = async (chatId: string) => {
     try {
       const result = await roomService.toggleFavorite(chatId);
-      setChats(prev => prev.map(chat => 
+    setChats(prev => prev.map(chat => 
         chat._id === chatId ? { ...chat, is_favorite: result.is_favorite } : chat
-      ));
+    ));
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
     }
@@ -58,9 +58,9 @@ export const ChatsList = () => {
   const toggleNotifications = async (chatId: string) => {
     try {
       const result = await roomService.toggleNotifications(chatId);
-      setChats(prev => prev.map(chat => 
+    setChats(prev => prev.map(chat => 
         chat._id === chatId ? { ...chat, has_notifications: result.has_notifications } : chat
-      ));
+    ));
     } catch (error) {
       console.error('Failed to toggle notifications:', error);
     }

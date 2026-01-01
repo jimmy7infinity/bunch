@@ -131,11 +131,14 @@ export const ChatRoom = ({
       if (showReactionPicker && reactionPickerRef.current && !reactionPickerRef.current.contains(event.target as Node)) {
         setShowReactionPicker(null);
       }
+      if (showMessageMenu && messageMenuRef.current && !messageMenuRef.current.contains(event.target as Node)) {
+        setShowMessageMenu(null);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showReactionPicker]);
+  }, [showReactionPicker, showMessageMenu]);
   
   // Reaction emojis
   const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😱', '🤬', '🔫'];
@@ -886,27 +889,15 @@ export const ChatRoom = ({
                         {!isAI && (
                           <div
                             onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?.id || (msg.sender_id as any)?._id)}
-                            style={{
-                              width: '35px',
-                              height: '35px',
-                              minWidth: '35px',
-                              borderRadius: '50%',
-                              border: '1px solid #888888',
-                  display: 'flex', 
-                  alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: '#2A2A2A',
-                              overflow: 'hidden',
-                              filter: 'grayscale(100%)',
-                              cursor: !isOwnMessage ? 'pointer' : 'default',
-                            }}
-                    >
-                            {msg.sender_id?.avatar_url ? (
-                              <img src={msg.sender_id.avatar_url} alt={senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <span style={{ fontSize: '16px' }}>👤</span>
-                            )}
-                  </div>
+                            style={{ cursor: !isOwnMessage ? 'pointer' : 'default', flexShrink: 0 }}
+                          >
+                            <RankedPFP 
+                              rank={msg.sender_id?.rank || 'BRONZE'} 
+                              size="medium" 
+                              showRankLabel={true}
+                              avatarUrl={msg.sender_id?.avatar_url}
+                            />
+                          </div>
                         )}
 
                         {/* Message Bubble */}
@@ -1024,60 +1015,83 @@ export const ChatRoom = ({
                 </div>
 
                             {/* Right: Menu */}
-                            {!isAI && isOwnMessage && (
-                      <button 
+                            {!isAI && (
+                              <button 
                                 onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px', position: 'relative' }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
-                                  <circle cx="12" cy="12" r="1"/>
-                                  <circle cx="12" cy="5" r="1"/>
-                                  <circle cx="12" cy="19" r="1"/>
-                        </svg>
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
+                                  <circle cx="5" cy="12" r="2"/>
+                                  <circle cx="12" cy="12" r="2"/>
+                                  <circle cx="19" cy="12" r="2"/>
+                                </svg>
                                 {showMessageMenu === msg._id && (
-                          <div 
+                                  <div 
                                     ref={messageMenuRef}
-                            style={{
-                              position: 'absolute',
+                                    style={{
+                                      position: 'absolute',
                                       bottom: '20px',
                                       right: '0',
-                              backgroundColor: '#19191A',
-                              border: '1px solid transparent',
-                              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                              backgroundOrigin: 'border-box',
-                              backgroundClip: 'padding-box, border-box',
+                                      backgroundColor: '#19191A',
+                                      border: '1px solid transparent',
+                                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                      backgroundOrigin: 'border-box',
+                                      backgroundClip: 'padding-box, border-box',
                                       borderRadius: '15px',
-                              padding: '8px',
-                              display: 'flex',
+                                      padding: '8px',
+                                      display: 'flex',
                                       flexDirection: 'column',
                                       gap: '4px',
                                       minWidth: '120px',
-                              zIndex: 100,
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                                      zIndex: 100,
+                                      boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                     }}
                                   >
-                        <button
-                          onClick={() => {
-                                        messageService.deleteMessage(msg._id);
-                                        setShowMessageMenu(null);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                                        color: '#FF4444',
-                            cursor: 'pointer',
-                                        padding: '6px 10px',
-                                        textAlign: 'left',
-                                        fontSize: '12px',
-                                        borderRadius: '8px',
-                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                                      }}
-                                    >
-                                      Delete
-                        </button>
-                      </div>
+                                    {isOwnMessage ? (
+                                      <button
+                                        onClick={() => {
+                                          messageService.deleteMessage(msg._id);
+                                          setShowMessageMenu(null);
+                                        }}
+                                        style={{
+                                          background: 'none',
+                                          border: 'none',
+                                          color: '#FF4444',
+                                          cursor: 'pointer',
+                                          padding: '6px 10px',
+                                          textAlign: 'left',
+                                          fontSize: '12px',
+                                          borderRadius: '8px',
+                                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                        }}
+                                      >
+                                        Delete
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          // TODO: Implement report functionality
+                                          console.log('Report message:', msg._id);
+                                          setShowMessageMenu(null);
+                                        }}
+                                        style={{
+                                          background: 'none',
+                                          border: 'none',
+                                          color: '#FF4444',
+                                          cursor: 'pointer',
+                                          padding: '6px 10px',
+                                          textAlign: 'left',
+                                          fontSize: '12px',
+                                          borderRadius: '8px',
+                                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                        }}
+                                      >
+                                        Report
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
-                    </button>
+                              </button>
                             )}
                   </div>
 
@@ -1302,7 +1316,6 @@ export const ChatRoom = ({
               rows={1}
             />
         </div>
-      </div>
       </div>
 
       {/* Group Members Modal */}
