@@ -881,9 +881,9 @@ export const ChatRoom = ({
                       <div style={{
                         display: 'flex',
                         flexDirection: isOwnMessage ? 'row-reverse' : 'row',
-                        alignItems: 'flex-start',
+                        alignItems: 'flex-end',
                         gap: '10px',
-                  width: '100%',
+                        width: '100%',
                       }}>
                         {/* PFP */}
                         {!isAI && (
@@ -892,7 +892,7 @@ export const ChatRoom = ({
                             style={{ cursor: !isOwnMessage ? 'pointer' : 'default', flexShrink: 0 }}
                           >
                             <RankedPFP 
-                              rank={msg.sender_id?.rank || 'BRONZE'} 
+                              rank={msg.sender_id?.rank || 'RECRUIT'} 
                               size="medium" 
                               showRankLabel={true}
                               avatarUrl={msg.sender_id?.avatar_url}
@@ -1210,7 +1210,8 @@ export const ChatRoom = ({
         <div
           className="message-input-container"
           style={{
-            width: '100%',
+            width: '90%',
+            marginTop: '10px',
             minHeight: '60px',
             backgroundColor: '#19191A',
             border: '1px solid transparent',

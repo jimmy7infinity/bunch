@@ -195,7 +195,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Populate sender info
       const populatedMessage = await (message as any).populate([
-        { path: 'sender_id', select: 'username display_name avatar_url' },
+        { path: 'sender_id', select: 'username display_name avatar_url rank' },
         { path: 'reply_to', select: 'text sender_id', populate: { path: 'sender_id', select: 'username' } },
       ]);
 

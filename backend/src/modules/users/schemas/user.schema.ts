@@ -35,7 +35,7 @@ export class User {
   @Prop()
   bio?: string;
 
-  @Prop({ default: 'BRONZE' })
+  @Prop({ default: 'RECRUIT' })
   rank?: string;
 
   @Prop({ enum: ['active', 'banned', 'suspended'], default: 'active' })
