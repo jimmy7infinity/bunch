@@ -57,7 +57,7 @@ export const ChatsList = () => {
     };
 
     loadChats();
-  }, [activeChatCategory]);
+  }, [activeChatCategory, viewMode]); // Reload when returning to chat list
   
   const toggleFavorite = async (chatId: string) => {
     try {
@@ -95,12 +95,25 @@ export const ChatsList = () => {
     // TODO: Implement actual group creation API call
   };
 
+  // Refresh chat list
+  const refreshChats = async () => {
+    try {
+      const rooms = await roomService.getRooms(activeChatCategory);
+      setChats(rooms);
+    } catch (error) {
+      console.error('Failed to refresh chats:', error);
+    }
+  };
+
   // Handle chat selection
   if (selectedChat && viewMode === 'chats') {
     return (
       <ChatRoom 
         conversation={selectedChat}
-        onBack={() => setSelectedChat(null)}
+        onBack={async () => {
+          setSelectedChat(null);
+          await refreshChats(); // Refresh chat list when returning
+        }}
         onUserClick={(userId) => {
           setSelectedUserId(userId);
           setViewMode('other-profile');
