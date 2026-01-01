@@ -5,6 +5,7 @@ import { websocketService } from '../../services/websocket';
 import { messageService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { RankedPFP } from '../common/RankedPFP';
+import { getRankColors } from '../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatRoom.css';
 
@@ -256,51 +257,13 @@ export const ChatRoom = ({
     }
   });
 
-  const toggleReaction = (messageId: string, emoji: string) => {
-    setReactions(prev => {
-      const messageReactions = prev[messageId] || {};
-      const currentReaction = messageReactions[emoji];
-      
-      if (currentReaction) {
-        // Reaction exists
-        if (currentReaction.userReacted) {
-          // Remove user's reaction
-          const newCount = currentReaction.count - 1;
-          if (newCount === 0) {
-            // Remove emoji entirely
-            const { [emoji]: removed, ...rest } = messageReactions;
-            return { ...prev, [messageId]: rest };
-          } else {
-            return {
-              ...prev,
-              [messageId]: {
-                ...messageReactions,
-                [emoji]: { count: newCount, userReacted: false }
-              }
-            };
-          }
-        } else {
-          // Add user's reaction
-          return {
-            ...prev,
-            [messageId]: {
-              ...messageReactions,
-              [emoji]: { count: currentReaction.count + 1, userReacted: true }
-            }
-          };
-        }
-      } else {
-        // New reaction
-        return {
-          ...prev,
-          [messageId]: {
-            ...messageReactions,
-            [emoji]: { count: 1, userReacted: true }
-          }
-        };
-      }
-    });
-    setShowReactionPicker(null);
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    try {
+      await websocketService.reactToMessage(messageId, emoji);
+      setShowReactionPicker(null);
+    } catch (error) {
+      console.error('Failed to toggle reaction:', error);
+    }
   };
 
   // Mock members data - will be replaced with actual API call
@@ -851,6 +814,10 @@ export const ChatRoom = ({
                   const isOwnMessage = msg.sender_id?.id === user?.id || (msg.sender_id as any)?._id === user?.id;
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
+                  const senderRank = msg.sender_id?.rank || 'RECRUIT';
+                  
+                  // Get rank colors for border
+                  const rankColors = getRankColors(senderRank);
                   
                   return (
             <div 
@@ -892,7 +859,7 @@ export const ChatRoom = ({
                             style={{ cursor: !isOwnMessage ? 'pointer' : 'default', flexShrink: 0 }}
                           >
                             <RankedPFP 
-                              rank={msg.sender_id?.rank || 'RECRUIT'} 
+                              rank={senderRank} 
                               size="medium" 
                               showRankLabel={true}
                               avatarUrl={msg.sender_id?.avatar_url}
@@ -900,26 +867,25 @@ export const ChatRoom = ({
                           </div>
                         )}
 
-                        {/* Message Bubble */}
-                        <div
-                          style={{
-                            backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
-                            border: '1px solid transparent',
-                            backgroundImage: isAI 
-                              ? 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)'
-                              : (isOwnMessage 
-                                ? 'linear-gradient(#5A5A5A, #5A5A5A), linear-gradient(135deg, #707070, #333333)'
-                                : 'linear-gradient(#242424, #242424), linear-gradient(135deg, #918E8E, #484646)'),
-                            backgroundOrigin: 'border-box',
-                            backgroundClip: 'padding-box, border-box',
-                            borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
-                            padding: '8px 12px',
-                            maxWidth: 'calc(100% - 65px)',
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
-                          }}
-                        >
+                          {/* Message Bubble */}
+                          <div
+                            style={{
+                              backgroundColor: isAI ? '#065C60' : (isOwnMessage ? '#5A5A5A' : '#242424'),
+                              border: '1px solid transparent',
+                              backgroundImage: isAI 
+                                ? 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)'
+                                : `linear-gradient(${isOwnMessage ? '#5A5A5A' : '#242424'}, ${isOwnMessage ? '#5A5A5A' : '#242424'}), linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`,
+                              backgroundOrigin: 'border-box',
+                              backgroundClip: 'padding-box, border-box',
+                              borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0'),
+                              padding: '8px 12px',
+                              minWidth: '180px',
+                              maxWidth: 'calc(100% - 65px)',
+                              wordWrap: 'break-word',
+                              whiteSpace: 'pre-wrap',
+                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                            }}
+                          >
                           {/* Username - positioned at start of straight edge */}
                           <span style={{
                             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1016,11 +982,22 @@ export const ChatRoom = ({
                   )}
                 </div>
 
-                            {/* Right: Menu */}
+                            {/* Right: Menu - positioned after curved corner */}
                             {!isAI && (
                               <button 
                                 onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px', position: 'relative' }}
+                                style={{ 
+                                  background: 'none', 
+                                  border: 'none', 
+                                  cursor: 'pointer', 
+                                  padding: 0, 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  height: '16px', 
+                                  position: 'relative',
+                                  marginLeft: isOwnMessage ? '0' : '20px',
+                                  marginRight: isOwnMessage ? '20px' : '0',
+                                }}
                               >
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
                                   <circle cx="5" cy="12" r="2"/>
@@ -1051,9 +1028,13 @@ export const ChatRoom = ({
                                   >
                                     {isOwnMessage ? (
                                       <button
-                                        onClick={() => {
-                                          messageService.deleteMessage(msg._id);
-                                          setShowMessageMenu(null);
+                                        onClick={async () => {
+                                          try {
+                                            await websocketService.deleteMessage(msg._id);
+                                            setShowMessageMenu(null);
+                                          } catch (error) {
+                                            console.error('Failed to delete message:', error);
+                                          }
                                         }}
                                         style={{
                                           background: 'none',
@@ -1097,27 +1078,38 @@ export const ChatRoom = ({
                             )}
                   </div>
 
-                  {/* Reactions Display */}
-                          {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                            <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
-                              {Object.entries(msg.reactions).map(([emoji, userIds]) => (
+                  {/* Reactions Display - with full-width background */}
+                  {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                    <div style={{ 
+                      backgroundColor: '#19191A',
+                      marginLeft: '-12px',
+                      marginRight: '-12px',
+                      marginBottom: '-8px',
+                      padding: '8px 12px',
+                      borderBottomLeftRadius: isOwnMessage ? '0' : (isAI ? '20px' : '32.5px'),
+                      borderBottomRightRadius: isOwnMessage ? '32.5px' : (isAI ? '20px' : '32.5px'),
+                      display: 'flex', 
+                      gap: '4px', 
+                      flexWrap: 'wrap',
+                    }}>
+                      {Object.entries(msg.reactions).map(([emoji, userIds]) => (
                         <button
                           key={emoji}
-                                  onClick={() => toggleReaction(msg._id, emoji)}
+                          onClick={() => toggleReaction(msg._id, emoji)}
                           style={{
-                                    backgroundColor: '#242424',
-                                    border: '1px solid #333',
-                                    borderRadius: '12px',
+                            backgroundColor: '#242424',
+                            border: '1px solid #333',
+                            borderRadius: '12px',
                             padding: '2px 6px',
-                                    fontSize: '12px',
-                                    cursor: 'pointer',
+                            fontSize: '12px',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '3px',
                           }}
                         >
-                                  <span>{emoji}</span>
-                                  <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
+                          <span>{emoji}</span>
+                          <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
                         </button>
                       ))}
                     </div>
