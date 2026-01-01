@@ -236,11 +236,27 @@ export const ChatRoom = ({
   
   // Handle sending messages
   const handleSendMessage = () => {
-    if (!message.trim() || connectionStatus !== 'connected') return;
+    console.log('handleSendMessage called', { 
+      messageLength: message.trim().length, 
+      connectionStatus,
+      isConnected: websocketService.isConnected()
+    });
+    
+    if (!message.trim()) {
+      console.log('Message is empty, not sending');
+      return;
+    }
+    
+    if (connectionStatus !== 'connected') {
+      console.log('Not connected, status:', connectionStatus);
+      return;
+    }
     
     try {
       // Extract mentions
       const mentions = message.match(/@(\w+)/g)?.map(m => m.substring(1)) || [];
+      
+      console.log('Sending message:', { text: message.trim(), mentions, replyTo: replyingTo?.messageId });
       
       // Send via WebSocket
       websocketService.sendMessage(
@@ -256,7 +272,7 @@ export const ChatRoom = ({
       setShowMentionPicker(false);
       setMentionSearch('');
       
-      // Message will be added via WebSocket event
+      console.log('Message sent successfully');
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
@@ -884,9 +900,6 @@ export const ChatRoom = ({
                 flexDirection: 'column',
                 width: '100%',
                 gap: '4px',
-                        backgroundColor: highlightedMessageId === msg._id ? 'rgba(96, 246, 171, 0.1)' : 'transparent',
-                borderRadius: '20px',
-                transition: 'background-color 0.3s ease',
               }}>
               {/* Time - positioned above the straight part of bubble */}
               <span style={{
@@ -939,7 +952,10 @@ export const ChatRoom = ({
                               maxWidth: 'calc(100% - 65px)',
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
-                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                              boxShadow: highlightedMessageId === msg._id 
+                                ? '0 0 0 3px rgba(91, 200, 84, 0.4), -2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)'
+                                : '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                              transition: 'box-shadow 0.3s ease',
                             }}
                           >
                           {/* Username - positioned at start of straight edge */}
@@ -1440,6 +1456,7 @@ export const ChatRoom = ({
             border: '1px solid #333',
             borderRadius: '10px',
             padding: '8px 12px',
+            marginTop: '10px',
             marginBottom: '5px',
             display: 'flex',
             justifyContent: 'space-between',
