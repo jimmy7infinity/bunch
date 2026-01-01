@@ -22,6 +22,7 @@ export interface Message {
     _id: string;
     sender_id: User;
     preview: string;
+    text?: string; // Added for backward compatibility
   };
   // Mention tracking
   mentions?: string[];
@@ -35,10 +36,12 @@ export interface Message {
 
 export interface ChatRoom {
   _id: string;
-  name: string;
-  type: 'global' | 'market' | 'private';
+  name?: string;
+  title?: string; // Added for backend compatibility
+  type: 'global' | 'market' | 'private' | 'dm' | 'group'; // Added dm and group
   description?: string;
-  member_count: number;
+  member_count?: number;
+  participant_count?: number; // Added for backend compatibility
   online_count?: number;
   is_favorite?: boolean;
   has_ai_feed?: boolean;

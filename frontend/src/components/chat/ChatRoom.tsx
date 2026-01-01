@@ -7,7 +7,7 @@ import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
 import { getRankColors } from '../../utils/ranks';
-import type { ChatRoom as ChatRoomType } from '../../types';
+import type { ChatRoom as ChatRoomType, Message } from '../../types';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
@@ -22,7 +22,7 @@ export const ChatRoom = ({
   onUserClick,
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
-  const { messages: storeMessages, addMessage, setMessages: setStoreMessages, connectionStatus } = useChatStore();
+  const { messages: storeMessages, addMessage, setMessages: setStoreMessages } = useChatStore();
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(conversation.is_favorite || false);
   const [hasNotifications, setHasNotifications] = useState(conversation.has_notifications || false);
@@ -51,7 +51,6 @@ export const ChatRoom = ({
   const messageMenuRef = useRef<HTMLDivElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const [messageStatus, setMessageStatus] = useState<'pending' | 'sent' | 'delivered' | 'failed'>('delivered');
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState<string | null>(null);
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -106,47 +105,56 @@ export const ChatRoom = ({
     const unsubscribeNew = websocketService.onMessageNew((message) => {
       // Check if this is replacing an optimistic message
       // Remove any temp messages from the same sender with similar timestamp (within 2 seconds)
-      setStoreMessages(prev => {
-        if (!Array.isArray(prev)) return [message];
+      const currentMessages = storeMessages;
+      if (!Array.isArray(currentMessages)) {
+        setStoreMessages([message]);
+        return;
+      }
+      
+      // Remove temp messages that match
+      const filtered = currentMessages.filter(m => {
+        if (!m._id.startsWith('temp-')) return true; // Keep real messages
         
-        // Remove temp messages that match
-        const filtered = prev.filter(m => {
-          if (!m._id.startsWith('temp-')) return true; // Keep real messages
-          
-          // Remove if same sender and text
-          const isSameSender = (m.sender_id?._id === message.sender_id?._id || m.sender_id?.id === message.sender_id?.id);
-          const isSameText = m.text === message.text;
-          const timeDiff = Math.abs(new Date(m.created_at).getTime() - new Date(message.created_at).getTime());
-          
-          return !(isSameSender && isSameText && timeDiff < 5000); // Remove if match
-        });
+        // Remove if same sender and text
+        const isSameSender = (m.sender_id?._id === message.sender_id?._id || m.sender_id?.id === message.sender_id?.id);
+        const isSameText = m.text === message.text;
+        const timeDiff = Math.abs(new Date(m.created_at).getTime() - new Date(message.created_at).getTime());
         
-        // Add the new real message
-        return [...filtered, message];
+        return !(isSameSender && isSameText && timeDiff < 5000); // Remove if match
       });
+      
+      // Add the new real message
+      setStoreMessages([...filtered, message]);
     });
 
     // Listen for message updates
     const unsubscribeUpdated = websocketService.onMessageUpdated((message) => {
-      setStoreMessages(prev => prev.map(m => m._id === message._id ? message : m));
+      const currentMessages = storeMessages;
+      setStoreMessages(currentMessages.map(m => m._id === message._id ? message : m));
     });
 
     // Listen for reaction updates
     const unsubscribeReaction = websocketService.onMessageReaction((data) => {
-      setStoreMessages(prev => {
-        if (!Array.isArray(prev)) return [];
-        return prev.map(m => 
+      const currentMessages = storeMessages;
+      if (!Array.isArray(currentMessages)) {
+        setStoreMessages([]);
+        return;
+      }
+      setStoreMessages(
+        currentMessages.map(m => 
           m._id === data.messageId ? { ...m, reactions: data.reactions } : m
-        );
-      });
+        )
+      );
     });
 
     // Listen for deleted messages
     const unsubscribeDeleted = websocketService.onMessageDeleted((data) => {
-      setStoreMessages(prev => {
-        if (!Array.isArray(prev)) return [];
-        return prev.filter(m => m._id !== data.messageId);
-      });
+      const currentMessages = storeMessages;
+      if (!Array.isArray(currentMessages)) {
+        setStoreMessages([]);
+        return;
+      }
+      setStoreMessages(currentMessages.filter(m => m._id !== data.messageId));
       setShowMessageMenu(null); // Close menu if open
     });
 
@@ -211,7 +219,6 @@ export const ChatRoom = ({
   // Mock users for mentions - will be replaced with API
   
   // Use participants as mentionable users
-  const mentionableUsers = participants;
   
   // Filter users for mention autocomplete
   const filteredMentionUsers = participants.filter(u => 
@@ -293,13 +300,13 @@ export const ChatRoom = ({
         _id: `temp-${Date.now()}`, // Temporary ID
         conversation_id: conversation._id,
         sender_id: {
-          _id: currentUser?._id || currentUser?.id || '',
-          id: currentUser?.id || '',
-          username: currentUser?.username || 'You',
-          display_name: currentUser?.display_name || currentUser?.username || 'You',
-          avatar_url: currentUser?.avatar_url,
-          rank: currentUser?.rank || 'RECRUIT',
-          wallet_address: currentUser?.wallet_address || '',
+          _id: user?._id || user?.id || '',
+          id: user?.id || '',
+          username: user?.username || 'You',
+          display_name: user?.display_name || user?.username || 'You',
+          avatar_url: user?.avatar_url,
+          rank: user?.rank || 'RECRUIT',
+          wallet_address: user?.wallet_address || '',
         },
         text: message.trim(),
         reactions: {},
@@ -418,9 +425,9 @@ export const ChatRoom = ({
             onClick={(e) => {
               e.stopPropagation();
               const username = part.substring(1);
-              const mentionedUser = mockChatUsers.find(u => u.username === username);
+              const mentionedUser = participants.find(u => u.username === username);
               if (mentionedUser) {
-                onUserClick?.(mentionedUser.id);
+                onUserClick?.(mentionedUser._id || mentionedUser.id);
               }
             }}
           >
@@ -432,22 +439,7 @@ export const ChatRoom = ({
     });
   };
   
-  // Mock reactions state - will be replaced with API
-  const [reactions, setReactions] = useState<{
-    [messageId: string]: {
-      [emoji: string]: { count: number; userReacted: boolean }
-    }
-  }>({
-    'msg1': {
-      '❤️': { count: 3, userReacted: false },
-      '👍': { count: 5, userReacted: true },
-    },
-    'msg2': {
-      '😂': { count: 2, userReacted: false },
-      '🔥': { count: 1, userReacted: false },
-    }
-  });
-
+  
   const toggleReaction = async (messageId: string, emoji: string) => {
     try {
       await websocketService.reactToMessage(messageId, emoji);
@@ -1527,6 +1519,8 @@ export const ChatRoom = ({
                           })()}
               </div>
             </div>
+                  );
+                })}
               </>
             )}
           </div>
