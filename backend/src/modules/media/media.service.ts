@@ -9,14 +9,22 @@ export class MediaService {
   private readonly tenorBaseUrl = 'https://tenor.googleapis.com/v2';
 
   constructor() {
-    this.tenorApiKey = process.env.TENOR_API_KEY;
+    this.tenorApiKey = process.env.TENOR_API_KEY || '';
+    
+    if (!this.tenorApiKey) {
+      console.warn('⚠️ TENOR_API_KEY not set in environment variables');
+    }
     
     // Configure Cloudinary
     cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+      api_key: process.env.CLOUDINARY_API_KEY || '',
+      api_secret: process.env.CLOUDINARY_API_SECRET || '',
     });
+    
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.warn('⚠️ Cloudinary credentials not fully set in environment variables');
+    }
   }
 
   async searchGifs(query: string, limit = 20) {
@@ -63,8 +71,10 @@ export class MediaService {
           if (error) {
             console.error('Cloudinary upload error:', error);
             reject(new HttpException('Failed to upload image', HttpStatus.INTERNAL_SERVER_ERROR));
-          } else {
+          } else if (result) {
             resolve(result.secure_url);
+          } else {
+            reject(new HttpException('Upload completed but no result returned', HttpStatus.INTERNAL_SERVER_ERROR));
           }
         }
       );
