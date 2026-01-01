@@ -260,7 +260,7 @@ async function seed() {
       slug: 'politics',
       title: 'Politics',
       is_private: false,
-      participant_count: 0,
+      participant_count: 332,  // Estimated active users in global chat
       last_message_at: new Date(Date.now() - 1000 * 60 * 3),
       metadata: { description: 'Political predictions and discussion' },
     });
@@ -270,7 +270,7 @@ async function seed() {
       slug: 'crypto',
       title: 'Crypto',
       is_private: false,
-      participant_count: 0,
+      participant_count: 245,  // Estimated active users in global chat
       last_message_at: new Date(Date.now() - 1000 * 60 * 8),
       metadata: { description: 'Cryptocurrency and blockchain' },
     });
@@ -280,7 +280,7 @@ async function seed() {
       market_id: 'polymarket:stranger-things-s5-death',
       title: 'Who will die in Stranger Things Season 5?',
       is_private: false,
-      participant_count: 0,
+      participant_count: 156,  // Users interested in this market
       last_message_at: new Date(Date.now() - 1000 * 60 * 1),
       metadata: {
         category: 'entertainment',

@@ -18,7 +18,7 @@ export const ChatRoom = ({
   conversation,
   onBack,
   onUserClick,
-  isEmpty = false
+  isEmpty: _isEmpty
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
   const { messages: storeMessages, addMessage, setMessages: setStoreMessages, connectionStatus } = useChatStore();
@@ -33,6 +33,16 @@ export const ChatRoom = ({
   const chatName = conversation.title || conversation.name || 'Chat';
   const chatType = conversation.type;
   const onlineCount = conversation.participant_count || 0;
+  
+  // Use actual message count instead of isEmpty prop
+  const isEmpty = !isLoadingMessages && storeMessages.length === 0;
+  
+  console.log('ChatRoom DEBUG:', { 
+    conversationId: conversation._id, 
+    messageCount: storeMessages.length,
+    isEmpty, 
+    isLoadingMessages 
+  });
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ messageId: string; username: string; preview: string } | null>(null);
@@ -828,105 +838,362 @@ export const ChatRoom = ({
               </div>
             ) : (
               <>
-            {/* AI Message */}
-            <div 
-              ref={el => { messageRefs.current['ai1'] = el; }}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                width: '100%',
-                gap: '4px',
-                backgroundColor: highlightedMessageId === 'ai1' ? 'rgba(96, 246, 171, 0.1)' : 'transparent',
+                {/* Render actual messages from database */}
+                {storeMessages.map((msg, index) => {
+                  const isOwnMessage = msg.sender_id?.id === user?.id || msg.sender_id?._id === user?.id;
+                  const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
+                  const isAI = msg.is_ai === true;
+                  
+                  return (
+                    <div 
+                      key={msg._id}
+                      ref={el => { messageRefs.current[msg._id] = el; }}
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        width: '100%',
+                        gap: '4px',
+                        backgroundColor: highlightedMessageId === msg._id ? 'rgba(96, 246, 171, 0.1)' : 'transparent',
+                        borderRadius: '20px',
+                        transition: 'background-color 0.3s ease',
+                      }}>
+                      {/* Time - centered above bubble */}
+                      <span style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '10px',
+                        color: '#707070',
+                        alignSelf: isOwnMessage ? 'flex-end' : (isAI ? 'center' : 'flex-start'),
+                        marginLeft: isOwnMessage ? '0' : (isAI ? '0' : '50px'),
+                        marginRight: isOwnMessage ? '50px' : '0',
+                      }}>
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+
+                      {/* Message Container */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: isOwnMessage ? 'row-reverse' : 'row',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        width: '100%',
+                      }}>
+                        {/* PFP */}
+                        {!isAI && (
+                          <div
+                            onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?.id || msg.sender_id?._id)}
+                            style={{
+                              width: '35px',
+                              height: '35px',
+                              minWidth: '35px',
+                              borderRadius: '50%',
+                              border: '1px solid #888888',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#2A2A2A',
+                              overflow: 'hidden',
+                              filter: 'grayscale(100%)',
+                              cursor: !isOwnMessage ? 'pointer' : 'default',
+                            }}
+                          >
+                            {msg.sender_id?.avatar_url ? (
+                              <img src={msg.sender_id.avatar_url} alt={senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: '16px' }}>👤</span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Message Bubble */}
+                        <div
+                          className={isAI ? "ai-message-bubble" : "message-bubble"}
+                          style={{
+                            flex: 1,
+                            maxWidth: 'calc(100% - 65px)',
+                            wordWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                          }}
+                        >
+                          {/* Username */}
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '10px',
+                            color: '#909090',
+                            display: 'block',
+                            marginBottom: '4px',
+                            textAlign: isAI ? 'center' : 'left',
+                          }}>
+                            {isOwnMessage ? 'You' : senderName}
+                          </span>
+
+                          {/* Message Text */}
+                          <p style={{
+                            fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '12px',
+                            color: '#D3D3D3',
+                            margin: '0 0 4px 0',
+                          }}>
+                            {renderMessageWithMentions(msg.text)}
+                          </p>
+
+                          {/* Reply, Reaction, Menu */}
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}>
+                            {/* Left: Reply + Reaction */}
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
+                              {!isAI && (
+                                <>
+                                  <button 
+                                    onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                      <polyline points="9 17 4 12 9 7"/>
+                                      <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+                                    </svg>
+                                  </button>
+                                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '16px' }}>
+                                    <button 
+                                      onClick={() => setShowReactionPicker(showReactionPicker === msg._id ? null : msg._id)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
+                                    >
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                                      </svg>
+                                    </button>
+                                    {showReactionPicker === msg._id && (
+                                      <div 
+                                        ref={reactionPickerRef}
+                                        style={{
+                                          position: 'absolute',
+                                          bottom: '25px',
+                                          left: '0',
+                                          backgroundColor: '#19191A',
+                                          border: '1px solid transparent',
+                                          backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                          backgroundOrigin: 'border-box',
+                                          backgroundClip: 'padding-box, border-box',
+                                          borderRadius: '20px',
+                                          padding: '8px',
+                                          display: 'flex',
+                                          gap: '8px',
+                                          zIndex: 100,
+                                          boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                                        }}>
+                                        {reactionEmojis.map(emoji => (
+                                          <button
+                                            key={emoji}
+                                            onClick={() => toggleReaction(msg._id, emoji)}
+                                            style={{
+                                              background: 'none',
+                                              border: 'none',
+                                              cursor: 'pointer',
+                                              fontSize: '18px',
+                                              padding: '4px',
+                                            }}
+                                          >
+                                            {emoji}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Right: Menu */}
+                            {!isAI && isOwnMessage && (
+                              <button 
+                                onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px', position: 'relative' }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="1"/>
+                                  <circle cx="12" cy="5" r="1"/>
+                                  <circle cx="12" cy="19" r="1"/>
+                                </svg>
+                                {showMessageMenu === msg._id && (
+                                  <div
+                                    ref={messageMenuRef}
+                                    style={{
+                                      position: 'absolute',
+                                      bottom: '20px',
+                                      right: '0',
+                                      backgroundColor: '#19191A',
+                                      border: '1px solid transparent',
+                                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                                      backgroundOrigin: 'border-box',
+                                      backgroundClip: 'padding-box, border-box',
+                                      borderRadius: '15px',
+                                      padding: '8px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '4px',
+                                      minWidth: '120px',
+                                      zIndex: 100,
+                                      boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+                                    }}
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        messageService.deleteMessage(msg._id);
+                                        setShowMessageMenu(null);
+                                      }}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#FF4444',
+                                        cursor: 'pointer',
+                                        padding: '6px 10px',
+                                        textAlign: 'left',
+                                        fontSize: '12px',
+                                        borderRadius: '8px',
+                                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Reactions Display */}
+                          {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
+                              {Object.entries(msg.reactions).map(([emoji, userIds]) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => toggleReaction(msg._id, emoji)}
+                                  style={{
+                                    backgroundColor: '#242424',
+                                    border: '1px solid #333',
+                                    borderRadius: '12px',
+                                    padding: '2px 6px',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                  }}
+                                >
+                                  <span>{emoji}</span>
+                                  <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+
+          {/* Mention Picker Dropdown */}
+          {showMentionPicker && (
+            <div
+              ref={mentionPickerRef}
+              style={{
+                position: 'absolute',
+                bottom: '80px',
+                left: '20px',
+                right: '20px',
+                maxHeight: '200px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
                 borderRadius: '20px',
-                transition: 'background-color 0.3s ease',
-              }}>
-              {/* Time - centered above bubble */}
-              <span style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '10px',
-                color: '#707070',
-                textAlign: 'center',
-              }}>
-                14:30
-              </span>
-
-              <div
-                style={{
-                  backgroundColor: '#065C60',
-                  border: '1px solid transparent',
-                  backgroundImage: 'linear-gradient(#065C60, #065C60), linear-gradient(135deg, #00E4B6, #34DF87)',
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderRadius: '20px',
-                  padding: '8px 12px',
-                  width: '100%',
-                }}
-              >
-                {/* Username */}
-                <span style={{
-                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '10px',
-                  color: '#60F6AB',
-                  display: 'block',
-                  marginBottom: '4px',
-                  textAlign: 'center',
-                }}>
-                  AI Insight
-                </span>
-
-                {/* Message Text */}
-                <p style={{
-                  fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '12px',
-                  color: '#60F6AB',
-                  margin: '0 0 4px 0',
-                }}>
-                  Welcome to the Politics chat! This is an AI-generated message.
-                </p>
-
-                {/* Reply, Reaction, Menu */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  height: '16px',
-                }}>
-                  {/* Left: Reply + Smile */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
-                    <button 
-                      onClick={() => setReplyingTo({ messageId: 'ai1', username: 'AI Insight', preview: 'Welcome to the Politics chat!' })}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60F6AB" strokeWidth="2">
-                        <polyline points="9 17 4 12 9 7"/>
-                        <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-                      </svg>
-                    </button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60F6AB" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                        <line x1="9" y1="9" x2="9.01" y2="9"/>
-                        <line x1="15" y1="9" x2="15.01" y2="9"/>
-                      </svg>
-                    </button>
+                padding: '10px',
+                overflowY: 'auto',
+                zIndex: 100,
+                boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              {mentionableUsers.map((u) => (
+                <button
+                  key={u.id}
+                  onClick={() => {
+                    setMessage(prev => prev + u.username + ' ');
+                    setShowMentionPicker(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: '10px',
+                    color: '#D3D3D3',
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '13px',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#242424'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    backgroundColor: '#2A2A2A',
+                    border: '1px solid #888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                  }}>
+                    {u.pfp}
                   </div>
-
-                  {/* Right: 3 dots */}
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#60F6AB">
-                      <circle cx="5" cy="12" r="2"/>
-                      <circle cx="12" cy="12" r="2"/>
-                      <circle cx="19" cy="12" r="2"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div>{u.username}</div>
+                    <div style={{
+                      fontSize: '10px',
+                      color: '#707070',
+                      background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}>
+                      {u.rank}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
+          )}
 
-            {/* Example message from other user */}
-            <div 
-              ref={el => { messageRefs.current['msg1'] = el; }}
+          <div
+            className="message-input-container"
+            style={{
+              width: '100%',
+              minHeight: '60px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '10px',
+              gap: '10px',
+            }}
+          >
               style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
