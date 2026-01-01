@@ -42,8 +42,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         let user: User;
         
         if (isOwnProfile) {
-          // For own profile, use current user data
-          user = currentUser!;
+          // For own profile, fetch fresh data from backend
+          user = await userService.getUser(currentUser!._id || currentUser!.id);
+          
+          // Update authStore with fresh data
+          if (token) {
+            setAuth(user, token);
+          }
           
           // Load friend requests and friends for own profile
           const [requests, friendsList] = await Promise.all([

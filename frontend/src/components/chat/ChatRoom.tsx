@@ -93,6 +93,13 @@ export const ChatRoom = ({
       try {
         const response = await messageService.getMessages(conversation._id, 50);
         setStoreMessages(response.data || []);
+        
+        // Scroll to bottom after messages are loaded
+        setTimeout(() => {
+          if (chatWindowRef.current) {
+            chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+          }
+        }, 100); // Small delay to ensure DOM is updated
       } catch (error) {
         console.error('Failed to load messages:', error);
       } finally {
@@ -183,12 +190,19 @@ export const ChatRoom = ({
     setParticipants(Array.from(uniqueUsers.values()));
   }, [storeMessages]);
   
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom only when appropriate (new messages, not reactions/deletes)
   useEffect(() => {
-    if (chatWindowRef.current) {
-      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    if (!chatWindowRef.current || storeMessages.length === 0) return;
+    
+    const chatWindow = chatWindowRef.current;
+    const isNearBottom = chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight < 100;
+    
+    // Only auto-scroll if user is already near the bottom
+    // This prevents unwanted scrolling when reacting or when new messages arrive while scrolled up
+    if (isNearBottom) {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-  }, [storeMessages]);
+  }, [storeMessages.length]); // Only trigger on message count change, not on every update
   
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -1291,10 +1305,16 @@ export const ChatRoom = ({
                                     e.stopPropagation();
                                     try {
                                       console.log('Deleting message:', msg._id);
-                                      await websocketService.deleteMessage(msg._id);
+                                      
+                                      // Optimistic delete - remove immediately
+                                      deleteStoreMessage(msg._id);
                                       setShowMessageMenu(null);
+                                      
+                                      // Send delete request to backend
+                                      await websocketService.deleteMessage(msg._id);
                                     } catch (error) {
                                       console.error('Failed to delete message:', error);
+                                      // TODO: Optionally restore the message if delete fails
                                     }
                                   }}
                                   style={{

@@ -110,6 +110,13 @@ export const roomService = {
       const response = await api.get<{ conversations: ChatRoom[] }>('/conversations/global');
       return response.data.conversations;
     }
+    if (type === 'market') {
+      // Market chats are from user's conversations, filtered by type === 'market'
+      const response = await api.get<{ conversations: any[] }>('/conversations/my');
+      return response.data.conversations
+        .map((c: any) => c.conversation)
+        .filter((c: ChatRoom) => c.type === 'market');
+    }
     if (type === 'favorites' || type === 'private') {
       const response = await api.get<{ conversations: any[] }>('/conversations/my');
       return response.data.conversations

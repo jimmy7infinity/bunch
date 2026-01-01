@@ -8,14 +8,14 @@ import { CreateGroupModal } from './CreateGroupModal';
 import { Leaderboard } from '../leaderboard/Leaderboard';
 import { RankedPFP } from '../common/RankedPFP';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
-import { roomService } from '../../services/api';
+import { roomService, userService } from '../../services/api';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatsList.css';
 
 type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'leaderboard';
 
 export const ChatsList = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, setAuth, token } = useAuthStore();
   const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -26,6 +26,21 @@ export const ChatsList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chats, setChats] = useState<ChatRoomType[]>([]);
   const pfpRef = useRef<HTMLDivElement>(null);
+
+  // Refresh user data on mount
+  useEffect(() => {
+    const refreshUserData = async () => {
+      if (user && token) {
+        try {
+          const freshUser = await userService.getUser(user._id || user.id);
+          setAuth(freshUser, token);
+        } catch (error) {
+          console.error('Failed to refresh user data:', error);
+        }
+      }
+    };
+    refreshUserData();
+  }, []); // Only run once on mount
 
   // Load chats from API
   useEffect(() => {
