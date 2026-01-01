@@ -201,6 +201,11 @@ export const userService = {
     return response.data;
   },
 
+  async checkUsername(username: string) {
+    const response = await api.get<{ available: boolean }>(`/users/check-username/${username}`);
+    return response.data.available;
+  },
+
   async searchUsers(query: string, limit = 10) {
     const response = await api.get<User[]>('/users/search', {
       params: { query, limit },

@@ -147,9 +147,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       setOriginalBio(bio);
       setIsEditingBio(false);
       
-      // Update auth store with new user data
+      // Update local userData and auth store with full updated user data
+      setUserData(updatedUser);
       if (currentUser && token) {
-        setAuth({ ...currentUser, bio }, token);
+        setAuth({ ...currentUser, ...updatedUser }, token);
       }
     } catch (error) {
       console.error('Failed to update bio:', error);
@@ -167,6 +168,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const handleSaveUsername = async () => {
     try {
       setIsSaving(true);
+      
+      // Check if username has changed
+      if (username !== originalUsername) {
+        // Check username availability
+        const isAvailable = await userService.checkUsername(username);
+        if (!isAvailable) {
+          alert('Username is already taken. Please choose a different one.');
+          setIsSaving(false);
+          return;
+        }
+      }
+      
       const updatedUser = await userService.updateProfile({ 
         username,
         display_name: displayName 
@@ -175,9 +188,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       setOriginalDisplayName(displayName);
       setIsEditingUsername(false);
       
-      // Update auth store with new user data
+      // Update local userData and auth store with full updated user data
+      setUserData(updatedUser);
       if (currentUser && token) {
-        setAuth({ ...currentUser, username, display_name: displayName }, token);
+        setAuth({ ...currentUser, ...updatedUser }, token);
       }
     } catch (error) {
       console.error('Failed to update username:', error);
@@ -566,6 +580,40 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                 </svg>
               </button>
             )}
+
+            {/* Message Button - only enabled for friends */}
+            <button
+              onClick={() => {
+                if (friendshipStatus === 'friends') {
+                  // TODO: Open DM with this user
+                  alert('Opening DM... (to be implemented)');
+                }
+              }}
+              className="profile-pill-button"
+              disabled={friendshipStatus !== 'friends'}
+              style={{
+                flex: 1,
+                height: '40px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: friendshipStatus === 'friends' 
+                  ? 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #3A8B3E)'
+                  : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #404040, #2A2A2A)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: friendshipStatus === 'friends' ? 'pointer' : 'not-allowed',
+                gap: '6px',
+                opacity: friendshipStatus === 'friends' ? 1 : 0.5,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={friendshipStatus === 'friends' ? '#5BC854' : '#666'} strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
 
             {/* Block Button */}
             <button
