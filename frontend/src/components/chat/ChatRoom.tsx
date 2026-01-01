@@ -3,7 +3,9 @@ import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { websocketService } from '../../services/websocket';
 import { messageService } from '../../services/api';
+import { cloudinaryService } from '../../services/cloudinary';
 import { GroupMembersModal } from './GroupMembersModal';
+import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
 import { getRankColors } from '../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../types';
@@ -59,6 +61,9 @@ export const ChatRoom = ({
   const [messageStatus, setMessageStatus] = useState<'pending' | 'sent' | 'delivered' | 'failed'>('delivered');
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState<string | null>(null);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   // Get search results with context
   const searchResults = searchQuery.trim() 
@@ -276,6 +281,57 @@ export const ChatRoom = ({
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
+    }
+  };
+  
+  // Handle sending GIF
+  const handleSendGif = (gifUrl: string) => {
+    if (connectionStatus !== 'connected') return;
+    
+    try {
+      websocketService.sendMessage(
+        conversation._id,
+        gifUrl,
+        replyingTo?.messageId,
+        []
+      );
+      
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Failed to send GIF:', error);
+      alert('Failed to send GIF. Please try again.');
+    }
+  };
+  
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!cloudinaryService.isValidImageFile(file)) return;
+    
+    setIsUploadingImage(true);
+    try {
+      const imageUrl = await cloudinaryService.uploadImage(file);
+      
+      // Send image URL as message
+      websocketService.sendMessage(
+        conversation._id,
+        imageUrl,
+        replyingTo?.messageId,
+        []
+      );
+      
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+      // Reset input
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
     }
   };
   
@@ -1012,15 +1068,35 @@ export const ChatRoom = ({
                             </div>
                           )}
 
-                          {/* Message Text */}
-                          <p style={{
-                            fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                            fontSize: '12px',
-                            color: isAI ? '#60F6AB' : '#D3D3D3',
-                            margin: '0 0 4px 0',
-                          }}>
-                            {renderMessageWithMentions(msg.text)}
-                          </p>
+                          {/* Message Content - Image, GIF, or Text */}
+                          {msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com') ? (
+                            <img
+                              src={msg.text}
+                              alt="Shared media"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '300px',
+                                borderRadius: '10px',
+                                marginBottom: '4px',
+                              }}
+                              onError={(e) => {
+                                // If image fails to load, show as text instead
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.appendChild(
+                                  document.createTextNode(msg.text)
+                                );
+                              }}
+                            />
+                          ) : (
+                            <p style={{
+                              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                              fontSize: '12px',
+                              color: isAI ? '#60F6AB' : '#D3D3D3',
+                              margin: '0 0 4px 0',
+                            }}>
+                              {renderMessageWithMentions(msg.text)}
+                            </p>
+                          )}
 
                   {/* Reply, Reaction, Menu */}
                   <div style={{ 
@@ -1524,6 +1600,69 @@ export const ChatRoom = ({
             gap: '10px',
           }}
         >
+            {/* GIF Button */}
+            <button
+              onClick={() => setShowGifPicker(true)}
+              disabled={connectionStatus !== 'connected'}
+              style={{
+                width: '40px',
+                height: '40px',
+                minWidth: '40px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: connectionStatus === 'connected' ? 'pointer' : 'not-allowed',
+                opacity: connectionStatus === 'connected' ? 1 : 0.5,
+              }}
+            >
+              <span style={{ fontSize: '20px' }}>GIF</span>
+            </button>
+
+            {/* Image Upload Button */}
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              disabled={connectionStatus !== 'connected' || isUploadingImage}
+              style={{
+                width: '40px',
+                height: '40px',
+                minWidth: '40px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: (connectionStatus === 'connected' && !isUploadingImage) ? 'pointer' : 'not-allowed',
+                opacity: (connectionStatus === 'connected' && !isUploadingImage) ? 1 : 0.5,
+              }}
+            >
+              {isUploadingImage ? (
+                <span style={{ fontSize: '12px', color: '#5BC854' }}>...</span>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#909090" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              )}
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+
             {/* Send Button */}
             <button
               className="send-button"
@@ -1600,6 +1739,13 @@ export const ChatRoom = ({
         onMemberClick={(userId) => {
           onUserClick?.(userId);
         }}
+      />
+
+      {/* GIF Picker Modal */}
+      <GifPicker
+        isOpen={showGifPicker}
+        onClose={() => setShowGifPicker(false)}
+        onSelectGif={handleSendGif}
       />
     </div>
   );

@@ -865,26 +865,34 @@ export const ChatsList = () => {
               padding: '0 20px',
             }}
           >
-            {/* User PFP */}
-            <div
-              style={{
-                width: '35px',
-                height: '35px',
-                minWidth: '35px',
-                borderRadius: '50%',
-                border: '1px solid #888888',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#2A2A2A',
-                overflow: 'hidden',
-                filter: 'grayscale(100%)',
-              }}
-            >
-              <span style={{ fontSize: '16px' }}>👤</span>
-            </div>
+            {/* Last Message Sender PFP with Rank Border */}
+            {chat.last_message?.sender_id ? (
+              <RankedPFP
+                rank={chat.last_message.sender_id.rank || 'RECRUIT'}
+                size="tiny"
+                showRankLabel={false}
+                avatarUrl={chat.last_message.sender_id.avatar_url}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '35px',
+                  height: '35px',
+                  minWidth: '35px',
+                  borderRadius: '50%',
+                  border: '1px solid #888888',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#2A2A2A',
+                  overflow: 'hidden',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>👤</span>
+              </div>
+            )}
 
-            {/* Text Bubble */}
+            {/* Last Message Preview Bubble */}
             <div
               className="text-bubble"
               style={{
