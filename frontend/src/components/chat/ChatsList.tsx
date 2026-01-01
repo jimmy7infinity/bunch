@@ -300,7 +300,7 @@ export const ChatsList = () => {
             }}
           >
             <RankedPFP 
-              rank="TITAN" 
+              rank={user?.rank || 'RECRUIT'} 
               size="tiny" 
               showRankLabel={false}
               avatarUrl={user?.avatar_url}

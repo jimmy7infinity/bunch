@@ -108,16 +108,14 @@ export const ChatRoom = ({
 
     // Listen for message updates
     const unsubscribeUpdated = websocketService.onMessageUpdated((message) => {
-      const updatedMessages = storeMessages.map(m => m._id === message._id ? message : m);
-      setStoreMessages(updatedMessages);
+      setStoreMessages(prev => prev.map(m => m._id === message._id ? message : m));
     });
 
     // Listen for reaction updates
     const unsubscribeReaction = websocketService.onMessageReaction((data) => {
-      const updatedMessages = storeMessages.map(m => 
+      setStoreMessages(prev => prev.map(m => 
         m._id === data.messageId ? { ...m, reactions: data.reactions } : m
-      );
-      setStoreMessages(updatedMessages);
+      ));
     });
 
     return () => {
@@ -126,7 +124,7 @@ export const ChatRoom = ({
       unsubscribeReaction();
       websocketService.leaveRoom(conversation._id);
     };
-  }, [conversation._id, token, addMessage, setStoreMessages, storeMessages]);
+  }, [conversation._id, token, addMessage, setStoreMessages]);
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -820,7 +818,7 @@ export const ChatRoom = ({
               <>
                 {/* Render actual messages from database */}
                 {storeMessages.map((msg) => {
-                  const isOwnMessage = msg.sender_id?.id === user?.id || (msg.sender_id as any)?._id === user?.id;
+                  const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
                   const senderRank = msg.sender_id?.rank || 'RECRUIT';
@@ -868,7 +866,7 @@ export const ChatRoom = ({
                         {/* PFP */}
                         {!isAI && (
                           <div
-                            onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?.id || (msg.sender_id as any)?._id)}
+                            onClick={() => !isOwnMessage && onUserClick?.(msg.sender_id?._id || msg.sender_id?.id || '')}
                             style={{ cursor: !isOwnMessage ? 'pointer' : 'default', flexShrink: 0 }}
                           >
                             <RankedPFP 
@@ -1225,26 +1223,30 @@ export const ChatRoom = ({
                       gap: '4px', 
                       flexWrap: 'wrap',
                     }}>
-                      {Object.entries(msg.reactions).map(([emoji, userIds]) => (
-                        <button
-                          key={emoji}
-                          onClick={() => toggleReaction(msg._id, emoji)}
-                          style={{
-                            backgroundColor: '#242424',
-                            border: '1px solid #333',
-                            borderRadius: '12px',
-                            padding: '2px 6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                          }}
-                        >
-                          <span>{emoji}</span>
-                          <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
-                        </button>
-                      ))}
+                      {Object.entries(msg.reactions).map(([emoji, userIds]) => {
+                        const currentUserId = user?._id || user?.id || '';
+                        const userHasReacted = Array.isArray(userIds) && userIds.includes(currentUserId);
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => toggleReaction(msg._id, emoji)}
+                            style={{
+                              backgroundColor: userHasReacted ? '#3A3A3A' : '#242424',
+                              border: `1px solid ${userHasReacted ? '#555' : '#333'}`,
+                              borderRadius: '12px',
+                              padding: '2px 6px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                          >
+                            <span>{emoji}</span>
+                            <span style={{ fontSize: '10px', color: '#909090' }}>{userIds.length}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
