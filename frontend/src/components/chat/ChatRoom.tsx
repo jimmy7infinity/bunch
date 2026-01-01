@@ -22,7 +22,14 @@ export const ChatRoom = ({
   onUserClick,
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
-  const { messages: storeMessages, addMessage, setMessages: setStoreMessages } = useChatStore();
+  const { 
+    messages: storeMessages, 
+    addMessage, 
+    setMessages: setStoreMessages,
+    updateMessage,
+    deleteMessage: deleteStoreMessage,
+    updateMessageReactions 
+  } = useChatStore();
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(conversation.is_favorite || false);
   const [hasNotifications, setHasNotifications] = useState(conversation.has_notifications || false);
@@ -129,32 +136,17 @@ export const ChatRoom = ({
 
     // Listen for message updates
     const unsubscribeUpdated = websocketService.onMessageUpdated((message) => {
-      const currentMessages = storeMessages;
-      setStoreMessages(currentMessages.map(m => m._id === message._id ? message : m));
+      updateMessage(message._id, message);
     });
 
     // Listen for reaction updates
     const unsubscribeReaction = websocketService.onMessageReaction((data) => {
-      const currentMessages = storeMessages;
-      if (!Array.isArray(currentMessages)) {
-        setStoreMessages([]);
-        return;
-      }
-      setStoreMessages(
-        currentMessages.map(m => 
-          m._id === data.messageId ? { ...m, reactions: data.reactions } : m
-        )
-      );
+      updateMessageReactions(data.messageId, data.reactions);
     });
 
     // Listen for deleted messages
     const unsubscribeDeleted = websocketService.onMessageDeleted((data) => {
-      const currentMessages = storeMessages;
-      if (!Array.isArray(currentMessages)) {
-        setStoreMessages([]);
-        return;
-      }
-      setStoreMessages(currentMessages.filter(m => m._id !== data.messageId));
+      deleteStoreMessage(data.messageId);
       setShowMessageMenu(null); // Close menu if open
     });
 
@@ -441,11 +433,36 @@ export const ChatRoom = ({
   
   
   const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+    
+    const currentUserId = user._id || user.id || '';
+    const message = storeMessages.find(m => m._id === messageId);
+    
+    if (!message) return;
+    
+    // Optimistic update
+    const currentReactions = message.reactions || {};
+    const userIds = currentReactions[emoji] || [];
+    const hasReacted = userIds.includes(currentUserId);
+    
+    const newReactions = {
+      ...currentReactions,
+      [emoji]: hasReacted 
+        ? userIds.filter(id => id !== currentUserId) // Remove reaction
+        : [...userIds, currentUserId] // Add reaction
+    };
+    
+    // Update locally immediately (optimistic)
+    updateMessageReactions(messageId, newReactions);
+    setShowReactionPicker(null);
+    
+    // Send to server
     try {
       await websocketService.reactToMessage(messageId, emoji);
-      setShowReactionPicker(null);
     } catch (error) {
       console.error('Failed to toggle reaction:', error);
+      // Revert on error
+      updateMessageReactions(messageId, currentReactions);
     }
   };
 
@@ -1026,6 +1043,16 @@ export const ChatRoom = ({
                 marginRight: isOwnMessage ? '93px' : '0',
               }}>
                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                {/* Delivery status ticks for own messages */}
+                {isOwnMessage && (
+                  <span style={{ marginLeft: '4px', fontSize: '10px' }}>
+                    {msg.status === 'pending' && '○'} {/* Single circle - sending */}
+                    {msg.status === 'sent' && '✓'} {/* Single tick - sent */}
+                    {(msg.status === 'delivered' || !msg.status) && '✓✓'} {/* Double tick - delivered */}
+                    {msg.status === 'read' && <span style={{ color: '#5BC854' }}>✓✓</span>} {/* Green double tick - read */}
+                    {msg.status === 'failed' && '✗'} {/* X - failed */}
+                  </span>
+                )}
               </span>
 
                       {/* Message Container */}
@@ -1137,51 +1164,59 @@ export const ChatRoom = ({
                           )}
 
                           {/* Message Content - Image, GIF, or Text */}
-                          {msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com') ? (
-                            // Image/GIF - flush with bubble edges
-                            <img
-                              src={msg.text}
-                              alt="Shared media"
-                              style={{
-                                width: '100%',
-                                maxHeight: '300px',
-                                objectFit: 'cover',
-                                borderRadius: isOwnMessage ? '20px 20px 0 20px' : (isAI ? '10px' : '20px 20px 20px 0'),
-                                display: 'block',
-                                margin: '0',
-                                padding: '0',
-                              }}
-                              onError={(e) => {
-                                // If image fails to load, show as text instead
-                                e.currentTarget.style.display = 'none';
-                                const textNode = document.createElement('p');
-                                textNode.textContent = msg.text;
-                                textNode.style.cssText = `
-                                  font-family: Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif;
-                                  font-size: 12px;
-                                  color: ${isAI ? '#60F6AB' : '#D3D3D3'};
-                                  margin: 0 0 4px 0;
-                                  padding: 8px 12px;
-                                `;
-                                e.currentTarget.parentElement?.appendChild(textNode);
-                              }}
-                            />
-                          ) : (
-                            <p style={{
-                              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
-                              fontSize: '12px',
-                              color: isAI ? '#60F6AB' : '#D3D3D3',
-                              margin: '0 0 4px 0',
-                            }}>
-                              {renderMessageWithMentions(msg.text)}
-                            </p>
-                          )}
+                          {(() => {
+                            const isImageMessage = msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com');
+                            
+                            return isImageMessage ? (
+                              // Image/GIF - flush with bubble edges, sharp top corners
+                              <img
+                                src={msg.text}
+                                alt="Shared media"
+                                style={{
+                                  width: '100%',
+                                  maxHeight: '300px',
+                                  objectFit: 'cover',
+                                  borderRadius: isOwnMessage ? '10px 10px 0 10px' : (isAI ? '10px' : '10px 10px 10px 0'), // Sharp top corners
+                                  display: 'block',
+                                  margin: '0',
+                                  padding: '0',
+                                }}
+                                onError={(e) => {
+                                  // If image fails to load, show as text instead
+                                  e.currentTarget.style.display = 'none';
+                                  const textNode = document.createElement('p');
+                                  textNode.textContent = msg.text;
+                                  textNode.style.cssText = `
+                                    font-family: Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif;
+                                    font-size: 12px;
+                                    color: ${isAI ? '#60F6AB' : '#D3D3D3'};
+                                    margin: 0 0 4px 0;
+                                    padding: 8px 12px;
+                                  `;
+                                  e.currentTarget.parentElement?.appendChild(textNode);
+                                }}
+                              />
+                            ) : (
+                              <p style={{
+                                fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+                                fontSize: '12px',
+                                color: isAI ? '#60F6AB' : '#D3D3D3',
+                                margin: '0 0 4px 0',
+                              }}>
+                                {renderMessageWithMentions(msg.text)}
+                              </p>
+                            );
+                          })()}
 
                   {/* Reply, Reaction, Menu */}
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    marginTop: (msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com')) ? '8px' : '0', // Add spacing for images
+                    marginBottom: (msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com')) ? '8px' : '0', // Add spacing for images
+                    paddingLeft: (msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com')) ? '8px' : '0', // Add padding for images
+                    paddingRight: (msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com')) ? '8px' : '0', // Add padding for images
                   }}>
                     {/* For self messages: 3 dots on left, reply+react on right */}
                     {/* For other messages: reply+react on left, 3 dots on right */}
