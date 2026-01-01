@@ -1194,13 +1194,11 @@ export const ChatRoom = ({
               gap: '10px',
             }}
           >
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: '4px',
-                width: '100%',
-                backgroundColor: highlightedMessageId === 'msg1' ? 'rgba(91, 200, 84, 0.1)' : 'transparent',
-                borderRadius: '20px',
+            {/* Send Button */}
+            <button
+              className="send-button"
+              onClick={() => {
+                if (message.trim() && websocketService.isConnected()) {
                 transition: 'background-color 0.3s ease',
               }}>
               {/* Time - centered above bubble */}
