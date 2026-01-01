@@ -57,7 +57,7 @@ export const ChatsList = () => {
     };
 
     loadChats();
-  }, [activeChatCategory, viewMode]); // Reload when returning to chat list
+  }, [activeChatCategory]); // Don't include viewMode - it causes issues
   
   const toggleFavorite = async (chatId: string) => {
     try {

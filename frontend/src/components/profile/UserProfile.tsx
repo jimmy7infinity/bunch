@@ -53,9 +53,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           
           // Load friend requests and friends for own profile
           const [requests, friendsList] = await Promise.all([
-            friendService.getFriendRequests().catch(() => []),
-            friendService.getFriends().catch(() => []),
+            friendService.getFriendRequests().catch((err) => {
+              console.error('Failed to load friend requests:', err);
+              return [];
+            }),
+            friendService.getFriends().catch((err) => {
+              console.error('Failed to load friends:', err);
+              return [];
+            }),
           ]);
+          console.log('Friend requests loaded:', requests);
+          console.log('Friends loaded:', friendsList);
           setFriendRequests(requests);
           setFriends(friendsList);
         } else {
@@ -803,30 +811,30 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         {isOwnProfile && (
           <>
             {/* Friend Requests */}
-            {friendRequests.length > 0 && (
-              <div 
-                className="bio-section"
-                style={{
-                  width: '90%',
-                  maxWidth: '500px',
-                  backgroundColor: '#19191A',
-                  border: '1px solid transparent',
-                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderRadius: '20px',
-                  padding: '20px',
-                }}
-              >
-                <span style={{
-                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '14px',
-                  color: '#B9B7B7',
-                  marginBottom: '15px',
-                  display: 'block',
-                }}>
-                  Friend Requests ({friendRequests.length})
-                </span>
+            <div 
+              className="bio-section"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+                backgroundColor: '#19191A',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                padding: '20px',
+              }}
+            >
+              <span style={{
+                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '14px',
+                color: '#B9B7B7',
+                marginBottom: '15px',
+                display: 'block',
+              }}>
+                Friend Requests ({friendRequests.length})
+              </span>
+              {friendRequests.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                   {friendRequests.map((request: any, index: number) => (
                     <React.Fragment key={request._id}>
@@ -933,12 +941,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     </React.Fragment>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#707070',
+                  margin: 0,
+                }}>
+                  No pending friend requests
+                </p>
+              )}
+            </div>
 
             {/* Friends List */}
-            {friends.length > 0 && (
-              <div 
+            <div 
                 className="bio-section"
                 style={{
                   width: '90%',
@@ -961,8 +977,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                 }}>
                   Friends ({friends.length})
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                  {friends.map((friend: User, index: number) => (
+                {friends.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {friends.map((friend: User, index: number) => (
                     <React.Fragment key={friend._id || friend.id}>
                       <div 
                         onClick={() => onUserClick?.(friend._id || friend.id)}
@@ -1013,8 +1030,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     </React.Fragment>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#707070',
+                  margin: 0,
+                }}>
+                  No friends yet
+                </p>
+              )}
+            </div>
           </>
         )}
       </div>

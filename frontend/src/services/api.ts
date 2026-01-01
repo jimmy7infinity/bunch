@@ -297,6 +297,7 @@ export const mediaService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000, // 30 seconds for image uploads
     });
     
     return response.data.url;
