@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RankedPFP } from '../common/RankedPFP';
 import { useAuthStore } from '../../stores/authStore';
-import { userService, friendService, blockService } from '../../services/api';
+import { userService, friendService, blockService, mediaService } from '../../services/api';
 import type { User } from '../../types';
 import './UserProfile.css';
 
@@ -26,6 +26,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const [friendshipStatus, setFriendshipStatus] = useState<'friends' | 'pending' | 'not_friends' | 'request_sent'>('not_friends');
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
+  const [isUploadingPFP, setIsUploadingPFP] = useState(false);
+  const pfpInputRef = useRef<HTMLInputElement>(null);
 
   // Store original values for cancel functionality
   const [originalBio, setOriginalBio] = useState('');
@@ -172,10 +174,78 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       // Check if username has changed
       if (username !== originalUsername) {
         // Check username availability
-        const isAvailable = await userService.checkUsername(username);
+        const isAvailable = await userService.checkUsernameAvailable(username);
         if (!isAvailable) {
           alert('Username is already taken. Please choose a different one.');
           setIsSaving(false);
+          return;
+        }
+      }
+      
+      const updatedUser = await userService.updateProfile({ 
+        username,
+        display_name: displayName 
+      });
+      setOriginalUsername(username);
+      setOriginalDisplayName(displayName);
+      setIsEditingUsername(false);
+      
+      // Update local userData and auth store
+      setUserData(updatedUser);
+      if (currentUser && token) {
+        setAuth({ ...currentUser, ...updatedUser }, token);
+      }
+    } catch (error) {
+      console.error('Failed to update username:', error);
+      alert('Failed to update username. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle PFP upload
+  const handlePFPUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      alert('Image must be less than 10MB');
+      return;
+    }
+    
+    setIsUploadingPFP(true);
+    try {
+      // Upload to backend
+      const imageUrl = await mediaService.uploadImage(file);
+      
+      // Update profile with new avatar
+      const updatedUser = await userService.updateProfile({ avatar_url: imageUrl });
+      
+      // Update local state
+      setUserData(updatedUser);
+      if (currentUser && token) {
+        setAuth({ ...currentUser, ...updatedUser }, token);
+      }
+    } catch (error) {
+      console.error('Failed to upload profile picture:', error);
+      alert('Failed to upload profile picture. Please try again.');
+    } finally {
+      setIsUploadingPFP(false);
+      // Reset input
+      if (pfpInputRef.current) {
+        pfpInputRef.current.value = '';
+      }
+    }
+  };
           return;
         }
       }
@@ -296,31 +366,47 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
 
           {/* Edit PFP Button (only for own profile) - overlapping PFP halfway down on right */}
           {isOwnProfile && (
-            <button
-              className="edit-pfp-button"
-              style={{
-                position: 'absolute',
-                top: '75px', // Halfway down the 150px PFP
-                right: '-10px',
-                width: '40px',
-                height: '40px',
-                backgroundColor: '#19191A',
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
+            <>
+              <button
+                onClick={() => pfpInputRef.current?.click()}
+                disabled={isUploadingPFP}
+                className="edit-pfp-button"
+                style={{
+                  position: 'absolute',
+                  top: '75px', // Halfway down the 150px PFP
+                  right: '-10px',
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: isUploadingPFP ? 'not-allowed' : 'pointer',
+                  opacity: isUploadingPFP ? 0.5 : 1,
+                }}
+              >
+                {isUploadingPFP ? (
+                  <span style={{ fontSize: '12px', color: '#5BC854' }}>...</span>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BAB9B9" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                )}
+              </button>
+              <input
+                ref={pfpInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePFPUpload}
+                style={{ display: 'none' }}
+              />
+            </>
           )}
         </div>
 
