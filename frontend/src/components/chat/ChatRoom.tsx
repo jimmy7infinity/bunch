@@ -112,12 +112,21 @@ export const ChatRoom = ({
       setStoreMessages(updatedMessages);
     });
 
+    // Listen for reaction updates
+    const unsubscribeReaction = websocketService.onMessageReaction((data) => {
+      const updatedMessages = storeMessages.map(m => 
+        m._id === data.messageId ? { ...m, reactions: data.reactions } : m
+      );
+      setStoreMessages(updatedMessages);
+    });
+
     return () => {
       unsubscribeNew();
       unsubscribeUpdated();
+      unsubscribeReaction();
       websocketService.leaveRoom(conversation._id);
     };
-  }, [conversation._id, token, addMessage, setStoreMessages]);
+  }, [conversation._id, token, addMessage, setStoreMessages, storeMessages]);
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -1143,7 +1152,7 @@ export const ChatRoom = ({
                               alignItems: 'center', 
                               height: '16px', 
                               position: 'relative',
-                              marginLeft: '20px',
+                              marginLeft: '33px',
                             }}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8A8A8">
@@ -1201,12 +1210,13 @@ export const ChatRoom = ({
                     )}
                   </div>
 
-                  {/* Reactions Display - with full-width background */}
+                  {/* Reactions Display - with full-width background and proper gap */}
                   {msg.reactions && Object.keys(msg.reactions).length > 0 && (
                     <div style={{ 
                       backgroundColor: '#19191A',
                       marginLeft: '-12px',
                       marginRight: '-12px',
+                      marginTop: '4px',
                       marginBottom: '-8px',
                       padding: '8px 12px',
                       borderBottomLeftRadius: isOwnMessage ? '0' : (isAI ? '20px' : '32.5px'),
