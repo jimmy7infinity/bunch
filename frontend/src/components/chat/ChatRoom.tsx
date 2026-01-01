@@ -1527,7 +1527,10 @@ export const ChatRoom = ({
             {/* Send Button */}
             <button
               className="send-button"
-              onClick={handleSendMessage}
+              onClick={() => {
+                console.log('SEND BUTTON CLICKED!', { message, connectionStatus });
+                handleSendMessage();
+              }}
               disabled={!message.trim() || connectionStatus !== 'connected'}
               style={{
                 width: '40px',
@@ -1559,8 +1562,10 @@ export const ChatRoom = ({
               value={message}
               onChange={handleMessageChange}
               onKeyDown={(e) => {
+                console.log('KEY DOWN:', e.key);
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
+                  console.log('ENTER PRESSED, sending message');
                   handleSendMessage();
                 }
               }}
