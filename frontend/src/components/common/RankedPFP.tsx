@@ -87,7 +87,6 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              filter: 'grayscale(100%)',
               overflow: 'hidden',
             }}
           >
