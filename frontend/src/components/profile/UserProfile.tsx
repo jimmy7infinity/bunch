@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RankedPFP } from '../common/RankedPFP';
 import { useAuthStore } from '../../stores/authStore';
-import { userService } from '../../services/api';
+import { userService, friendService, blockService } from '../../services/api';
 import type { User } from '../../types';
 import './UserProfile.css';
 
@@ -23,6 +23,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
+  const [friendshipStatus, setFriendshipStatus] = useState<'friends' | 'pending' | 'not_friends' | 'request_sent'>('not_friends');
+  const [friendRequests, setFriendRequests] = useState<any[]>([]);
+  const [friends, setFriends] = useState<User[]>([]);
 
   // Store original values for cancel functionality
   const [originalBio, setOriginalBio] = useState('');
@@ -39,9 +42,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         if (isOwnProfile) {
           // For own profile, use current user data
           user = currentUser!;
+          
+          // Load friend requests and friends for own profile
+          const [requests, friendsList] = await Promise.all([
+            friendService.getFriendRequests().catch(() => []),
+            friendService.getFriends().catch(() => []),
+          ]);
+          setFriendRequests(requests);
+          setFriends(friendsList);
         } else {
-          // For other users, fetch their data
+          // For other users, fetch their data and friendship status
           user = await userService.getUser(userId);
+          const status = await friendService.getFriendshipStatus(userId).catch(() => ({ status: 'not_friends' as const }));
+          setFriendshipStatus(status.status);
         }
         
         setUserData(user);
@@ -72,20 +85,59 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     friendStatus: isOwnProfile ? null : 'not_friends', // 'friends', 'pending', 'not_friends', 'request_sent'
   };
 
-  const handleAddFriend = () => {
-    // TODO: Implement actual friend request API call
-    setShowRequestSent(true);
-    setTimeout(() => setShowRequestSent(false), 2000); // Hide after 2 seconds
+  const handleAddFriend = async () => {
+    try {
+      await friendService.sendFriendRequest(userId);
+      setFriendshipStatus('request_sent');
+      setShowRequestSent(true);
+      setTimeout(() => setShowRequestSent(false), 2000);
+    } catch (error) {
+      console.error('Failed to send friend request:', error);
+      alert('Failed to send friend request. Please try again.');
+    }
+  };
+
+  const handleAcceptFriendRequest = async (requestId: string) => {
+    try {
+      await friendService.acceptFriendRequest(requestId);
+      // Reload friend requests and friends
+      const [requests, friendsList] = await Promise.all([
+        friendService.getFriendRequests(),
+        friendService.getFriends(),
+      ]);
+      setFriendRequests(requests);
+      setFriends(friendsList);
+    } catch (error) {
+      console.error('Failed to accept friend request:', error);
+      alert('Failed to accept friend request. Please try again.');
+    }
+  };
+
+  const handleRejectFriendRequest = async (requestId: string) => {
+    try {
+      await friendService.rejectFriendRequest(requestId);
+      // Reload friend requests
+      const requests = await friendService.getFriendRequests();
+      setFriendRequests(requests);
+    } catch (error) {
+      console.error('Failed to reject friend request:', error);
+      alert('Failed to reject friend request. Please try again.');
+    }
   };
 
   const handleBlock = () => {
     setShowBlockConfirm(true);
   };
 
-  const confirmBlock = () => {
-    // TODO: Implement actual block API call
-    console.log('User blocked');
-    setShowBlockConfirm(false);
+  const confirmBlock = async () => {
+    try {
+      await blockService.blockUser(userId);
+      setShowBlockConfirm(false);
+      onBack(); // Go back after blocking
+    } catch (error) {
+      console.error('Failed to block user:', error);
+      alert('Failed to block user. Please try again.');
+    }
   };
 
   const handleSaveBio = async () => {
@@ -222,7 +274,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         }}>
           {/* RankedPFP Component - xlarge size for profile */}
           <RankedPFP 
-            rank={mockData.rank} 
+            rank={userData?.rank || 'RECRUIT'} 
             size="xlarge" 
             showRankLabel={true}
             avatarUrl={userData?.avatar_url}
@@ -384,7 +436,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             gap: '10px',
           }}>
             {/* Add Friend / Remove Friend Button */}
-            {mockData.friendStatus === 'friends' ? (
+            {friendshipStatus === 'friends' ? (
               <button
                 className="profile-pill-button"
                 style={{
@@ -409,7 +461,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                   <line x1="12" y1="12" x2="18" y2="12"/>
                 </svg>
               </button>
-            ) : mockData.friendStatus === 'pending' ? (
+            ) : friendshipStatus === 'pending' ? (
               <button
                 className="profile-pill-button"
                 style={{
@@ -467,7 +519,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             )}
 
             {/* Message / Message Request Button */}
-            {mockData.friendStatus === 'friends' ? (
+            {friendshipStatus === 'friends' ? (
               <button
                 className="profile-pill-button-primary"
                 style={{

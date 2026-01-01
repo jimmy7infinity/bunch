@@ -209,6 +209,60 @@ export const userService = {
   },
 };
 
+export const friendService = {
+  async sendFriendRequest(userId: string) {
+    const response = await api.post(`/users/${userId}/friend-request`);
+    return response.data;
+  },
+
+  async acceptFriendRequest(requestId: string) {
+    const response = await api.post(`/users/friend-requests/${requestId}/accept`);
+    return response.data;
+  },
+
+  async rejectFriendRequest(requestId: string) {
+    const response = await api.post(`/users/friend-requests/${requestId}/reject`);
+    return response.data;
+  },
+
+  async removeFriend(userId: string) {
+    const response = await api.delete(`/users/${userId}/friend`);
+    return response.data;
+  },
+
+  async getFriendRequests() {
+    const response = await api.get<any[]>('/users/friend-requests');
+    return response.data;
+  },
+
+  async getFriends() {
+    const response = await api.get<User[]>('/users/friends');
+    return response.data;
+  },
+
+  async getFriendshipStatus(userId: string) {
+    const response = await api.get<{ status: 'friends' | 'pending' | 'not_friends' | 'request_sent' }>(`/users/${userId}/friendship-status`);
+    return response.data;
+  },
+};
+
+export const blockService = {
+  async blockUser(userId: string) {
+    const response = await api.post(`/users/${userId}/block`);
+    return response.data;
+  },
+
+  async unblockUser(userId: string) {
+    const response = await api.delete(`/users/${userId}/block`);
+    return response.data;
+  },
+
+  async getBlockedUsers() {
+    const response = await api.get<User[]>('/users/blocked');
+    return response.data;
+  },
+};
+
 export default api;
 
 
