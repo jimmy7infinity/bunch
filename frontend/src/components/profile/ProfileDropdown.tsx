@@ -365,6 +365,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             Logout
           </span>
         </button>
+        </div>
       </div>
     </div>
   );
