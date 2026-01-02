@@ -59,17 +59,6 @@ export const ChatsList = () => {
     loadChats();
   }, [activeChatCategory]); // Don't include viewMode - it causes issues
   
-  // Keep selectedChat in sync with chats array to prevent stale references
-  useEffect(() => {
-    if (selectedChat && chats.length > 0) {
-      const updatedChat = chats.find(chat => chat._id === selectedChat._id);
-      if (updatedChat && updatedChat !== selectedChat) {
-        console.log('[ChatsList] Updating selectedChat reference');
-        setSelectedChat(updatedChat);
-      }
-    }
-  }, [chats]); // Only depends on chats, not selectedChat to avoid infinite loop
-  
   const toggleFavorite = async (chatId: string) => {
     try {
       const result = await roomService.toggleFavorite(chatId);

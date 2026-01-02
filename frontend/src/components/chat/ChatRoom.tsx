@@ -204,7 +204,7 @@ export const ChatRoom = ({
       }
     });
     setParticipants(Array.from(uniqueUsers.values()));
-  }, [conversationMessages]);
+  }, [storeMessages, conversation._id]); // Depend on store messages and conversation ID, not the filtered array
   
   // Auto-scroll to bottom only when appropriate (new messages, not reactions/deletes)
   useEffect(() => {
