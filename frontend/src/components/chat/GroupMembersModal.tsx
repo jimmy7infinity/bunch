@@ -1,19 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { roomService } from '../../services/api';
+import { RankedPFP } from '../common/RankedPFP';
 import './GroupMembersModal.css';
-
-interface Member {
-  id: string;
-  username: string;
-  pfp: string;
-  rank: string;
-  isOnline: boolean;
-}
 
 interface GroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
   chatName: string;
-  members: Member[];
+  conversationId: string;
   onMemberClick: (userId: string) => void;
 }
 
@@ -21,9 +15,43 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   isOpen,
   onClose,
   chatName,
-  members,
+  conversationId,
   onMemberClick,
 }) => {
+  const [members, setMembers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Load participants from API
+  useEffect(() => {
+    const loadParticipants = async () => {
+      if (isOpen && conversationId) {
+        try {
+          setIsLoading(true);
+          const participants = await roomService.getRoomMembers(conversationId);
+          setMembers(participants);
+        } catch (error) {
+          console.error('Failed to load participants:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadParticipants();
+  }, [isOpen, conversationId]);
+
+  // Filter members by search query
+  const filteredMembers = members.filter(member => {
+    const user = member.user_id;
+    if (!user) return false;
+    const username = user.username?.toLowerCase() || '';
+    const displayName = user.display_name?.toLowerCase() || '';
+    const query = searchQuery.toLowerCase();
+    return username.includes(query) || displayName.includes(query);
+  });
+
+  const onlineCount = members.filter(m => m.user_id?.is_online).length;
+
   if (!isOpen) return null;
 
   return (
@@ -81,7 +109,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               fontSize: '12px',
               color: '#707070',
             }}>
-              {members.length} members • {members.filter(m => m.isOnline).length} online
+              {members.length} members • {onlineCount} online
             </span>
           </div>
           <button
@@ -100,6 +128,31 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
           </button>
         </div>
 
+        {/* Search Input */}
+        <div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search members..."
+            style={{
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '10px',
+              padding: '0 15px',
+              fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#D3D3D3',
+              outline: 'none',
+            }}
+          />
+        </div>
+
         {/* Members List */}
         <div style={{
           flex: 1,
@@ -108,90 +161,111 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
           flexDirection: 'column',
           gap: '8px',
         }}>
-          {members.map((member) => (
-            <div
-              key={member.id}
-              onClick={() => {
-                onMemberClick(member.id);
-                onClose();
-              }}
-              className="member-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: '#19191A',
-                border: '1px solid #333333',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {/* PFP with online indicator */}
-                <div style={{ position: 'relative' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
+          {isLoading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#707070',
+            }}>
+              Loading members...
+            </div>
+          ) : filteredMembers.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#707070',
+            }}>
+              {searchQuery ? 'No members found' : 'No members'}
+            </div>
+          ) : (
+            filteredMembers.map((participant) => {
+              const user = participant.user_id;
+              if (!user) return null;
+              
+              return (
+                <div
+                  key={user._id || user.id}
+                  onClick={() => {
+                    onMemberClick(user._id || user.id);
+                    onClose();
+                  }}
+                  className="member-item"
+                  style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    filter: 'grayscale(100%)',
-                  }}>
-                    <span style={{ fontSize: '20px' }}>{member.pfp}</span>
-                  </div>
-                  {/* Online indicator */}
-                  {member.isOnline && (
-                    <div
-                      className="online-indicator-small"
-                      style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        right: '0',
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle, #4DEB97, #2B9522)',
-                        border: '2px solid #19191A',
-                      }}
-                    />
-                  )}
-                </div>
+                    justifyContent: 'space-between',
+                    padding: '12px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid #333333',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* PFP with online indicator */}
+                    <div style={{ position: 'relative' }}>
+                      <RankedPFP 
+                        rank={user.rank || 'RECRUIT'} 
+                        size="small" 
+                        showRankLabel={false}
+                        avatarUrl={user.avatar_url}
+                      />
+                      {/* Online indicator */}
+                      {user.is_online && (
+                        <div
+                          className="online-indicator-small"
+                          style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            right: '0',
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '50%',
+                            background: 'radial-gradient(circle, #4DEB97, #2B9522)',
+                            border: '2px solid #19191A',
+                          }}
+                        />
+                      )}
+                    </div>
 
-                {/* Username and Rank */}
-                <div>
-                  <div style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '13px',
-                    color: '#D3D3D3',
-                    marginBottom: '3px',
-                  }}>
-                    {member.username}
+                    {/* Username and Rank */}
+                    <div>
+                      <div style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px',
+                        color: '#D3D3D3',
+                        marginBottom: '3px',
+                      }}>
+                        {user.display_name || user.username}
+                      </div>
+                      <div style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '11px',
+                        color: '#707070',
+                      }}>
+                        {user.rank || 'RECRUIT'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '11px',
-                    color: '#707070',
-                  }}>
-                    {member.rank}
-                  </div>
-                </div>
-              </div>
 
-              {/* Arrow icon */}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          ))}
+                  {/* Arrow icon */}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
   );
 };
+
 
 

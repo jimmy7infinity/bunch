@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from './stores/authStore';
 import { WalletConnect } from './components/auth/WalletConnect';
 import { ChatsList } from './components/chat/ChatsList';
+import { NotificationBanner } from './components/common/NotificationBanner';
 
 function App() {
   const { isAuthenticated, setAuth } = useAuthStore();
@@ -54,7 +55,12 @@ function App() {
     );
   }
 
-  return isAuthenticated ? <ChatsList /> : <WalletConnect />;
+  return (
+    <>
+      {isAuthenticated && <NotificationBanner />}
+      {isAuthenticated ? <ChatsList /> : <WalletConnect />}
+    </>
+  );
 }
 
 export default App;

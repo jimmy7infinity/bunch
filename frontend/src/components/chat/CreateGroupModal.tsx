@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { friendService } from '../../services/api';
+import { RankedPFP } from '../common/RankedPFP';
+import type { User } from '../../types';
 import './CreateGroupModal.css';
-
-interface Friend {
-  id: string;
-  username: string;
-  pfp: string;
-}
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -21,18 +18,30 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const [groupName, setGroupName] = useState('');
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [friends, setFriends] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Mock friends data - will be replaced with actual API call
-  const friends: Friend[] = [
-    { id: '1', username: 'friend_one', pfp: '👤' },
-    { id: '2', username: 'friend_two', pfp: '👤' },
-    { id: '3', username: 'friend_three', pfp: '👤' },
-    { id: '4', username: 'friend_four', pfp: '👤' },
-    { id: '5', username: 'friend_five', pfp: '👤' },
-  ];
+  // Load friends from API
+  useEffect(() => {
+    const loadFriends = async () => {
+      if (isOpen) {
+        try {
+          setIsLoading(true);
+          const friendsList = await friendService.getFriends();
+          setFriends(friendsList);
+        } catch (error) {
+          console.error('Failed to load friends:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadFriends();
+  }, [isOpen]);
 
   const filteredFriends = friends.filter(friend =>
-    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+    (friend.username?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (friend.display_name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   const toggleFriend = (friendId: string) => {
@@ -222,62 +231,80 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           gap: '0',
           maxHeight: '300px',
         }}>
-          {filteredFriends.map((friend, index) => (
-            <React.Fragment key={friend.id}>
-              <div
-                onClick={() => toggleFriend(friend.id)}
-                className="friend-item"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: selectedFriends.has(friend.id) ? '12px' : '10px 0',
-                  backgroundColor: selectedFriends.has(friend.id) ? '#1A2A1A' : 'transparent',
-                  border: selectedFriends.has(friend.id) ? '1px solid #5BC854' : '1px solid transparent',
-                  borderRadius: selectedFriends.has(friend.id) ? '10px' : '0',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  margin: selectedFriends.has(friend.id) ? '5px 0' : '0',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '35px',
-                    height: '35px',
-                    borderRadius: '50%',
-                    border: '2px solid #888888',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#2A2A2A',
-                    filter: 'grayscale(100%)',
-                  }}>
-                    <span style={{ fontSize: '16px' }}>{friend.pfp}</span>
+          {isLoading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#707070',
+            }}>
+              Loading friends...
+            </div>
+          ) : filteredFriends.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#707070',
+            }}>
+              {friends.length === 0 ? 'No friends yet' : 'No friends found'}
+            </div>
+          ) : (
+            filteredFriends.map((friend, index) => {
+              const friendId = friend._id || friend.id;
+              return (
+                <React.Fragment key={friendId}>
+                  <div
+                    onClick={() => toggleFriend(friendId)}
+                    className="friend-item"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: selectedFriends.has(friendId) ? '12px' : '10px 0',
+                      backgroundColor: selectedFriends.has(friendId) ? '#1A2A1A' : 'transparent',
+                      border: selectedFriends.has(friendId) ? '1px solid #5BC854' : '1px solid transparent',
+                      borderRadius: selectedFriends.has(friendId) ? '10px' : '0',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      margin: selectedFriends.has(friendId) ? '5px 0' : '0',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <RankedPFP 
+                        rank={friend.rank || 'RECRUIT'} 
+                        size="small" 
+                        showRankLabel={false}
+                        avatarUrl={friend.avatar_url}
+                      />
+                      <span style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px',
+                        color: '#D3D3D3',
+                      }}>
+                        {friend.display_name || friend.username}
+                      </span>
+                    </div>
+                    {selectedFriends.has(friendId) && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
                   </div>
-                  <span style={{
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '13px',
-                    color: '#D3D3D3',
-                  }}>
-                    {friend.username}
-                  </span>
-                </div>
-                {selectedFriends.has(friend.id) && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-              </div>
-              {/* Horizontal separator (not for last item, and only show if not selected) */}
-              {index < filteredFriends.length - 1 && !selectedFriends.has(friend.id) && (
-                <div style={{
-                  height: '1px',
-                  backgroundColor: '#333333',
-                  margin: '5px 0',
-                }} />
-              )}
-            </React.Fragment>
-          ))}
+                  {/* Horizontal separator (not for last item, and only show if not selected) */}
+                  {index < filteredFriends.length - 1 && !selectedFriends.has(friendId) && (
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#333333',
+                      margin: '5px 0',
+                    }} />
+                  )}
+                </React.Fragment>
+              );
+            })
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -330,5 +357,6 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     </div>
   );
 };
+
 
 

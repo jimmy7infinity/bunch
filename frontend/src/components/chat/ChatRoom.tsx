@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { websocketService } from '../../services/websocket';
-import { messageService, mediaService } from '../../services/api';
+import { messageService, mediaService, roomService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
 import { getRankColors } from '../../utils/ranks';
-import type { ChatRoom as ChatRoomType, Message } from '../../types';
+import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
@@ -22,6 +23,7 @@ export const ChatRoom = ({
   onUserClick,
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const { 
     messages: storeMessages, 
     addMessage, 
@@ -134,6 +136,31 @@ export const ChatRoom = ({
     // Listen for new messages
     const unsubscribeNew = websocketService.onMessageNew((message) => {
       console.log('[ChatRoom] Received new message for conversation:', message.conversation_id);
+      
+      // Check if this is from someone else and show notification
+      const isFromSelf = message.sender_id?._id === (user?._id || user?.id) || message.sender_id?.id === (user?._id || user?.id);
+      if (!isFromSelf && message.conversation_id === conversation._id) {
+        const senderName = message.sender_id?.display_name || message.sender_id?.username || 'Someone';
+        
+        // Check for mentions
+        const currentUsername = user?.username || '';
+        const isMentioned = message.text?.includes(`@${currentUsername}`);
+        
+        if (isMentioned) {
+          addNotification({
+            type: 'mention',
+            title: `${senderName} mentioned you`,
+            message: message.text.substring(0, 50) + (message.text.length > 50 ? '...' : ''),
+          });
+        } else {
+          // Regular message notification
+          addNotification({
+            type: 'message',
+            title: `${senderName} in ${conversation.title || 'Chat'}`,
+            message: message.text.substring(0, 50) + (message.text.length > 50 ? '...' : ''),
+          });
+        }
+      }
       
       // Get current messages from the store
       const currentMessages = useChatStore.getState().messages;
@@ -594,14 +621,7 @@ export const ChatRoom = ({
     }
   };
 
-  // Mock members data - will be replaced with actual API call
-  const mockMembers = [
-    { id: '1', username: 'user_one', pfp: '👤', rank: 'Gold', isOnline: true },
-    { id: '2', username: 'user_two', pfp: '👤', rank: 'Silver', isOnline: true },
-    { id: '3', username: 'user_three', pfp: '👤', rank: 'Bronze', isOnline: false },
-    { id: '4', username: 'user_four', pfp: '👤', rank: 'Gold', isOnline: true },
-    { id: '5', username: 'user_five', pfp: '👤', rank: 'Silver', isOnline: false },
-  ];
+  // REMOVED mockMembers - Now using real participants from API in GroupMembersModal
 
   const getChatTypeIcon = () => {
     switch (chatType) {
@@ -864,7 +884,14 @@ export const ChatRoom = ({
         >
           {/* Push Notifications Bell Button - Blue when active */}
           <button
-            onClick={() => setHasNotifications(!hasNotifications)}
+            onClick={async () => {
+              try {
+                const result = await roomService.toggleNotifications(conversation._id);
+                setHasNotifications(result.has_notifications);
+              } catch (error) {
+                console.error('Failed to toggle notifications:', error);
+              }
+            }}
             className="nav-icon-button"
             style={{
               width: '40px',
@@ -955,7 +982,14 @@ export const ChatRoom = ({
 
           {/* Star Button */}
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={async () => {
+              try {
+                const result = await roomService.toggleFavorite(conversation._id);
+                setIsFavorite(result.is_favorite);
+              } catch (error) {
+                console.error('Failed to toggle favorite:', error);
+              }
+            }}
             className="nav-icon-button"
             style={{
               width: '40px',
@@ -1155,7 +1189,9 @@ export const ChatRoom = ({
             ) : (
               <>
                 {/* Render actual messages from database */}
-                {Array.isArray(conversationMessages) && conversationMessages.map((msg) => {
+                {Array.isArray(conversationMessages) && conversationMessages
+                  .filter(msg => !msg.deleted) // Hide deleted messages
+                  .map((msg) => {
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
@@ -1418,15 +1454,14 @@ export const ChatRoom = ({
                                     try {
                                       console.log('Deleting message:', msg._id);
                                       
-                                      // Optimistic delete - remove immediately
-                                      deleteStoreMessage(msg._id);
                                       setShowMessageMenu(null);
                                       
                                       // Send delete request to backend
                                       await websocketService.deleteMessage(msg._id);
+                                      
+                                      // The websocket event will handle updating the UI
                                     } catch (error) {
                                       console.error('Failed to delete message:', error);
-                                      // TODO: Optionally restore the message if delete fails
                                     }
                                   }}
                                   style={{
@@ -2053,7 +2088,7 @@ export const ChatRoom = ({
         isOpen={isMembersModalOpen}
         onClose={() => setIsMembersModalOpen(false)}
         chatName={chatName}
-        members={mockMembers}
+        conversationId={conversation._id}
         onMemberClick={(userId) => {
           onUserClick?.(userId);
         }}

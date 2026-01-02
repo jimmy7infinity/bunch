@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { ChatRoom } from './ChatRoom';
 import { UserProfile } from '../profile/UserProfile';
 import { Settings } from '../profile/Settings';
@@ -16,6 +17,7 @@ type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'l
 
 export const ChatsList = () => {
   const { user, logout, setAuth, token } = useAuthStore();
+  const { unreadCount } = useNotificationStore();
   const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -90,9 +92,26 @@ export const ChatsList = () => {
     return matchesSearch;
   });
 
-  const handleCreateGroup = (groupName: string, selectedFriends: string[]) => {
+  const handleCreateGroup = async (groupName: string, selectedFriends: string[]) => {
     console.log('Creating group:', groupName, 'with friends:', selectedFriends);
-    // TODO: Implement actual group creation API call
+    
+    try {
+      if (selectedFriends.length === 1) {
+        // Create DM with single friend
+        const conversation = await roomService.getOrCreateDM(selectedFriends[0]);
+        setSelectedChat(conversation);
+        setIsCreateGroupOpen(false);
+      } else if (selectedFriends.length > 1) {
+        // Create group chat
+        const conversation = await roomService.createPrivateRoom(groupName, selectedFriends);
+        setSelectedChat(conversation);
+        setIsCreateGroupOpen(false);
+        await refreshChats(); // Refresh to show new group in list
+      }
+    } catch (error) {
+      console.error('Failed to create chat/group:', error);
+      // TODO: Show error message to user
+    }
   };
 
   // Refresh chat list
@@ -328,6 +347,7 @@ export const ChatsList = () => {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             style={{
               cursor: 'pointer',
+              position: 'relative',
             }}
           >
             <RankedPFP 
@@ -337,6 +357,30 @@ export const ChatsList = () => {
               borderOnly={true}
               avatarUrl={user?.avatar_url}
             />
+            {/* Notification Badge */}
+            {unreadCount > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  backgroundColor: '#FF4444',
+                  color: '#FFFFFF',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  border: '2px solid #19191A',
+                }}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </div>
+            )}
           </div>
         </div>
 
