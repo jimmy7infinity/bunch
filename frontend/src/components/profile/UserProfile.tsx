@@ -924,10 +924,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                             backgroundColor: '#2A2A2A',
                             overflow: 'hidden',
                           }}>
-                            {request.sender_id?.avatar_url ? (
+                            {request.from_user_id?.avatar_url ? (
                               <img 
-                                src={request.sender_id.avatar_url} 
-                                alt={request.sender_id.username}
+                                src={request.from_user_id.avatar_url} 
+                                alt={request.from_user_id.username}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />
                             ) : (
@@ -939,7 +939,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                             fontSize: '12px',
                             color: '#B9B7B7',
                           }}>
-                            {request.sender_id?.display_name || request.sender_id?.username || 'User'}
+                            {request.from_user_id?.display_name || request.from_user_id?.username || 'User'}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '5px' }}>

@@ -175,8 +175,12 @@ export const NotificationBanner = () => {
             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '12px',
             color: '#B9B7B7',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '350px',
           }}>
-            {currentBanner.message}
+            {currentBanner.message.length > 50 ? currentBanner.message.substring(0, 50) + '...' : currentBanner.message}
           </div>
         </div>
 

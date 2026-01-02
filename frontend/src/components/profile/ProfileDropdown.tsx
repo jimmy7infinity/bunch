@@ -47,11 +47,17 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
   // Position dropdown below the anchor element
   const rect = anchorEl.getBoundingClientRect();
+  
+  // Calculate max width to prevent overflow
+  const maxWidth = Math.min(600, window.innerWidth - 40); // 40px for margins
+  const rightPosition = window.innerWidth - rect.right;
+  
   const dropdownStyle: React.CSSProperties = {
     position: 'fixed',
     top: `${rect.bottom + 10}px`,
-    right: `${window.innerWidth - rect.right}px`,
+    right: `${rightPosition}px`,
     zIndex: 1000,
+    maxWidth: `${maxWidth}px`,
   };
 
   const getNotificationIcon = (type: string) => {
@@ -107,8 +113,9 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           padding: '15px',
           display: 'flex',
           gap: '15px',
-          minWidth: '500px',
-          maxWidth: '600px',
+          minWidth: '400px',
+          maxWidth: '100%',
+          width: 'fit-content',
         }}
       >
         {/* LEFT COLUMN: Notifications */}
@@ -207,8 +214,9 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        maxWidth: '200px',
                       }}>
-                        {notif.message}
+                        {notif.message.length > 40 ? notif.message.substring(0, 40) + '...' : notif.message}
                       </div>
                       <div style={{
                         fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',

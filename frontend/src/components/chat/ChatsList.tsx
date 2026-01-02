@@ -234,6 +234,17 @@ export const ChatsList = () => {
             gap: '12px',
           }}
         >
+          {/* Logo */}
+          <img 
+            src="/logo.png" 
+            alt="PolyBanter"
+            style={{
+              width: '30px',
+              height: '30px',
+              objectFit: 'contain',
+            }}
+          />
+
           {/* Leaderboard Button (Trophy Icon) */}
           <button
             onClick={() => setViewMode('leaderboard')}
@@ -253,17 +264,6 @@ export const ChatsList = () => {
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
             </svg>
           </button>
-
-          {/* Logo */}
-          <img 
-            src="/logo.png" 
-            alt="PolyBanter"
-            style={{
-              width: '30px',
-              height: '30px',
-              objectFit: 'contain',
-            }}
-          />
         </div>
 
         {/* PAGE NAME - Center with Icon */}
@@ -822,7 +822,7 @@ export const ChatsList = () => {
             {/* Center: Chat Name */}
             <span style={{
               fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '15px',
+              fontSize: (chat.title || chat.name || 'Untitled').length > 20 ? '13px' : '15px',
               background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -830,6 +830,10 @@ export const ChatsList = () => {
               position: 'absolute',
               left: '50%',
               transform: 'translateX(-50%)',
+              maxWidth: '60%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}>
               {chat.title || chat.name || 'Untitled'}
             </span>

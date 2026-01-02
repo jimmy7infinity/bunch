@@ -860,13 +860,18 @@ export const ChatRoom = ({
         {/* Center: Chat Name */}
         <h1 
           style={{
-            fontSize: '15px',
+            fontSize: chatName.length > 20 ? '13px' : '15px',
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             fontWeight: '400',
+            maxWidth: 'calc(100% - 300px)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            margin: 0,
           }}
         >
           {chatName}

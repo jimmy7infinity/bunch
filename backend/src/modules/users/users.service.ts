@@ -242,8 +242,8 @@ export class UsersService {
 
   async getFriendRequests(userId: string): Promise<FriendRequest[]> {
     return this.friendRequestModel
-      .find({ receiver_id: userId, status: 'pending' })
-      .populate('sender_id', 'username display_name avatar_url rank')
+      .find({ to_user_id: userId, status: 'pending' })
+      .populate('from_user_id', 'username display_name avatar_url rank')
       .exec();
   }
 
