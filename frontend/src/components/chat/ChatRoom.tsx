@@ -1089,8 +1089,7 @@ export const ChatRoom = ({
           style={{
             width: '100%',
             backgroundColor: '#19191A',
-            borderBottom: '1px solid #333333',
-            padding: '8px 20px',
+            padding: '6px 20px 0 20px',
           }}
         >
           <button
@@ -1138,7 +1137,7 @@ export const ChatRoom = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '20px 0',
+          padding: '6px 0 20px 0',
           gap: '0',
           overflow: 'hidden',
         }}

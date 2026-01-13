@@ -84,7 +84,11 @@ export const ChatsList = () => {
         try {
           // Find the global chat matching this category
           const rooms = await roomService.getRooms('global');
-          console.log('🔍 Global rooms fetched:', rooms.map(r => ({ name: r.name, slug: r.slug })));
+          console.log('🔍 Global rooms fetched:', rooms.map(r => ({ 
+            title: r.title, 
+            name: r.name, 
+            slug: r.slug 
+          })));
           
           const categoryChat = rooms.find(
             room => room.slug === currentMarketContext.categorySlug
@@ -95,14 +99,23 @@ export const ChatsList = () => {
           if (categoryChat) {
             // Respect auto-join setting for category pages too
             if (autoPredictionChat) {
-              console.log('📍 Auto-joining global chat:', categoryChat.name);
+              console.log('📍 Auto-joining global chat:', categoryChat.title || categoryChat.name);
+              
+              // Join the room before switching to it (same as market chats)
+              try {
+                await roomService.joinRoom(categoryChat._id);
+                console.log('✅ Successfully joined global chat');
+              } catch (joinError) {
+                console.error('Failed to join global chat:', joinError);
+              }
+              
               setSelectedChat(categoryChat);
               setViewMode('chats');
               setActiveChatCategory('global');
               setShowMarketCTA(false);
               setCtaChatRoom(null);
             } else {
-              console.log('📍 Auto-join disabled, showing CTA for:', categoryChat.name);
+              console.log('📍 Auto-join disabled, showing CTA for:', categoryChat.title || categoryChat.name);
               setShowMarketCTA(true);
               setCtaChatRoom(categoryChat);
             }
@@ -110,7 +123,7 @@ export const ChatsList = () => {
             console.warn('⚠️ No matching global chat found for category:', currentMarketContext.categorySlug);
           }
         } catch (error) {
-          console.error('Failed to join category chat:', error);
+          console.error('Failed to handle category chat:', error);
         }
         
         return;
@@ -235,8 +248,16 @@ export const ChatsList = () => {
             setViewMode('other-profile');
           }}
           ctaChatRoom={showMarketCTA && ctaChatRoom && ctaChatRoom._id !== selectedChat._id ? ctaChatRoom : null}
-          onJoinCTA={() => {
+          onJoinCTA={async () => {
             if (ctaChatRoom) {
+              // Join the room first (backend auto-joins for global/market chats)
+              try {
+                await roomService.joinRoom(ctaChatRoom._id);
+                console.log('✅ Successfully joined chat from CTA:', ctaChatRoom.title || ctaChatRoom.name);
+              } catch (joinError) {
+                console.error('Failed to join chat from CTA:', joinError);
+              }
+              
               setSelectedChat(ctaChatRoom);
               setActiveChatCategory(ctaChatRoom.type === 'market' ? 'market' : 'global');
               setShowMarketCTA(false);
@@ -1150,7 +1171,15 @@ export const ChatsList = () => {
           }}
         >
           <button
-            onClick={() => {
+            onClick={async () => {
+              // Join the room first (backend auto-joins for global/market chats)
+              try {
+                await roomService.joinRoom(ctaChatRoom._id);
+                console.log('✅ Successfully joined chat from CTA:', ctaChatRoom.title || ctaChatRoom.name);
+              } catch (joinError) {
+                console.error('Failed to join chat from CTA:', joinError);
+              }
+              
               setSelectedChat(ctaChatRoom);
               setViewMode('chats');
               setActiveChatCategory(ctaChatRoom.type === 'market' ? 'market' : 'global');
@@ -1188,7 +1217,7 @@ export const ChatsList = () => {
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}>
-              Join: {ctaChatRoom.name || ctaChatRoom.title}
+              Join: {ctaChatRoom.title || ctaChatRoom.name}
             </span>
           </button>
         </div>

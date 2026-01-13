@@ -12,18 +12,18 @@ async function seedGlobalChats() {
   );
 
   const globalChats = [
-    { name: 'Politics', slug: 'politics' },
-    { name: 'Sports', slug: 'sports' },
-    { name: 'Crypto', slug: 'crypto' },
-    { name: 'Finance', slug: 'finance' },
-    { name: 'Geopolitics', slug: 'geopolitics' },
-    { name: 'Earnings', slug: 'earnings' },
-    { name: 'Tech', slug: 'tech' },
-    { name: 'Culture', slug: 'culture' },
-    { name: 'World Economy', slug: 'world-economy' },
-    { name: 'Climate & Science', slug: 'climate-science' },
-    { name: 'Elections', slug: 'elections' },
-    { name: 'Mentions', slug: 'mentions' },
+    { title: 'Politics', slug: 'politics' },
+    { title: 'Sports', slug: 'sports' },
+    { title: 'Crypto', slug: 'crypto' },
+    { title: 'Finance', slug: 'finance' },
+    { title: 'Geopolitics', slug: 'geopolitics' },
+    { title: 'Earnings', slug: 'earnings' },
+    { title: 'Tech', slug: 'tech' },
+    { title: 'Culture', slug: 'culture' },
+    { title: 'World Economy', slug: 'world-economy' },
+    { title: 'Climate & Science', slug: 'climate-science' },
+    { title: 'Elections', slug: 'elections' },
+    { title: 'Mentions', slug: 'mentions' },
   ];
 
   console.log('🌱 Seeding global chats...');
@@ -35,17 +35,18 @@ async function seedGlobalChats() {
     });
 
     if (existing) {
-      console.log(`✓ ${chat.name} already exists`);
+      console.log(`✓ ${chat.title} already exists`);
     } else {
       await conversationModel.create({
         type: 'global',
-        name: chat.name,
+        title: chat.title,
         slug: chat.slug,
-        participants: [],
+        is_private: false,
+        participant_count: 0,
         created_at: new Date(),
         updated_at: new Date(),
       });
-      console.log(`✓ Created ${chat.name}`);
+      console.log(`✓ Created ${chat.title}`);
     }
   }
 
