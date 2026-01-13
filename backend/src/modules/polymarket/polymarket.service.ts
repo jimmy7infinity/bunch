@@ -96,11 +96,12 @@ export class PolymarketService {
     try {
       const profileData = await this.fetchPolymarketProfile(polymarketUsername);
       
-      // Check if token exists in bio
-      if (!profileData.bio || !profileData.bio.includes(tokenToUse!)) {
+      // Check if token exists anywhere in the profile HTML (bio, description, etc.)
+      // This is more robust than looking for specific fields since Polymarket's structure may change
+      if (!profileData.html || !profileData.html.includes(tokenToUse!)) {
         return {
           success: false,
-          message: 'Verification token not found in Polymarket bio. Please add it and try again.',
+          message: 'Verification token not found in Polymarket profile. Please add it to your bio and try again.',
         };
       }
 
@@ -129,11 +130,11 @@ export class PolymarketService {
 
   /**
    * Fetch Polymarket profile data (server-side)
-   * This is a placeholder - actual implementation depends on Polymarket's API/website structure
+   * Returns full HTML to search for verification token
    */
   private async fetchPolymarketProfile(
     username: string,
-  ): Promise<{ bio: string; walletAddress?: string }> {
+  ): Promise<{ html: string; bio?: string; walletAddress?: string }> {
     // TODO: Implement actual Polymarket profile fetching
     // Options:
     // 1. Use Polymarket API if available
@@ -149,56 +150,31 @@ export class PolymarketService {
       
       console.log('Fetching Polymarket profile for:', cleanUsername);
       
-      // Try Polymarket's data API endpoint
-      // They use a GraphQL-like API at gamma-api.polymarket.com
-      try {
-        const apiResponse = await fetch(`https://gamma-api.polymarket.com/users/${cleanUsername}`);
-        
-        if (apiResponse.ok) {
-          const userData = await apiResponse.json();
-          console.log('API response:', JSON.stringify(userData, null, 2));
-          
-          // Extract bio and wallet from API response
-          const bio = userData.bio || userData.description || '';
-          const walletAddress = userData.walletAddress || userData.address || undefined;
-          
-          console.log('Extracted from API - bio:', bio, 'wallet:', walletAddress);
-          
-          return { bio, walletAddress };
-        } else {
-          console.log('API fetch failed:', apiResponse.status);
-        }
-      } catch (apiError) {
-        console.log('API error:', apiError.message);
-      }
-      
-      // Fallback: Try HTML scraping (won't work for client-rendered content but try anyway)
+      // Fetch the profile page HTML
       const response = await fetch(`https://polymarket.com/@${cleanUsername}`);
       
       if (!response.ok) {
         console.log('Profile fetch failed:', response.status, response.statusText);
-        throw new Error(`Profile not found: ${username}`);
+        throw new Error(`Profile not found for username: ${cleanUsername}`);
       }
 
       const html = await response.text();
-      console.log('HTML length:', html.length);
+      console.log('Fetched HTML length:', html.length);
       
-      // Try to find bio in meta tags or initial state
-      const bioMatch = html.match(/<meta name="description" content="([^"]*)"/) || 
-                      html.match(/<meta property="og:description" content="([^"]*)"/) ||
-                      html.match(/"bio":"([^"]*)"/) ||
-                      html.match(/"description":"([^"]*)"/);
-      const bio = bioMatch ? bioMatch[1] : '';
-      
-      console.log('Extracted bio from HTML:', bio);
-
-      // Extract wallet address if publicly visible
+      // Extract wallet address if visible in the HTML
       const walletMatch = html.match(/0x[a-fA-F0-9]{40}/);
       const walletAddress = walletMatch ? walletMatch[0] : undefined;
       
-      console.log('Extracted wallet:', walletAddress);
+      if (walletAddress) {
+        console.log('Found wallet address:', walletAddress);
+      }
 
-      return { bio, walletAddress };
+      // Return the full HTML for token verification
+      // Token can be anywhere in the profile (bio, description, etc.)
+      return { 
+        html,
+        walletAddress,
+      };
     } catch (error) {
       console.error('Profile fetch error:', error);
       throw new Error(`Unable to fetch Polymarket profile for ${username}: ${error.message}`);
