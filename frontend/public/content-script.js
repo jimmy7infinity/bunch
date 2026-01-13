@@ -97,44 +97,55 @@ function extractMarketInfo() {
  * Send market context to the side panel
  */
 function sendMarketContext(marketInfo) {
-  if (!marketInfo) {
-    // Not on a market page or category, send null context
-    chrome.runtime.sendMessage({
-      type: 'POLYMARKET_CONTEXT',
-      marketId: null,
-      marketTitle: null,
-      categorySlug: null,
-    });
-    return;
-  }
+  // Wrap in try-catch to handle extension context invalidation
+  try {
+    if (!marketInfo) {
+      // Not on a market page or category, send null context
+      chrome.runtime.sendMessage({
+        type: 'POLYMARKET_CONTEXT',
+        marketId: null,
+        marketTitle: null,
+        categorySlug: null,
+      });
+      return;
+    }
 
-  // Handle category pages
-  if (marketInfo.categorySlug) {
-    console.log('📍 Detected Polymarket category:', marketInfo.categorySlug);
-    chrome.runtime.sendMessage({
-      type: 'POLYMARKET_CONTEXT',
-      marketId: null,
-      marketTitle: null,
-      categorySlug: marketInfo.categorySlug,
-      url: marketInfo.url,
-    });
-    return;
-  }
+    // Handle category pages
+    if (marketInfo.categorySlug) {
+      console.log('📍 Detected Polymarket category:', marketInfo.categorySlug);
+      chrome.runtime.sendMessage({
+        type: 'POLYMARKET_CONTEXT',
+        marketId: null,
+        marketTitle: null,
+        categorySlug: marketInfo.categorySlug,
+        url: marketInfo.url,
+      });
+      return;
+    }
 
-  // Only send if market has changed
-  if (marketInfo.marketId !== currentMarketId) {
-    currentMarketId = marketInfo.marketId;
-    currentMarketTitle = marketInfo.marketTitle;
+    // Only send if market has changed
+    if (marketInfo.marketId !== currentMarketId) {
+      currentMarketId = marketInfo.marketId;
+      currentMarketTitle = marketInfo.marketTitle;
 
-    console.log('📍 Detected Polymarket market:', marketInfo);
+      console.log('📍 Detected Polymarket market:', marketInfo);
 
-    chrome.runtime.sendMessage({
-      type: 'POLYMARKET_CONTEXT',
-      marketId: marketInfo.marketId,
-      marketTitle: marketInfo.marketTitle,
-      url: marketInfo.url,
-      categorySlug: null,
-    });
+      chrome.runtime.sendMessage({
+        type: 'POLYMARKET_CONTEXT',
+        marketId: marketInfo.marketId,
+        marketTitle: marketInfo.marketTitle,
+        url: marketInfo.url,
+        categorySlug: null,
+      });
+    }
+  } catch (error) {
+    // Extension context invalidated (happens after reload)
+    // Silently ignore - the content script will reload on next page load
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      console.log('⚠️ Extension context invalidated - will reconnect on next page load');
+    } else {
+      console.error('❌ Error sending market context:', error);
+    }
   }
 }
 
@@ -207,8 +218,12 @@ if (document.readyState === 'loading') {
 
 // Listen for messages from the side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'GET_CURRENT_MARKET') {
-    const marketInfo = extractMarketInfo();
-    sendResponse(marketInfo);
+  try {
+    if (message.type === 'GET_CURRENT_MARKET') {
+      const marketInfo = extractMarketInfo();
+      sendResponse(marketInfo);
+    }
+  } catch (error) {
+    console.error('❌ Error handling message:', error);
   }
 });

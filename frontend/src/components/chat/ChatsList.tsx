@@ -71,6 +71,12 @@ export const ChatsList = () => {
       // Check if user has auto-join enabled
       const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
       
+      console.log('🔍 Market context changed:', {
+        categorySlug: currentMarketContext?.categorySlug,
+        marketId: currentMarketContext?.marketId,
+        autoPredictionChat,
+      });
+      
       // Handle category pages (e.g., /geopolitics) - maps to global chats
       if (currentMarketContext?.categorySlug) {
         console.log('📍 Category page detected:', currentMarketContext.categorySlug);
@@ -78,9 +84,13 @@ export const ChatsList = () => {
         try {
           // Find the global chat matching this category
           const rooms = await roomService.getRooms('global');
+          console.log('🔍 Global rooms fetched:', rooms.map(r => ({ name: r.name, slug: r.slug })));
+          
           const categoryChat = rooms.find(
             room => room.slug === currentMarketContext.categorySlug
           );
+          
+          console.log('🔍 Category chat match:', categoryChat);
           
           if (categoryChat) {
             // Respect auto-join setting for category pages too
@@ -96,6 +106,8 @@ export const ChatsList = () => {
               setShowMarketCTA(true);
               setCtaChatRoom(categoryChat);
             }
+          } else {
+            console.warn('⚠️ No matching global chat found for category:', currentMarketContext.categorySlug);
           }
         } catch (error) {
           console.error('Failed to join category chat:', error);
