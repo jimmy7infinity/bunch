@@ -25,6 +25,11 @@
       "matches": ["https://polymarket.com/*"],
       "js": ["content-script.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://poly-banter.up.railway.app/auth-success.html*"],
+      "js": ["auth-content-script.js"],
+      "run_at": "document_start"
     }
   ],
   "action": {
