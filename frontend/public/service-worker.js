@@ -12,7 +12,7 @@ console.log('🚀 PolyBanter service worker loaded');
 // Store current market context
 let currentMarketContext = null;
 
-// Listen for messages from content script
+// Listen for messages from content script and side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'POLYMARKET_CONTEXT') {
     console.log('📍 Market context received:', message);
@@ -31,6 +31,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Try to send to all side panel instances
     // Note: This will be picked up by the side panel when it queries for context
     sendResponse({ success: true });
+  }
+  
+  // Handle opening Twitter OAuth in new tab
+  if (message.type === 'OPEN_AUTH_TAB') {
+    console.log('🔐 Opening auth tab:', message.url);
+    chrome.tabs.create({ url: message.url }, (tab) => {
+      sendResponse({ success: true, tabId: tab.id });
+    });
+    return true; // Keep the message channel open for async response
   }
 });
 

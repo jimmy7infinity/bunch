@@ -7,10 +7,43 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
 
+  // Debug: Log when component mounts
+  console.log('🎨 WalletConnect component rendered');
+  console.log('🔧 Chrome runtime available:', typeof chrome !== 'undefined' && !!chrome.runtime);
+  console.log('🔧 API URL:', import.meta.env.VITE_API_URL);
+
   const handleTwitterLogin = () => {
+    console.log('🔵 Twitter login button clicked!');
+    setLoading(true);
+    
     // Redirect to backend Twitter OAuth endpoint
     const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
-    window.location.href = `${apiUrl}/api/auth/twitter`;
+    const authUrl = `${apiUrl}/api/auth/twitter`;
+    console.log('🔗 Auth URL:', authUrl);
+    
+    // Check if running as Chrome extension
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+      console.log('🌐 Running as Chrome extension, sending message to service worker');
+      // Send message to service worker to open tab
+      chrome.runtime.sendMessage(
+        { type: 'OPEN_AUTH_TAB', url: authUrl },
+        (response) => {
+          setLoading(false);
+          if (chrome.runtime.lastError) {
+            console.error('❌ Failed to open auth tab:', chrome.runtime.lastError);
+            // Fallback to window.open
+            console.log('🔄 Trying fallback: window.open');
+            window.open(authUrl, '_blank');
+          } else {
+            console.log('✅ Auth tab opened successfully:', response);
+          }
+        }
+      );
+    } else {
+      console.log('🌐 Running as web app, using window.location.href');
+      // Regular redirect for web app
+      window.location.href = authUrl;
+    }
   };
 
   return (
