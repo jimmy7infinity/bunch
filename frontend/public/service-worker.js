@@ -17,10 +17,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'POLYMARKET_CONTEXT') {
     console.log('📍 Market context received:', message);
     
-    // Store the context
+    // Store the context (INCLUDING categorySlug!)
     currentMarketContext = {
       marketId: message.marketId,
       marketTitle: message.marketTitle,
+      categorySlug: message.categorySlug,
       url: message.url,
       timestamp: Date.now(),
     };
