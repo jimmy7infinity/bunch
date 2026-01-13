@@ -8,6 +8,16 @@ export interface User {
   rank?: string;
   bio?: string;
   is_online?: boolean;
+  polymarket?: {
+    verified: boolean;
+    username?: string;
+    wallet_address?: string;
+    verification_token?: string;
+    verified_at?: Date;
+  };
+  settings?: {
+    autoPredictionChat: boolean;
+  };
 }
 
 export interface Message {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../types';
+import api from '../services/api';
 
 interface AuthState {
   user: User | null;
@@ -7,6 +8,7 @@ interface AuthState {
   isAuthenticated: boolean;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -24,6 +26,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     set({ user: null, token: null, isAuthenticated: false });
+  },
+  
+  refreshUser: async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const user = response.data;
+      localStorage.setItem('user', JSON.stringify(user));
+      set({ user });
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
   },
 }));
 

@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 import { Message, MessageDocument } from './schemas/message.schema';
 import { Conversation, ConversationDocument, ConversationType } from './schemas/conversation.schema';
 import { Participant, ParticipantDocument } from './schemas/participant.schema';
+import { UserMarketPosition, UserMarketPositionDocument, PositionType } from './schemas/user-market-position.schema';
 
 @Injectable()
 export class ChatService {
@@ -12,6 +13,7 @@ export class ChatService {
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
     @InjectModel(Participant.name) private participantModel: Model<ParticipantDocument>,
+    @InjectModel(UserMarketPosition.name) private userMarketPositionModel: Model<UserMarketPositionDocument>,
   ) {}
 
   // ==================== CONVERSATION MANAGEMENT ====================
@@ -487,5 +489,65 @@ export class ChatService {
       created_at: { $gt: participant.last_read_at },
       deleted: false,
     }).exec();
+  }
+
+  // ==================== USER MARKET POSITIONS ====================
+
+  /**
+   * Set a user's position for a market
+   */
+  async setUserPosition(userId: string, marketId: string, position: PositionType) {
+    const result = await this.userMarketPositionModel.findOneAndUpdate(
+      { 
+        user_id: new Types.ObjectId(userId), 
+        market_id: marketId 
+      },
+      { 
+        position,
+        updated_at: new Date(),
+      },
+      { 
+        upsert: true, 
+        new: true 
+      }
+    ).exec();
+
+    return result;
+  }
+
+  /**
+   * Get a user's position for a market
+   */
+  async getUserPosition(userId: string, marketId: string) {
+    const position = await this.userMarketPositionModel.findOne({
+      user_id: new Types.ObjectId(userId),
+      market_id: marketId,
+    }).exec();
+
+    return position;
+  }
+
+  /**
+   * Get all positions for a market
+   */
+  async getMarketPositions(marketId: string) {
+    const positions = await this.userMarketPositionModel
+      .find({ market_id: marketId })
+      .populate('user_id', 'username display_name avatar_url rank')
+      .exec();
+
+    return positions;
+  }
+
+  /**
+   * Clear a user's position for a market
+   */
+  async clearUserPosition(userId: string, marketId: string) {
+    await this.userMarketPositionModel.deleteOne({
+      user_id: new Types.ObjectId(userId),
+      market_id: marketId,
+    }).exec();
+
+    return { success: true };
   }
 }

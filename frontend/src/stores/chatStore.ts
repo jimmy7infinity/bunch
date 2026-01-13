@@ -3,6 +3,13 @@ import type { Message, ChatRoom, User } from '../types';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
+interface MarketContext {
+  marketId: string;
+  marketTitle: string;
+  url?: string;
+  timestamp?: number;
+}
+
 interface ChatState {
   // Connection
   connectionStatus: ConnectionStatus;
@@ -37,6 +44,10 @@ interface ChatState {
   setOnlineUsers: (users: User[]) => void;
   addTypingUser: (user: User) => void;
   removeTypingUser: (userId: string) => void;
+  
+  // Market context (for Polymarket detection)
+  currentMarketContext: MarketContext | null;
+  setMarketContext: (context: MarketContext | null) => void;
   
   // UI State
   replyingTo: Message | null;
@@ -121,6 +132,10 @@ export const useChatStore = create<ChatState>((set) => ({
   removeTypingUser: (userId) => set((state) => ({
     typingUsers: state.typingUsers.filter(u => u.id !== userId),
   })),
+  
+  // Market context
+  currentMarketContext: null,
+  setMarketContext: (context) => set({ currentMarketContext: context }),
   
   // UI State
   replyingTo: null,

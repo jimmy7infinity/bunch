@@ -23,6 +23,20 @@ export class User {
   @Prop({ default: false })
   wallet_verified: boolean;
 
+  @Prop({ type: Object })
+  polymarket?: {
+    verified: boolean;
+    username?: string;
+    wallet_address?: string;
+    verification_token?: string;
+    verified_at?: Date;
+  };
+
+  @Prop({ type: Object, default: { autoPredictionChat: true } })
+  settings?: {
+    autoPredictionChat: boolean;
+  };
+
   @Prop({ unique: true, sparse: true })
   username: string;
 

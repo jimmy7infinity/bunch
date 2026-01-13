@@ -241,4 +241,50 @@ export class ChatController {
     await this.chatService.updateLastRead(id, req.user.userId);
     return { success: true };
   }
+
+  // ==================== MARKET POSITION ENDPOINTS ====================
+
+  /**
+   * Set user's position for a market
+   * POST /conversations/markets/:marketId/position
+   */
+  @Post('market/:marketId/position')
+  async setPosition(
+    @Request() req: any,
+    @Param('marketId') marketId: string,
+    @Body() body: { position: 'yes' | 'no' },
+  ) {
+    const position = await this.chatService.setUserPosition(
+      req.user.userId,
+      marketId,
+      body.position,
+    );
+    return { position };
+  }
+
+  /**
+   * Get user's position for a market
+   */
+  @Get('markets/:marketId/my-position')
+  async getUserPosition(@Request() req: any, @Param('marketId') marketId: string) {
+    const position = await this.chatService.getUserPosition(req.user.userId, marketId);
+    return { position };
+  }
+
+  /**
+   * Get all positions for a market
+   */
+  @Get('markets/:marketId/positions')
+  async getMarketPositions(@Param('marketId') marketId: string) {
+    const positions = await this.chatService.getMarketPositions(marketId);
+    return { positions };
+  }
+
+  /**
+   * Clear user's position for a market
+   */
+  @Delete('markets/:marketId/position')
+  async clearPosition(@Request() req: any, @Param('marketId') marketId: string) {
+    return this.chatService.clearUserPosition(req.user.userId, marketId);
+  }
 }

@@ -302,6 +302,65 @@ export const mediaService = {
   },
 };
 
+// Polymarket verification service
+export const polymarketService = {
+  async startVerification() {
+    const response = await api.post<{ token: string }>('/polymarket/verification/start');
+    return response.data;
+  },
+
+  async confirmVerification(polymarketUsername: string) {
+    const response = await api.post<{
+      success: boolean;
+      message: string;
+      username?: string;
+      wallet_address?: string;
+    }>('/polymarket/verification/confirm', { polymarketUsername });
+    return response.data;
+  },
+
+  async getVerificationStatus() {
+    const response = await api.get<{
+      verified: boolean;
+      username?: string;
+      wallet_address?: string;
+      has_pending_token: boolean;
+    }>('/polymarket/verification/status');
+    return response.data;
+  },
+
+  async getMarketWhales(marketId: string, activeUserIds: string[]) {
+    const response = await api.post<{ whales: Record<string, boolean> }>(
+      `/polymarket/markets/${marketId}/whales`,
+      { activeUserIds }
+    );
+    return response.data;
+  },
+};
+
+// Market positions service
+export const marketPositionService = {
+  async setPosition(marketId: string, position: 'yes' | 'no') {
+    const response = await api.post(`/conversations/market/${marketId}/position`, { position });
+    return response.data;
+  },
+
+  async getMyPosition(marketId: string) {
+    const response = await api.get<{ position: { position: 'yes' | 'no' } | null }>(`/conversations/markets/${marketId}/my-position`);
+    return response.data;
+  },
+
+  async getMarketPositions(marketId: string) {
+    const response = await api.get<{ positions: Array<{ user_id: any; position: 'yes' | 'no' }> }>(`/conversations/markets/${marketId}/positions`);
+    return response.data;
+  },
+
+  async clearPosition(marketId: string) {
+    const response = await api.delete(`/conversations/markets/${marketId}/position`);
+    return response.data;
+  },
+};
+
 export default api;
 
 

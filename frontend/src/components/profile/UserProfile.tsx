@@ -553,6 +553,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     backgroundClip: 'text',
                   }}>@{username || 'loading...'}</span>
                 )}
+                {/* Polymarket Verification Badge */}
+                {userData?.polymarket?.verified && (
+                  <span style={{
+                    fontSize: '14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }} title="Verified Polymarket Account">
+                    ✓
+                  </span>
+                )}
               </span>
               {isOwnProfile && (
                 <button
@@ -874,6 +884,133 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             </p>
           )}
         </div>
+
+        {/* Account Links Section */}
+        {(userData?.twitter_username || userData?.polymarket?.username) && (
+          <div 
+            className="bio-section"
+            style={{
+              width: '90%',
+              maxWidth: '500px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              padding: '20px',
+            }}
+          >
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '14px',
+              color: '#B9B7B7',
+              marginBottom: '15px',
+              display: 'block',
+            }}>
+              Connected Accounts
+            </span>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* X (Twitter) Profile Link */}
+              {userData?.twitter_username && (
+                <a
+                  href={`https://twitter.com/${userData.twitter_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px',
+                    backgroundColor: '#242424',
+                    borderRadius: '12px',
+                    textDecoration: 'none',
+                    border: '1px solid #333333',
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1DA1F2">
+                    <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>
+                  </svg>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '12px',
+                      color: '#D3D3D3',
+                    }}>
+                      X (Twitter)
+                    </div>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '11px',
+                      color: '#707070',
+                    }}>
+                      @{userData.twitter_username}
+                    </div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              )}
+
+              {/* Polymarket Profile Link */}
+              {userData?.polymarket?.verified && userData?.polymarket?.username && (
+                <a
+                  href={`https://polymarket.com/profile/${userData.polymarket.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px',
+                    backgroundColor: '#242424',
+                    borderRadius: '12px',
+                    textDecoration: 'none',
+                    border: '1px solid #333333',
+                  }}
+                >
+                  <img 
+                    src="/polymarket-logo.png" 
+                    alt="Polymarket" 
+                    style={{ width: '20px', height: '20px' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '12px',
+                      color: '#D3D3D3',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
+                      Polymarket
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5BC854" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                      </svg>
+                    </div>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '11px',
+                      color: '#707070',
+                    }}>
+                      {userData.polymarket.username}
+                    </div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" strokeWidth="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Friend Requests and Friends (only for own profile) */}
         {isOwnProfile && (

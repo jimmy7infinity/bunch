@@ -3,6 +3,7 @@ import { useAuthStore } from './stores/authStore';
 import { WalletConnect } from './components/auth/WalletConnect';
 import { ChatsList } from './components/chat/ChatsList';
 import { NotificationBanner } from './components/common/NotificationBanner';
+import { initializeMarketDetection } from './services/marketDetection';
 
 function App() {
   const { isAuthenticated, setAuth } = useAuthStore();
@@ -39,6 +40,13 @@ function App() {
       setIsCheckingAuth(false);
     }
   }, [setAuth]);
+
+  // Initialize market detection when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      initializeMarketDetection();
+    }
+  }, [isAuthenticated]);
 
   if (isCheckingAuth) {
     return (

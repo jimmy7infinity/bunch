@@ -98,7 +98,13 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    updates: { username?: string; display_name?: string; avatar_url?: string; bio?: string },
+    updates: { 
+      username?: string; 
+      display_name?: string; 
+      avatar_url?: string; 
+      bio?: string;
+      settings?: { autoPredictionChat?: boolean };
+    },
   ): Promise<User> {
     // If username is being updated, check if it's already taken
     if (updates.username) {
@@ -109,6 +115,14 @@ export class UsersService {
       
       if (existingUser) {
         throw new Error('Username already taken');
+      }
+    }
+
+    // If updating settings, merge with existing settings
+    if (updates.settings) {
+      const user = await this.userModel.findById(userId).exec();
+      if (user) {
+        updates.settings = { ...user.settings, ...updates.settings };
       }
     }
 

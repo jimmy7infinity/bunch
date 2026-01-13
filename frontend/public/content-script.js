@@ -1,0 +1,168 @@
+// Content script for detecting Polymarket market pages
+console.log('🎯 PolyBanter content script loaded');
+
+let currentMarketId = null;
+let currentMarketTitle = null;
+
+/**
+ * Extract market ID from Polymarket URL
+ * Polymarket URLs are typically: https://polymarket.com/event/{slug}?tid={marketId}
+ * or https://polymarket.com/event/{slug}
+ */
+function extractMarketInfo() {
+  const url = window.location.href;
+  const pathname = window.location.pathname;
+
+  // Check if we're on a market page (event or market)
+  const marketMatch = pathname.match(/\/(event|market)\/([^\/\?]+)/);
+  
+  if (!marketMatch) {
+    return null;
+  }
+
+  // Extract slug as market ID (we'll use this as unique identifier)
+  const slug = marketMatch[2];
+
+  // Try to get market ID from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const tid = urlParams.get('tid');
+
+  // Use tid if available, otherwise use slug
+  const marketId = tid || slug;
+
+  // Try to extract market title from page
+  let marketTitle = null;
+  
+  // Method 1: Try to get from page title
+  const pageTitle = document.title;
+  if (pageTitle && !pageTitle.includes('Polymarket')) {
+    marketTitle = pageTitle.replace(' | Polymarket', '').trim();
+  }
+
+  // Method 2: Try to get from H1 tag
+  if (!marketTitle) {
+    const h1 = document.querySelector('h1');
+    if (h1) {
+      marketTitle = h1.textContent.trim();
+    }
+  }
+
+  // Method 3: Try to get from meta tags
+  if (!marketTitle) {
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      marketTitle = ogTitle.getAttribute('content');
+    }
+  }
+
+  return {
+    marketId,
+    marketTitle: marketTitle || slug,
+    url,
+  };
+}
+
+/**
+ * Send market context to the side panel
+ */
+function sendMarketContext(marketInfo) {
+  if (!marketInfo) {
+    // Not on a market page, send null context
+    chrome.runtime.sendMessage({
+      type: 'POLYMARKET_CONTEXT',
+      marketId: null,
+      marketTitle: null,
+    });
+    return;
+  }
+
+  // Only send if market has changed
+  if (marketInfo.marketId !== currentMarketId) {
+    currentMarketId = marketInfo.marketId;
+    currentMarketTitle = marketInfo.marketTitle;
+
+    console.log('📍 Detected Polymarket market:', marketInfo);
+
+    chrome.runtime.sendMessage({
+      type: 'POLYMARKET_CONTEXT',
+      marketId: marketInfo.marketId,
+      marketTitle: marketInfo.marketTitle,
+      url: marketInfo.url,
+    });
+  }
+}
+
+/**
+ * Initialize detection
+ */
+function initializeDetection() {
+  // Initial detection
+  const marketInfo = extractMarketInfo();
+  sendMarketContext(marketInfo);
+
+  // Watch for URL changes (SPA navigation)
+  let lastUrl = window.location.href;
+  
+  const observer = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      console.log('🔄 URL changed, re-detecting market...');
+      
+      // Wait a bit for DOM to update
+      setTimeout(() => {
+        const marketInfo = extractMarketInfo();
+        sendMarketContext(marketInfo);
+      }, 500);
+    }
+  });
+
+  // Observe changes to the document
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  // Also watch for popstate events (back/forward navigation)
+  window.addEventListener('popstate', () => {
+    setTimeout(() => {
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
+    }, 500);
+  });
+
+  // Watch for pushState/replaceState (SPA navigation)
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(this, args);
+    setTimeout(() => {
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
+    }, 500);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(this, args);
+    setTimeout(() => {
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
+    }, 500);
+  };
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeDetection);
+} else {
+  initializeDetection();
+}
+
+// Listen for messages from the side panel
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'GET_CURRENT_MARKET') {
+    const marketInfo = extractMarketInfo();
+    sendResponse(marketInfo);
+  }
+});

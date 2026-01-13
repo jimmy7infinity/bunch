@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
+import { useChatStore } from '../../stores/chatStore';
 import { ChatRoom } from './ChatRoom';
 import { UserProfile } from '../profile/UserProfile';
 import { Settings } from '../profile/Settings';
@@ -18,6 +19,7 @@ type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'l
 export const ChatsList = () => {
   const { user, logout, setAuth, token } = useAuthStore();
   const { unreadCount } = useNotificationStore();
+  const { currentMarketContext } = useChatStore();
   const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -27,6 +29,7 @@ export const ChatsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chats, setChats] = useState<ChatRoomType[]>([]);
+  const [showMarketCTA, setShowMarketCTA] = useState(false);
   const pfpRef = useRef<HTMLDivElement>(null);
 
   // Refresh user data on mount
@@ -60,6 +63,44 @@ export const ChatsList = () => {
 
     loadChats();
   }, [activeChatCategory]); // Don't include viewMode - it causes issues
+
+  // Auto-join prediction chat when market context changes
+  useEffect(() => {
+    const handleMarketContextChange = async () => {
+      // Check if user has auto-join enabled
+      const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
+      
+      if (!currentMarketContext || !autoPredictionChat) {
+        // No market or auto-join disabled - show CTA if market detected
+        if (currentMarketContext && !autoPredictionChat) {
+          setShowMarketCTA(true);
+        } else {
+          setShowMarketCTA(false);
+        }
+        return;
+      }
+
+      try {
+        console.log('📍 Auto-joining prediction chat for market:', currentMarketContext.marketId);
+        
+        // Get or create market chat
+        const conversation = await roomService.getOrCreateMarketChat(
+          currentMarketContext.marketId,
+          currentMarketContext.marketTitle
+        );
+
+        // Auto-join the chat (switch view mode to chats if needed)
+        setSelectedChat(conversation);
+        setViewMode('chats');
+        setActiveChatCategory('market');
+        setShowMarketCTA(false);
+      } catch (error) {
+        console.error('Failed to auto-join prediction chat:', error);
+      }
+    };
+
+    handleMarketContextChange();
+  }, [currentMarketContext, user?.settings?.autoPredictionChat]); // React to market context changes
   
   const toggleFavorite = async (chatId: string) => {
     try {
@@ -721,6 +762,59 @@ export const ChatsList = () => {
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z"/>
           </svg>
         </button>
+
+        {/* Join Prediction Chat CTA (shown when auto-join is off and market is detected) */}
+        {showMarketCTA && currentMarketContext && (
+          <button
+            onClick={async () => {
+              try {
+                const conversation = await roomService.getOrCreateMarketChat(
+                  currentMarketContext.marketId,
+                  currentMarketContext.marketTitle
+                );
+                setSelectedChat(conversation);
+                setViewMode('chats');
+                setActiveChatCategory('market');
+                setShowMarketCTA(false);
+              } catch (error) {
+                console.error('Failed to join prediction chat:', error);
+              }
+            }}
+            style={{
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#3D3A60',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '13px',
+              color: '#7A9BCC',
+              fontWeight: '400',
+              maxWidth: '70%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              Join: {currentMarketContext.marketTitle}
+            </span>
+          </button>
+        )}
 
         {/* Dynamic Chat Cards */}
         {isLoading ? (

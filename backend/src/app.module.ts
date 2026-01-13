@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { MediaModule } from './modules/media/media.module';
+import { PolymarketModule } from './modules/polymarket/polymarket.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MediaModule } from './modules/media/media.module';
     AuthModule,
     ChatModule,
     MediaModule,
+    PolymarketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

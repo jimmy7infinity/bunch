@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { websocketService } from '../../services/websocket';
-import { messageService, mediaService, roomService } from '../../services/api';
+import { messageService, mediaService, roomService, marketPositionService, polymarketService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
@@ -74,6 +74,14 @@ export const ChatRoom = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaMenuRef = useRef<HTMLDivElement>(null);
   
+  // Position state (for market chats)
+  const [myPosition, setMyPosition] = useState<'yes' | 'no' | null>(null);
+  const [showPositionPicker, setShowPositionPicker] = useState(false);
+  const [marketPositions, setMarketPositions] = useState<Record<string, 'yes' | 'no'>>({});
+  
+  // Whale state (for market chats)
+  const [whales, setWhales] = useState<Record<string, boolean>>({});
+  
   // Use a ref to track the current conversation ID to prevent switching during operations
   const currentConversationIdRef = useRef<string>(conversation._id);
   
@@ -93,6 +101,41 @@ export const ChatRoom = ({
       setSearchQuery('');
     }
   };
+  
+  // Load positions and whales for market chats
+  useEffect(() => {
+    const loadMarketData = async () => {
+      if (conversation.type !== 'market' || !conversation.market_id) return;
+
+      try {
+        // Load my position
+        const myPosResult = await marketPositionService.getMyPosition(conversation.market_id);
+        setMyPosition(myPosResult.position?.position || null);
+
+        // Load all positions for this market
+        const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
+        const positionsMap: Record<string, 'yes' | 'no'> = {};
+        const activeUserIds: string[] = [];
+        
+        positionsResult.positions.forEach((pos) => {
+          const userId = pos.user_id._id || pos.user_id;
+          positionsMap[userId] = pos.position;
+          activeUserIds.push(userId);
+        });
+        setMarketPositions(positionsMap);
+
+        // Load whale data
+        if (activeUserIds.length > 0) {
+          const whalesResult = await polymarketService.getMarketWhales(conversation.market_id, activeUserIds);
+          setWhales(whalesResult.whales);
+        }
+      } catch (error) {
+        console.error('Failed to load market data:', error);
+      }
+    };
+
+    loadMarketData();
+  }, [conversation.type, conversation.market_id]);
   
   // Load messages and connect to WebSocket
   useEffect(() => {
@@ -877,6 +920,8 @@ export const ChatRoom = ({
           {chatName}
         </h1>
 
+        {/* RIGHT SECTION MOVED TO CHATBOX HEADER BELOW */}
+
         {/* Right: Bell + Star Buttons */}
         <div 
           style={{
@@ -1097,16 +1142,155 @@ export const ChatRoom = ({
             </span>
           </button>
 
-          {/* Right: Online Indicator */}
-          <div
-            className="online-indicator"
-            style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, #4DEB97 0%, #2B9522 100%)',
-            }}
-          />
+          {/* Right: Position Picker (for market chats) + Online Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Position Picker - Only for market chats */}
+            {conversation.type === 'market' && conversation.market_id && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowPositionPicker(!showPositionPicker)}
+                  style={{
+                    height: '28px',
+                    padding: '0 10px',
+                    backgroundColor: '#19191A',
+                    border: '1px solid transparent',
+                    backgroundImage: myPosition 
+                      ? `linear-gradient(#19191A, #19191A), linear-gradient(135deg, ${myPosition === 'yes' ? '#5BC854' : '#C85454'}, #333333)`
+                      : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                    backgroundOrigin: 'border-box',
+                    backgroundClip: 'padding-box, border-box',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '11px',
+                    color: myPosition ? (myPosition === 'yes' ? '#5BC854' : '#C85454') : '#B9B7B7',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {myPosition ? (myPosition === 'yes' ? '🟢' : '🔴') : '⚪'}
+                  <span>{myPosition ? (myPosition === 'yes' ? 'Yes' : 'No') : 'Position'}</span>
+                </button>
+
+                {/* Position Dropdown */}
+                {showPositionPicker && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '35px',
+                    right: '0',
+                    backgroundColor: '#242424',
+                    border: '1px solid #333333',
+                    borderRadius: '12px',
+                    padding: '8px',
+                    zIndex: 100,
+                    minWidth: '120px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  }}>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await marketPositionService.setPosition(conversation.market_id!, 'yes');
+                          setMyPosition('yes');
+                          setShowPositionPicker(false);
+                        } catch (error) {
+                          console.error('Failed to set position:', error);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        backgroundColor: myPosition === 'yes' ? '#1A2E1A' : 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px',
+                        color: '#5BC854',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <span>🟢</span>
+                      <span>Yes</span>
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        try {
+                          await marketPositionService.setPosition(conversation.market_id!, 'no');
+                          setMyPosition('no');
+                          setShowPositionPicker(false);
+                        } catch (error) {
+                          console.error('Failed to set position:', error);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        backgroundColor: myPosition === 'no' ? '#2E1A1A' : 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px',
+                        color: '#C85454',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <span>🔴</span>
+                      <span>No</span>
+                    </button>
+
+                    {myPosition && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await marketPositionService.clearPosition(conversation.market_id!);
+                            setMyPosition(null);
+                            setShowPositionPicker(false);
+                          } catch (error) {
+                            console.error('Failed to clear position:', error);
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #333333',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                          fontSize: '12px',
+                          color: '#707070',
+                          marginTop: '4px',
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Online Indicator */}
+            <div
+              className="online-indicator"
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, #4DEB97 0%, #2B9522 100%)',
+              }}
+            />
+          </div>
         </div>
 
         {/* Chat Window */}
@@ -1306,6 +1490,25 @@ export const ChatRoom = ({
                             textAlign: isAI ? 'center' : (isOwnMessage ? 'right' : 'left'),
                           }}>
                             {isOwnMessage ? 'You' : senderName}
+                            {/* Position emoji + Whale emoji for market chats */}
+                            {conversation.type === 'market' && !isAI && (() => {
+                              const senderId = msg.sender_id?._id || msg.sender_id?.id;
+                              const position = marketPositions[senderId];
+                              const isWhale = whales[senderId];
+                              
+                              return (
+                                <>
+                                  {position && (
+                                    <span style={{ marginLeft: '4px' }}>
+                                      {position === 'yes' ? '🟢' : '🔴'}
+                                    </span>
+                                  )}
+                                  {isWhale && (
+                                    <span style={{ marginLeft: '4px' }}>🐳</span>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </span>
 
                           {/* Reply Preview - clickable to scroll to original message */}
