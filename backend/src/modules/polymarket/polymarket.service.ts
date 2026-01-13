@@ -154,27 +154,24 @@ export class PolymarketService {
       };
     }
 
-      // Mark as verified
-      await this.userModel.findByIdAndUpdate(userId, {
-        'polymarket.verified': true,
-        'polymarket.username': polymarketUsername,
-        'polymarket.wallet_address': profileData.walletAddress,
-        'polymarket.verified_at': new Date(),
-        'polymarket.verification_token': null, // Clear token
-      });
+    // Mark as verified
+    await this.userModel.findByIdAndUpdate(userId, {
+      'polymarket.verified': true,
+      'polymarket.username': polymarketUsername,
+      'polymarket.wallet_address': profileData.walletAddress,
+      'polymarket.verified_at': new Date(),
+      'polymarket.verification_token': null, // Clear token
+    });
 
-      // Clear from memory
-      this.verificationTokens.delete(userId);
+    // Clear from memory
+    this.verificationTokens.delete(userId);
 
-      return {
-        success: true,
-        message: 'Polymarket account verified successfully!',
-        username: polymarketUsername,
-        wallet_address: profileData.walletAddress,
-      };
-    } catch (error) {
-      throw new BadRequestException(`Failed to verify Polymarket profile: ${error.message}`);
-    }
+    return {
+      success: true,
+      message: 'Polymarket account verified successfully!',
+      username: polymarketUsername,
+      wallet_address: profileData.walletAddress,
+    };
   }
 
   /**
