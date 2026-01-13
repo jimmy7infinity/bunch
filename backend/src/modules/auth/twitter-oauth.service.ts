@@ -9,7 +9,6 @@ export class TwitterOAuthService {
   private readonly clientSecret: string;
   private readonly callbackUrl: string;
   private readonly codeVerifiers = new Map<string, string>();
-  private readonly redirectUris = new Map<string, string>(); // Store extension redirect URIs by state
 
   constructor(private configService: ConfigService) {
     this.clientId = configService.get<string>('TWITTER_CLIENT_ID') || '';
@@ -37,13 +36,19 @@ export class TwitterOAuthService {
   }
 
   getAuthorizationUrl(extensionRedirectUri?: string): string {
-    const { codeChallenge, state } = this.generateCodeChallenge();
+    const { codeChallenge, state: randomState } = this.generateCodeChallenge();
     
-    // Store extension redirect URI if provided
-    if (extensionRedirectUri) {
-      this.redirectUris.set(state, extensionRedirectUri);
-      console.log('🔗 Stored redirect URI for state:', state, '→', extensionRedirectUri);
-    }
+    // Encode redirect_uri and CSRF token into state parameter (fully stateless)
+    const stateData = {
+      csrf: randomState,
+      redirect_uri: extensionRedirectUri,
+    };
+    
+    const state = Buffer.from(JSON.stringify(stateData)).toString('base64url');
+    console.log('🔗 Encoded state with redirect_uri:', extensionRedirectUri);
+    
+    // Store code verifier by CSRF token (not by full state)
+    this.codeVerifiers.set(randomState, this.codeVerifiers.get(randomState)!);
     
     const params = new URLSearchParams({
       response_type: 'code',
@@ -59,16 +64,31 @@ export class TwitterOAuthService {
   }
   
   getRedirectUri(state: string): string | undefined {
-    const uri = this.redirectUris.get(state);
-    console.log('🔍 Getting redirect URI for state:', state, '→', uri);
-    return uri;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, 'base64url').toString());
+      console.log('🔍 Decoded state:', decoded);
+      return decoded.redirect_uri;
+    } catch (error) {
+      console.error('❌ Failed to decode state:', error);
+      return undefined;
+    }
   }
 
   async handleCallback(code: string, state: string): Promise<any> {
-    const codeVerifier = this.codeVerifiers.get(state);
+    // Decode state to get CSRF token
+    let csrfToken: string;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, 'base64url').toString());
+      csrfToken = decoded.csrf;
+      console.log('🔍 Decoded CSRF token from state:', csrfToken);
+    } catch (error) {
+      throw new Error('Invalid state parameter: failed to decode');
+    }
+    
+    const codeVerifier = this.codeVerifiers.get(csrfToken);
     
     if (!codeVerifier) {
-      throw new Error('Invalid state parameter');
+      throw new Error('Invalid state parameter: code verifier not found');
     }
 
     // Exchange code for access token
