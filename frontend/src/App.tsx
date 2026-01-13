@@ -94,30 +94,39 @@ function App() {
     }
   }, [isAuthenticated]);
 
-  // Listen for auth success messages from popup window
+  // Listen for storage changes (auth updates) - for instant login without refresh
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'AUTH_SUCCESS' && event.data.token) {
-        console.log('🎉 Received auth success message from popup');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const isExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+    
+    if (!isExtension) return;
+    
+    const handleStorageChange = (changes: any, area: string) => {
+      if (area === 'local' && changes.authToken) {
+        const newToken = changes.authToken.newValue;
         
-        fetch(`${apiUrl}/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${event.data.token}`,
-          },
-        })
-          .then(res => res.json())
-          .then(userData => {
-            setAuth(userData, event.data.token);
+        if (newToken) {
+          console.log('🔑 Auth token updated in storage, fetching user data');
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+          
+          fetch(`${apiUrl}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${newToken}`,
+            },
           })
-          .catch(error => {
-            console.error('Failed to fetch user data:', error);
-          });
+            .then(res => res.json())
+            .then(userData => {
+              setAuth(userData, newToken);
+              console.log('✅ Logged in automatically after OAuth!');
+            })
+            .catch(error => {
+              console.error('Failed to fetch user data:', error);
+            });
+        }
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, [setAuth]);
 
   if (isCheckingAuth) {

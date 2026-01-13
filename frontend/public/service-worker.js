@@ -70,12 +70,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (token) {
             console.log('🔑 Token extracted, storing in chrome.storage');
             
-            // Store token
-            chrome.storage.local.set({ authToken: token }, () => {
+            // Store token (source of truth for auth state)
+            chrome.storage.local.set({ 
+              authToken: token,
+              authUpdatedAt: Date.now()
+            }, () => {
               console.log('✅ Token stored successfully');
-              
-              // Notify side panel
-              chrome.runtime.sendMessage({ type: 'AUTH_SUCCESS', token });
+              console.log('💡 Side panel will read token on next mount/refresh');
               
               sendResponse({ success: true });
             });
