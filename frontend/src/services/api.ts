@@ -336,6 +336,13 @@ export const polymarketService = {
     );
     return response.data;
   },
+
+  async getMyMarketPosition(marketId: string) {
+    const response = await api.get<{ outcome: string | null; size: number }>(
+      `/polymarket/markets/${marketId}/position`
+    );
+    return response.data;
+  },
 };
 
 // Market positions service

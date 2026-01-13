@@ -179,6 +179,74 @@ export class PolymarketService {
   }
 
   /**
+   * Fetch user's positions from Polymarket Data API
+   */
+  async getUserPositions(walletAddress: string, marketId?: string): Promise<any[]> {
+    try {
+      const params = new URLSearchParams({
+        user: walletAddress,
+        sizeThreshold: '0.01', // Minimum position size
+        limit: '100',
+        sortBy: 'TOKENS',
+        sortDirection: 'DESC',
+      });
+
+      // If specific market requested, add condition ID
+      if (marketId) {
+        params.append('market', marketId);
+      }
+
+      const response = await fetch(`https://data-api.polymarket.com/positions?${params.toString()}`);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch positions:', response.status);
+        return [];
+      }
+
+      const positions = await response.json();
+      console.log(`Found ${positions.length} positions for wallet ${walletAddress}`);
+      
+      return positions;
+    } catch (error) {
+      console.error('Error fetching positions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get user's position for a specific market
+   */
+  async getMarketPosition(userId: string, marketId: string): Promise<{ outcome: string | null; size: number }> {
+    try {
+      // Get user to find wallet address
+      const user = await this.userModel.findById(userId);
+      if (!user || !user.polymarket?.wallet_address) {
+        return { outcome: null, size: 0 };
+      }
+
+      const positions = await this.getUserPositions(user.polymarket.wallet_address, marketId);
+      
+      // Find the position with the largest size for this market
+      if (positions.length === 0) {
+        return { outcome: null, size: 0 };
+      }
+
+      // User might have positions on both outcomes, return the larger one
+      const largestPosition = positions.reduce((max, pos) => 
+        pos.size > max.size ? pos : max
+      , positions[0]);
+
+      return {
+        outcome: largestPosition.outcome, // "Yes" or "No"
+        size: largestPosition.size,
+      };
+    } catch (error) {
+      console.error('Error getting market position:', error);
+      return { outcome: null, size: 0 };
+    }
+  }
+
+  /**
    * Fetch Polymarket profile data (server-side)
    * Returns full HTML to search for verification token
    */

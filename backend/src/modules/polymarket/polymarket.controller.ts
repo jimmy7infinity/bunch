@@ -80,4 +80,18 @@ export class PolymarketController {
     const whales = await this.whaleDetectionService.getMarketWhales(marketId, activeUserIds || []);
     return { whales };
   }
+
+  /**
+   * Get user's position for a specific market from Polymarket API
+   * GET /polymarket/markets/:marketId/position
+   */
+  @Get('markets/:marketId/position')
+  async getMyMarketPosition(
+    @Request() req: any,
+    @Param('marketId') marketId: string,
+  ) {
+    const userId = req.user.userId;
+    const position = await this.polymarketService.getMarketPosition(userId, marketId);
+    return position;
+  }
 }
