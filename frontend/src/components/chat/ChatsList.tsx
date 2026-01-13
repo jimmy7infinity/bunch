@@ -209,19 +209,90 @@ export const ChatsList = () => {
   if (selectedChat && viewMode === 'chats') {
     console.log('[ChatsList] Rendering ChatRoom for:', selectedChat._id, selectedChat.title || selectedChat.name);
     return (
-      <ChatRoom 
-        key={selectedChat._id} // Add key to force re-mount on conversation change
-        conversation={selectedChat}
-        onBack={async () => {
-          console.log('[ChatsList] Going back from chat');
-          setSelectedChat(null);
-          await refreshChats(); // Refresh chat list when returning
-        }}
-        onUserClick={(userId) => {
-          setSelectedUserId(userId);
-          setViewMode('other-profile');
-        }}
-      />
+      <>
+        <ChatRoom 
+          key={selectedChat._id} // Add key to force re-mount on conversation change
+          conversation={selectedChat}
+          onBack={async () => {
+            console.log('[ChatsList] Going back from chat');
+            setSelectedChat(null);
+            await refreshChats(); // Refresh chat list when returning
+          }}
+          onUserClick={(userId) => {
+            setSelectedUserId(userId);
+            setViewMode('other-profile');
+          }}
+          ctaChatRoom={showMarketCTA && ctaChatRoom && ctaChatRoom._id !== selectedChat._id ? ctaChatRoom : null}
+          onJoinCTA={() => {
+            if (ctaChatRoom) {
+              setSelectedChat(ctaChatRoom);
+              setActiveChatCategory(ctaChatRoom.type === 'market' ? 'market' : 'global');
+              setShowMarketCTA(false);
+              setCtaChatRoom(null);
+            }
+          }}
+        />
+        
+        {/* Chat Join CTA Button - shown even when in ChatRoom */}
+        {showMarketCTA && ctaChatRoom && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '0',
+              left: '0',
+              right: '0',
+              zIndex: 1000,
+              padding: '16px 20px',
+              backgroundColor: '#19191A',
+              borderTop: '1px solid #333333',
+              boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <button
+              onClick={() => {
+                setSelectedChat(ctaChatRoom);
+                setViewMode('chats');
+                setActiveChatCategory(ctaChatRoom.type === 'market' ? 'market' : 'global');
+                setShowMarketCTA(false);
+                setCtaChatRoom(null);
+              }}
+              style={{
+                width: '100%',
+                height: '40px',
+                backgroundColor: '#3D3A60',
+                border: '1px solid transparent',
+                backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span style={{
+                fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '13px',
+                color: '#7A9BCC',
+                fontWeight: '400',
+                maxWidth: '70%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                Join: {ctaChatRoom.name || ctaChatRoom.title}
+              </span>
+            </button>
+          </div>
+        )}
+      </>
     );
   }
 

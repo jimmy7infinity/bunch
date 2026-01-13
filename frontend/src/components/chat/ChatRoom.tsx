@@ -17,12 +17,16 @@ interface ChatRoomProps {
   conversation: ChatRoomType;
   onBack?: () => void;
   onUserClick?: (userId: string) => void;
+  ctaChatRoom?: ChatRoomType | null;
+  onJoinCTA?: () => void;
 }
 
 export const ChatRoom = ({ 
   conversation,
   onBack,
   onUserClick,
+  ctaChatRoom,
+  onJoinCTA,
 }: ChatRoomProps) => {
   const { user, token } = useAuthStore();
   const { addNotification } = useNotificationStore();
@@ -1078,6 +1082,54 @@ export const ChatRoom = ({
           </button>
         </div>
       </div>
+
+      {/* Thin CTA Banner (when viewing different chat but CTA available) */}
+      {ctaChatRoom && onJoinCTA && (
+        <div
+          style={{
+            width: '100%',
+            backgroundColor: '#19191A',
+            borderBottom: '1px solid #333333',
+            padding: '8px 20px',
+          }}
+        >
+          <button
+            onClick={onJoinCTA}
+            style={{
+              width: '100%',
+              height: '32px',
+              backgroundColor: '#3D3A60',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#7A9BCC',
+              fontWeight: '400',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              Join: {ctaChatRoom.name || ctaChatRoom.title}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* CHAT CONTENT */}
       <div 
