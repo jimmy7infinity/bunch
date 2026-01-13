@@ -33,26 +33,64 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   }
   
-  // Handle opening Twitter OAuth in new tab
-  if (message.type === 'OPEN_AUTH_TAB') {
-    console.log('🔐 Opening auth tab:', message.url);
-    chrome.tabs.create({ url: message.url }, (tab) => {
-      sendResponse({ success: true, tabId: tab.id });
-    });
-    return true; // Keep the message channel open for async response
-  }
-  
-  // Handle auth success from callback page
-  if (message.type === 'AUTH_SUCCESS') {
-    console.log('🎉 Auth success received from callback page, token present:', !!message.token);
+  // Handle OAuth start request from side panel
+  if (message.type === 'START_AUTH') {
+    console.log('🔐 Starting Twitter OAuth flow via chrome.identity');
     
-    // Store token in chrome.storage
-    chrome.storage.local.set({ authToken: message.token }, () => {
-      console.log('✅ Token stored in chrome.storage from service worker');
-      sendResponse({ success: true });
-    });
+    // Get the extension's redirect URL
+    const redirectUri = chrome.identity.getRedirectURL('auth');
+    console.log('🔗 Extension redirect URI:', redirectUri);
     
-    return true; // Keep message channel open
+    // Build auth URL with redirect_uri parameter
+    const backendUrl = 'https://poly-banter.up.railway.app';
+    const authUrl = `${backendUrl}/api/auth/twitter?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    
+    console.log('🚀 Launching web auth flow to:', authUrl);
+    
+    // Launch OAuth flow in Chrome-managed window
+    chrome.identity.launchWebAuthFlow(
+      {
+        url: authUrl,
+        interactive: true,
+      },
+      (responseUrl) => {
+        if (chrome.runtime.lastError) {
+          console.error('❌ OAuth failed:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+          return;
+        }
+        
+        console.log('✅ OAuth callback received:', responseUrl);
+        
+        // Extract token from response URL
+        try {
+          const url = new URL(responseUrl);
+          const token = url.searchParams.get('token');
+          
+          if (token) {
+            console.log('🔑 Token extracted, storing in chrome.storage');
+            
+            // Store token
+            chrome.storage.local.set({ authToken: token }, () => {
+              console.log('✅ Token stored successfully');
+              
+              // Notify side panel
+              chrome.runtime.sendMessage({ type: 'AUTH_SUCCESS', token });
+              
+              sendResponse({ success: true });
+            });
+          } else {
+            console.error('❌ No token found in response URL');
+            sendResponse({ success: false, error: 'No token in response' });
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse response URL:', error);
+          sendResponse({ success: false, error: error.message });
+        }
+      }
+    );
+    
+    return true; // Keep message channel open for async response
   }
 });
 

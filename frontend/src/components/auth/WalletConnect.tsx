@@ -16,33 +16,24 @@ export const WalletConnect = () => {
     console.log('🔵 Twitter login button clicked!');
     setLoading(true);
     
-    // Redirect to backend Twitter OAuth endpoint
-    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
-    const authUrl = `${apiUrl}/api/auth/twitter`;
-    console.log('🔗 Auth URL:', authUrl);
-    
     // Check if running as Chrome extension
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-      console.log('🌐 Running as Chrome extension, sending message to service worker');
-      // Send message to service worker to open tab
-      chrome.runtime.sendMessage(
-        { type: 'OPEN_AUTH_TAB', url: authUrl },
-        (response) => {
-          setLoading(false);
-          if (chrome.runtime.lastError) {
-            console.error('❌ Failed to open auth tab:', chrome.runtime.lastError);
-            // Fallback to window.open
-            console.log('🔄 Trying fallback: window.open');
-            window.open(authUrl, '_blank');
-          } else {
-            console.log('✅ Auth tab opened successfully:', response);
-          }
+      console.log('📦 Extension detected, sending START_AUTH message to service worker');
+      
+      // Let the service worker handle OAuth using chrome.identity.launchWebAuthFlow
+      chrome.runtime.sendMessage({ type: 'START_AUTH' }, (response) => {
+        setLoading(false);
+        if (chrome.runtime.lastError) {
+          console.error('❌ Auth failed:', chrome.runtime.lastError);
+        } else if (response?.success) {
+          console.log('✅ Auth initiated successfully');
         }
-      );
+      });
     } else {
-      console.log('🌐 Running as web app, using window.location.href');
-      // Regular redirect for web app
-      window.location.href = authUrl;
+      // Regular web app flow
+      console.log('🌐 Running as web app, using direct redirect');
+      const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+      window.location.href = `${apiUrl}/api/auth/twitter`;
     }
   };
 

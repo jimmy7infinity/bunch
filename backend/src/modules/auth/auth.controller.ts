@@ -55,13 +55,20 @@ export class AuthController {
 
   // Twitter OAuth
   @Get('twitter')
-  async twitterLogin(@Res() res: Response) {
+  async twitterLogin(@Query('redirect_uri') redirectUri: string, @Res() res: Response, @Req() req: any) {
+    console.log('🔐 Twitter OAuth initiated, redirect_uri:', redirectUri);
+    
+    // Store redirect_uri in session for callback
+    if (redirectUri) {
+      req.session.oauth_redirect_uri = redirectUri;
+    }
+    
     const authUrl = this.authService.getTwitterAuthUrl();
     res.redirect(authUrl);
   }
 
   @Get('twitter/callback')
-  async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response, @Req() req: any) {
     try {
       console.log('🔍 Twitter callback received:', { code: !!code, state: !!state });
       
@@ -71,13 +78,22 @@ export class AuthController {
       
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
-      // Redirect to auth success page hosted on backend
-      // Use Railway URL in production, localhost in development
-      const backendUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://poly-banter.up.railway.app'
-        : 'http://localhost:3000';
+      // Get redirect_uri from session (for extension) or use default (for web)
+      const redirectUri = req.session.oauth_redirect_uri;
       
-      res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
+      if (redirectUri && redirectUri.startsWith('https://') && redirectUri.includes('.chromiumapp.org')) {
+        // Extension OAuth flow - redirect back to extension
+        console.log('📦 Extension OAuth, redirecting to:', redirectUri);
+        res.redirect(`${redirectUri}?token=${authResult.access_token}`);
+      } else {
+        // Web app flow - redirect to auth success page
+        console.log('🌐 Web OAuth, redirecting to auth-success');
+        const backendUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://poly-banter.up.railway.app'
+          : 'http://localhost:3000';
+        
+        res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
+      }
     } catch (error) {
       console.error('❌ Twitter callback error:', error);
       res.status(500).json({ error: 'Authentication failed', details: error.message });
