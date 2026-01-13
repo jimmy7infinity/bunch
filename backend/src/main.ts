@@ -3,9 +3,14 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import session from 'express-session';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Serve static files from public directory
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   // Minimal session for OAuth 2.0 state parameter
   app.use(

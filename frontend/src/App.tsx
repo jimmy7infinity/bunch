@@ -94,6 +94,32 @@ function App() {
     }
   }, [isAuthenticated]);
 
+  // Listen for auth success messages from popup window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'AUTH_SUCCESS' && event.data.token) {
+        console.log('🎉 Received auth success message from popup');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        
+        fetch(`${apiUrl}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${event.data.token}`,
+          },
+        })
+          .then(res => res.json())
+          .then(userData => {
+            setAuth(userData, event.data.token);
+          })
+          .catch(error => {
+            console.error('Failed to fetch user data:', error);
+          });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setAuth]);
+
   if (isCheckingAuth) {
     return (
       <div style={{ 

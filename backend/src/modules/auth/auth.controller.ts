@@ -71,10 +71,11 @@ export class AuthController {
       
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
-      // Redirect to auth success page (works for both extension and web)
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      // Redirect to auth success page hosted on backend
+      // This works for both extension and web since it's a regular HTTPS URL
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
       
-      res.redirect(`${frontendUrl}/auth-success.html?token=${authResult.access_token}`);
+      res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
     } catch (error) {
       console.error('❌ Twitter callback error:', error);
       res.status(500).json({ error: 'Authentication failed', details: error.message });
