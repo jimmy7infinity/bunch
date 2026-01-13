@@ -29,7 +29,13 @@ export class UsersController {
   @Patch('me')
   async updateMe(
     @Request() req: any,
-    @Body() updates: { username?: string; display_name?: string; avatar_url?: string; bio?: string },
+    @Body() updates: { 
+      username?: string; 
+      display_name?: string; 
+      avatar_url?: string; 
+      bio?: string;
+      settings?: { autoPredictionChat?: boolean };
+    },
   ) {
     try {
       const updatedUser = await this.usersService.updateProfile(req.user.userId, updates);
