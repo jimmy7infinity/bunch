@@ -137,15 +137,20 @@ export class PolymarketService {
     // TODO: Implement actual Polymarket profile fetching
     // Options:
     // 1. Use Polymarket API if available
-    // 2. Scrape profile page (https://polymarket.com/profile/{username})
+    // 2. Scrape profile page (https://polymarket.com/@username)
     // 3. Use CLOB API to get user data
     
     // For now, using a mock implementation
     // In production, this would make an HTTP request to Polymarket
     
     try {
-      // Example: Using fetch to get profile page
-      const response = await fetch(`https://polymarket.com/profile/${username}`);
+      // Strip @ prefix if user included it
+      const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
+      
+      console.log('Fetching Polymarket profile for:', cleanUsername);
+      
+      // Polymarket profile URLs are https://polymarket.com/@username
+      const response = await fetch(`https://polymarket.com/@${cleanUsername}`);
       
       if (!response.ok) {
         throw new Error(`Profile not found: ${username}`);

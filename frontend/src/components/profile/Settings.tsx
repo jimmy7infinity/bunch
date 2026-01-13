@@ -570,15 +570,23 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                       fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                       fontSize: '12px',
                       color: '#B9B7B7',
-                      marginBottom: '8px',
+                      marginBottom: '4px',
                     }}>
                       Step 3: Enter your Polymarket username
+                    </div>
+                    <div style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '10px',
+                      color: '#707070',
+                      marginBottom: '8px',
+                    }}>
+                      From your profile URL: polymarket.com/<span style={{ color: '#7A9BCC' }}>@yourname</span>
                     </div>
                     <input
                       type="text"
                       value={polymarketUsername}
                       onChange={(e) => setPolymarketUsername(e.target.value)}
-                      placeholder="yourpolymarketusername"
+                      placeholder="yourname (without @)"
                       style={{
                         width: '100%',
                         padding: '10px',
