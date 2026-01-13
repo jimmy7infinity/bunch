@@ -169,8 +169,15 @@ export class PolymarketService {
       
       console.log('Fetching Polymarket profile for:', cleanUsername);
       
-      // Fetch the profile page HTML
-      const response = await fetch(`https://polymarket.com/@${cleanUsername}`);
+      // Fetch the profile page HTML with cache-busting and proper headers
+      const response = await fetch(`https://polymarket.com/@${cleanUsername}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'User-Agent': 'Mozilla/5.0 (compatible; PolyBanter/1.0)',
+        },
+        cache: 'no-store', // Disable caching
+      });
       
       if (!response.ok) {
         console.log('Profile fetch failed:', response.status, response.statusText);
