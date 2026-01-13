@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'POLYMARKET_CONTEXT') {
     console.log('📍 Market context received:', message);
     
-    // Store the context (INCLUDING categorySlug!)
+    // Store the context (including categorySlug for global chats!)
     currentMarketContext = {
       marketId: message.marketId,
       marketTitle: message.marketTitle,
