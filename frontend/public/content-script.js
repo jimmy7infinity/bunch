@@ -97,7 +97,12 @@ function extractMarketInfo() {
  * Send market context to the side panel
  */
 function sendMarketContext(marketInfo) {
-  // Wrap in try-catch to handle extension context invalidation
+  // Check if extension context is still valid
+  if (!chrome.runtime?.id) {
+    console.log('⚠️ Extension context invalidated - will reconnect on next page load');
+    return;
+  }
+
   try {
     if (!marketInfo) {
       // Not on a market page or category, send null context
@@ -141,11 +146,7 @@ function sendMarketContext(marketInfo) {
   } catch (error) {
     // Extension context invalidated (happens after reload)
     // Silently ignore - the content script will reload on next page load
-    if (error.message && error.message.includes('Extension context invalidated')) {
-      console.log('⚠️ Extension context invalidated - will reconnect on next page load');
-    } else {
-      console.error('❌ Error sending market context:', error);
-    }
+    console.log('⚠️ Extension error:', error.message);
   }
 }
 
