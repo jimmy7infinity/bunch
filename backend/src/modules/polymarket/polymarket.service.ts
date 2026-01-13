@@ -149,29 +149,59 @@ export class PolymarketService {
       
       console.log('Fetching Polymarket profile for:', cleanUsername);
       
-      // Polymarket profile URLs are https://polymarket.com/@username
+      // Try Polymarket's data API endpoint
+      // They use a GraphQL-like API at gamma-api.polymarket.com
+      try {
+        const apiResponse = await fetch(`https://gamma-api.polymarket.com/users/${cleanUsername}`);
+        
+        if (apiResponse.ok) {
+          const userData = await apiResponse.json();
+          console.log('API response:', JSON.stringify(userData, null, 2));
+          
+          // Extract bio and wallet from API response
+          const bio = userData.bio || userData.description || '';
+          const walletAddress = userData.walletAddress || userData.address || undefined;
+          
+          console.log('Extracted from API - bio:', bio, 'wallet:', walletAddress);
+          
+          return { bio, walletAddress };
+        } else {
+          console.log('API fetch failed:', apiResponse.status);
+        }
+      } catch (apiError) {
+        console.log('API error:', apiError.message);
+      }
+      
+      // Fallback: Try HTML scraping (won't work for client-rendered content but try anyway)
       const response = await fetch(`https://polymarket.com/@${cleanUsername}`);
       
       if (!response.ok) {
+        console.log('Profile fetch failed:', response.status, response.statusText);
         throw new Error(`Profile not found: ${username}`);
       }
 
       const html = await response.text();
+      console.log('HTML length:', html.length);
       
-      // Parse bio from HTML (this is a simplified example)
-      // In reality, you'd need proper HTML parsing or use Polymarket's API
+      // Try to find bio in meta tags or initial state
       const bioMatch = html.match(/<meta name="description" content="([^"]*)"/) || 
-                      html.match(/<div class="bio[^>]*>([^<]*)</);
+                      html.match(/<meta property="og:description" content="([^"]*)"/) ||
+                      html.match(/"bio":"([^"]*)"/) ||
+                      html.match(/"description":"([^"]*)"/);
       const bio = bioMatch ? bioMatch[1] : '';
+      
+      console.log('Extracted bio from HTML:', bio);
 
       // Extract wallet address if publicly visible
       const walletMatch = html.match(/0x[a-fA-F0-9]{40}/);
       const walletAddress = walletMatch ? walletMatch[0] : undefined;
+      
+      console.log('Extracted wallet:', walletAddress);
 
       return { bio, walletAddress };
     } catch (error) {
-      // If fetch fails, throw error
-      throw new Error(`Unable to fetch Polymarket profile for ${username}`);
+      console.error('Profile fetch error:', error);
+      throw new Error(`Unable to fetch Polymarket profile for ${username}: ${error.message}`);
     }
   }
 
