@@ -96,6 +96,14 @@ export class PolymarketService {
     try {
       const profileData = await this.fetchPolymarketProfile(polymarketUsername);
       
+      console.log('Looking for token:', tokenToUse);
+      console.log('HTML contains token?', profileData.html?.includes(tokenToUse!));
+      
+      // Debug: Search for partial token to see if it exists at all
+      const tokenPrefix = tokenToUse!.substring(0, 20);
+      console.log('Searching for token prefix:', tokenPrefix);
+      console.log('HTML contains prefix?', profileData.html?.includes(tokenPrefix));
+      
       // Check if token exists anywhere in the profile HTML (bio, description, etc.)
       // This is more robust than looking for specific fields since Polymarket's structure may change
       if (!profileData.html || !profileData.html.includes(tokenToUse!)) {
