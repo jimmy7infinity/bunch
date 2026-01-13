@@ -104,6 +104,17 @@ export class PolymarketService {
       console.log('Searching for token prefix:', tokenPrefix);
       console.log('HTML contains prefix?', profileData.html?.includes(tokenPrefix));
       
+      // Extract what token IS in the HTML
+      const tokenRegex = /PB-VERIFY-[a-f0-9]{24}-[a-f0-9]{16}/g;
+      const foundTokens = profileData.html?.match(tokenRegex);
+      console.log('Tokens found in HTML:', foundTokens);
+      
+      if (foundTokens && foundTokens.length > 0) {
+        console.log('Expected token:', tokenToUse);
+        console.log('Found token(s):', foundTokens);
+        console.log('Tokens match?', foundTokens.includes(tokenToUse!));
+      }
+      
       // Check if token exists anywhere in the profile HTML (bio, description, etc.)
       // This is more robust than looking for specific fields since Polymarket's structure may change
       if (!profileData.html || !profileData.html.includes(tokenToUse!)) {
