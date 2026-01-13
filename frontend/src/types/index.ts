@@ -61,6 +61,11 @@ export interface ChatRoom {
   last_message_id?: Message; // New populated field
   created_at?: string;
   updated_at?: string;
+  // Market-specific fields
+  market_id?: string;
+  market_title?: string;
+  // Additional metadata
+  metadata?: Record<string, any>;
 }
 
 export interface ChatRoomMember {
