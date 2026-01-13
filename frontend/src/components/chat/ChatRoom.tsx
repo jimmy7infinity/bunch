@@ -76,9 +76,8 @@ export const ChatRoom = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaMenuRef = useRef<HTMLDivElement>(null);
   
-  // Position state (for market chats)
+  // Position state (for market chats) - now fetched from Polymarket API automatically
   const [myPosition, setMyPosition] = useState<'yes' | 'no' | null>(null);
-  const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [marketPositions, setMarketPositions] = useState<Record<string, 'yes' | 'no'>>({});
   
   // Whale state (for market chats)
@@ -110,11 +109,16 @@ export const ChatRoom = ({
       if (conversation.type !== 'market' || !conversation.market_id) return;
 
       try {
-        // Load my position
-        const myPosResult = await marketPositionService.getMyPosition(conversation.market_id);
-        setMyPosition(myPosResult.position?.position || null);
+        // Load my position from Polymarket API (real blockchain data)
+        const myPosResult = await polymarketService.getMyMarketPosition(conversation.market_id);
+        // Outcome is "Yes" or "No" from Polymarket API
+        if (myPosResult.outcome) {
+          setMyPosition(myPosResult.outcome.toLowerCase() as 'yes' | 'no');
+        } else {
+          setMyPosition(null);
+        }
 
-        // Load all positions for this market
+        // Load all positions for this market (still using our DB for other users)
         const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
         const positionsMap: Record<string, 'yes' | 'no'> = {};
         const activeUserIds: string[] = [];
@@ -1144,132 +1148,28 @@ export const ChatRoom = ({
             </span>
           </button>
 
-          {/* Right: Position Picker (for market chats) + Online Indicator */}
+          {/* Right: Position Display (for market chats) + Online Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Position Picker - Only for market chats */}
-            {conversation.type === 'market' && conversation.market_id && (
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowPositionPicker(!showPositionPicker)}
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    backgroundColor: '#19191A',
-                    border: '1px solid transparent',
-                    backgroundImage: myPosition 
-                      ? `linear-gradient(#19191A, #19191A), linear-gradient(135deg, ${myPosition === 'yes' ? '#5BC854' : '#C85454'}, #333333)`
-                      : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-                    backgroundOrigin: 'border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    borderRadius: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  {myPosition ? (myPosition === 'yes' ? '🟢' : '🔴') : '⚪'}
-                </button>
-
-                {/* Position Dropdown */}
-                {showPositionPicker && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '35px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: '#242424',
-                    border: '1px solid #333333',
-                    borderRadius: '12px',
-                    padding: '8px',
-                    zIndex: 100,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                  }}>
-                    <button
-                      onClick={async () => {
-                        try {
-                          await marketPositionService.setPosition(conversation.market_id!, 'yes');
-                          setMyPosition('yes');
-                          setShowPositionPicker(false);
-                        } catch (error) {
-                          console.error('Failed to set position:', error);
-                        }
-                      }}
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: myPosition === 'yes' ? '#1A2E1A' : 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      🟢
-                    </button>
-
-                    <button
-                      onClick={async () => {
-                        try {
-                          await marketPositionService.setPosition(conversation.market_id!, 'no');
-                          setMyPosition('no');
-                          setShowPositionPicker(false);
-                        } catch (error) {
-                          console.error('Failed to set position:', error);
-                        }
-                      }}
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: myPosition === 'no' ? '#2E1A1A' : 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      🔴
-                    </button>
-
-                    {myPosition && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await marketPositionService.clearPosition(conversation.market_id!);
-                            setMyPosition(null);
-                            setShowPositionPicker(false);
-                          } catch (error) {
-                            console.error('Failed to clear position:', error);
-                          }
-                        }}
-                        style={{
-                          width: '40px',
-                          height: '32px',
-                          backgroundColor: 'transparent',
-                          border: '1px solid #333333',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                          fontSize: '10px',
-                          color: '#707070',
-                          marginTop: '4px',
-                        }}
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                )}
+            {/* Position Display - Shows actual Polymarket position (read-only) */}
+            {conversation.type === 'market' && conversation.market_id && myPosition && (
+              <div 
+                title={`Your position: ${myPosition === 'yes' ? 'Yes' : 'No'} (from Polymarket)`}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: `linear-gradient(#19191A, #19191A), linear-gradient(135deg, ${myPosition === 'yes' ? '#5BC854' : '#C85454'}, #333333)`,
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                }}
+              >
+                {myPosition === 'yes' ? '🟢' : '🔴'}
               </div>
             )}
 
