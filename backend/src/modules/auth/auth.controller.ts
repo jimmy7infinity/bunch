@@ -71,6 +71,7 @@ export class AuthController {
   async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response, @Req() req: any) {
     try {
       console.log('🔍 Twitter callback received:', { code: !!code, state: !!state });
+      console.log('🔍 Session redirect_uri:', req.session?.oauth_redirect_uri);
       
       const twitterUser = await this.authService.handleTwitterCallback(code, state);
       const user = await this.authService.findOrCreateFromTwitter(twitterUser);
@@ -78,16 +79,17 @@ export class AuthController {
       
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
-      // Get redirect_uri from session (for extension) or use default (for web)
-      const redirectUri = req.session.oauth_redirect_uri;
+      // Get redirect_uri from session (for extension)
+      const redirectUri = req.session?.oauth_redirect_uri;
+      console.log('🔗 Redirect URI from session:', redirectUri);
       
       if (redirectUri && redirectUri.startsWith('https://') && redirectUri.includes('.chromiumapp.org')) {
         // Extension OAuth flow - redirect back to extension
-        console.log('📦 Extension OAuth, redirecting to:', redirectUri);
+        console.log('📦 Extension OAuth detected, redirecting to:', redirectUri);
         res.redirect(`${redirectUri}?token=${authResult.access_token}`);
       } else {
         // Web app flow - redirect to auth success page
-        console.log('🌐 Web OAuth, redirecting to auth-success');
+        console.log('🌐 Web OAuth (no extension redirect_uri), redirecting to auth-success');
         const backendUrl = process.env.NODE_ENV === 'production' 
           ? 'https://poly-banter.up.railway.app'
           : 'http://localhost:3000';
