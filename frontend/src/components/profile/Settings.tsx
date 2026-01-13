@@ -108,11 +108,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         settings: { autoPredictionChat: newValue },
       });
       
-      // Update auth store with new user data (this preserves all fields)
-      const { token } = useAuthStore.getState();
-      if (token) {
-        useAuthStore.getState().setAuth(updatedUser, token);
+      // Update auth store with the complete updated user data
+      const currentToken = token;
+      if (currentToken) {
+        setAuth(updatedUser, currentToken);
       }
+      
+      console.log('✅ Auto-join setting updated:', newValue);
     } catch (error) {
       console.error('Failed to update setting:', error);
       // Revert on error

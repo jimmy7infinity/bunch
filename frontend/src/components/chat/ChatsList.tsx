@@ -10,8 +10,6 @@ import { CreateGroupModal } from './CreateGroupModal';
 import { Leaderboard } from '../leaderboard/Leaderboard';
 import { RankedPFP } from '../common/RankedPFP';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
-import { JoinChatBanner } from './JoinChatBanner';
-import { useAutoJoinChat } from '../../hooks/useAutoJoinChat';
 import { roomService, userService } from '../../services/api';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatsList.css';
@@ -21,6 +19,7 @@ type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'l
 export const ChatsList = () => {
   const { user, logout, setAuth, token } = useAuthStore();
   const { unreadCount } = useNotificationStore();
+  const { currentMarketContext } = useChatStore();
   const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -30,15 +29,8 @@ export const ChatsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chats, setChats] = useState<ChatRoomType[]>([]);
-  const [isJoiningChat, setIsJoiningChat] = useState(false);
+  const [showJoinPopup, setShowJoinPopup] = useState(false);
   const pfpRef = useRef<HTMLDivElement>(null);
-
-  // Use auto-join hook (modular logic)
-  const { shouldShowCTA, joinChat, currentContext } = useAutoJoinChat((chat) => {
-    setSelectedChat(chat);
-    setViewMode('chat');
-    setActiveChatCategory(chat.type === 'market' ? 'market' : 'global');
-  });
 
   // Refresh user data on mount
   useEffect(() => {
@@ -72,7 +64,62 @@ export const ChatsList = () => {
     loadChats();
   }, [activeChatCategory]); // Don't include viewMode - it causes issues
 
-  // Note: Auto-join logic is now handled by useAutoJoinChat hook
+  // Auto-join market chat when context changes
+  useEffect(() => {
+    const handleMarketContextChange = async () => {
+      // Check if user has auto-join enabled
+      const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
+      
+      if (!currentMarketContext) {
+        setShowJoinPopup(false);
+        return;
+      }
+
+      if (!autoPredictionChat) {
+        // Show popup instead of auto-joining
+        setShowJoinPopup(true);
+        return;
+      }
+
+      // Auto-join is enabled
+      try {
+        let conversation: ChatRoomType;
+
+        if (currentMarketContext.contextType === 'market') {
+          console.log('📍 Auto-joining market chat:', currentMarketContext.marketId);
+          conversation = await roomService.getOrCreateMarketChat(
+            currentMarketContext.marketId!,
+            currentMarketContext.marketTitle!
+          );
+        } else if (currentMarketContext.contextType === 'category') {
+          console.log('📂 Auto-joining category chat:', currentMarketContext.chatName);
+          // Find global chat by name
+          const globalChats = await roomService.getRooms('global');
+          const targetChat = globalChats.find(
+            chat => chat.name === currentMarketContext.chatName
+          );
+
+          if (!targetChat) {
+            console.warn('⚠️ Global chat not found:', currentMarketContext.chatName);
+            return;
+          }
+
+          conversation = targetChat;
+        } else {
+          return;
+        }
+
+        setSelectedChat(conversation);
+        setViewMode('chat');
+        setActiveChatCategory(conversation.type === 'market' ? 'market' : 'global');
+        setShowJoinPopup(false);
+      } catch (error) {
+        console.error('Failed to auto-join chat:', error);
+      }
+    };
+
+    handleMarketContextChange();
+  }, [currentMarketContext, user?.settings?.autoPredictionChat]);
   
   const toggleFavorite = async (chatId: string) => {
     try {
@@ -735,25 +782,6 @@ export const ChatsList = () => {
           </svg>
         </button>
 
-        {/* Join Chat CTA (shown when auto-join is off and context is detected) */}
-        {shouldShowCTA && currentContext && (
-          <div style={{ marginBottom: '12px' }}>
-            <JoinChatBanner
-              contextType={currentContext.contextType}
-              title={
-                currentContext.contextType === 'market'
-                  ? currentContext.marketTitle || 'this market'
-                  : currentContext.chatName || 'this category'
-              }
-              onJoin={async () => {
-                setIsJoiningChat(true);
-                await joinChat();
-                setIsJoiningChat(false);
-              }}
-              loading={isJoiningChat}
-            />
-          </div>
-        )}
 
         {/* Dynamic Chat Cards */}
         {isLoading ? (
@@ -1061,6 +1089,130 @@ export const ChatsList = () => {
         )}
         </div>
       </div>
+
+      {/* Bottom Join Popup - shown when auto-join is OFF and market/category detected */}
+      {showJoinPopup && currentMarketContext && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100% - 40px)',
+          maxWidth: '400px',
+          backgroundColor: '#2A2A2B',
+          border: '1px solid #3D3A60',
+          borderRadius: '14px',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+          zIndex: 1000,
+          animation: 'slideUp 0.3s ease-out',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '14px',
+                color: '#D3D3D3',
+                fontWeight: '600',
+                marginBottom: '4px',
+              }}>
+                {currentMarketContext.contextType === 'market' ? '📊 Market Chat Available' : '📁 Category Chat Available'}
+              </div>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '12px',
+                color: '#909090',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {currentMarketContext.contextType === 'market' 
+                  ? currentMarketContext.marketTitle 
+                  : currentMarketContext.chatName}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowJoinPopup(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#707070',
+                cursor: 'pointer',
+                padding: '4px',
+                fontSize: '20px',
+                lineHeight: '1',
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                let conversation: ChatRoomType;
+
+                if (currentMarketContext.contextType === 'market') {
+                  conversation = await roomService.getOrCreateMarketChat(
+                    currentMarketContext.marketId!,
+                    currentMarketContext.marketTitle!
+                  );
+                } else {
+                  const globalChats = await roomService.getRooms('global');
+                  const targetChat = globalChats.find(
+                    chat => chat.name === currentMarketContext.chatName
+                  );
+                  if (!targetChat) return;
+                  conversation = targetChat;
+                }
+
+                setSelectedChat(conversation);
+                setViewMode('chat');
+                setActiveChatCategory(conversation.type === 'market' ? 'market' : 'global');
+                setShowJoinPopup(false);
+              } catch (error) {
+                console.error('Failed to join chat:', error);
+              }
+            }}
+            style={{
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#3D3A60',
+              border: '1px solid #5C6B8A',
+              borderRadius: '10px',
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '14px',
+              color: '#7A9BCC',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#454277';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3D3A60';
+            }}
+          >
+            Join Chat
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            transform: translate(-50%, 20px);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };
