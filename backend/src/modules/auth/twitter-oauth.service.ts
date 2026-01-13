@@ -9,6 +9,7 @@ export class TwitterOAuthService {
   private readonly clientSecret: string;
   private readonly callbackUrl: string;
   private readonly codeVerifiers = new Map<string, string>();
+  private readonly redirectUris = new Map<string, string>(); // Store extension redirect URIs by state
 
   constructor(private configService: ConfigService) {
     this.clientId = configService.get<string>('TWITTER_CLIENT_ID') || '';
@@ -35,8 +36,14 @@ export class TwitterOAuthService {
     return { codeVerifier, codeChallenge, state };
   }
 
-  getAuthorizationUrl(): string {
+  getAuthorizationUrl(extensionRedirectUri?: string): string {
     const { codeChallenge, state } = this.generateCodeChallenge();
+    
+    // Store extension redirect URI if provided
+    if (extensionRedirectUri) {
+      this.redirectUris.set(state, extensionRedirectUri);
+      console.log('🔗 Stored redirect URI for state:', state, '→', extensionRedirectUri);
+    }
     
     const params = new URLSearchParams({
       response_type: 'code',
@@ -49,6 +56,12 @@ export class TwitterOAuthService {
     });
 
     return `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
+  }
+  
+  getRedirectUri(state: string): string | undefined {
+    const uri = this.redirectUris.get(state);
+    console.log('🔍 Getting redirect URI for state:', state, '→', uri);
+    return uri;
   }
 
   async handleCallback(code: string, state: string): Promise<any> {

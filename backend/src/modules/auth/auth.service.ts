@@ -88,13 +88,17 @@ export class AuthService {
     return this.usersService.findOrCreateFromTwitter(twitterProfile);
   }
 
-  getTwitterAuthUrl(): string {
-    return this.twitterOAuthService.getAuthorizationUrl();
+  getTwitterAuthUrl(extensionRedirectUri?: string): string {
+    return this.twitterOAuthService.getAuthorizationUrl(extensionRedirectUri);
   }
 
   async handleTwitterCallback(code: string, state: string) {
     const result = await this.twitterOAuthService.handleCallback(code, state);
     return result.profile;
+  }
+  
+  getExtensionRedirectUri(state: string): string | undefined {
+    return this.twitterOAuthService.getRedirectUri(state);
   }
 }
 

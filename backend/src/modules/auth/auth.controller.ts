@@ -55,23 +55,18 @@ export class AuthController {
 
   // Twitter OAuth with chrome.identity support
   @Get('twitter')
-  async twitterLogin(@Query('redirect_uri') redirectUri: string, @Res() res: Response, @Req() req: any) {
+  async twitterLogin(@Query('redirect_uri') redirectUri: string, @Res() res: Response) {
     console.log('🔐 Twitter OAuth initiated, redirect_uri:', redirectUri);
     
-    // Store redirect_uri in session for callback
-    if (redirectUri) {
-      req.session.oauth_redirect_uri = redirectUri;
-    }
-    
-    const authUrl = this.authService.getTwitterAuthUrl();
+    // Get auth URL (will store redirect_uri internally using state parameter)
+    const authUrl = this.authService.getTwitterAuthUrl(redirectUri);
     res.redirect(authUrl);
   }
 
   @Get('twitter/callback')
-  async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response, @Req() req: any) {
+  async twitterCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
-      console.log('🔍 Twitter callback received:', { code: !!code, state: !!state });
-      console.log('🔍 Session redirect_uri:', req.session?.oauth_redirect_uri);
+      console.log('🔍 Twitter callback received:', { code: !!code, state });
       
       const twitterUser = await this.authService.handleTwitterCallback(code, state);
       const user = await this.authService.findOrCreateFromTwitter(twitterUser);
@@ -79,9 +74,9 @@ export class AuthController {
       
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
-      // Get redirect_uri from session (for extension)
-      const redirectUri = req.session?.oauth_redirect_uri;
-      console.log('🔗 Redirect URI from session:', redirectUri);
+      // Get redirect_uri from state parameter (stored in TwitterOAuthService)
+      const redirectUri = this.authService.getExtensionRedirectUri(state);
+      console.log('🔗 Redirect URI from state:', redirectUri);
       
       if (redirectUri && redirectUri.startsWith('https://') && redirectUri.includes('.chromiumapp.org')) {
         // Extension OAuth flow - redirect back to extension
