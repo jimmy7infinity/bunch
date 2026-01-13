@@ -4,8 +4,14 @@ import type { Message, ChatRoom, User } from '../types';
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 interface MarketContext {
-  marketId: string;
-  marketTitle: string;
+  contextType: 'market' | 'category';
+  // Market-specific fields
+  marketId?: string;
+  marketTitle?: string;
+  // Category-specific fields
+  category?: string;
+  chatName?: string;
+  // Common fields
   url?: string;
   timestamp?: number;
 }

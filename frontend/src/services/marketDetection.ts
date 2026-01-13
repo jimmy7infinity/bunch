@@ -20,23 +20,32 @@ export function initializeMarketDetection() {
 
     console.log('🔌 Connected to extension background script');
 
-    // Listen for market context updates
+    // Listen for market/category context updates
     port.onMessage.addListener((message) => {
       if (message.type === 'POLYMARKET_CONTEXT') {
-        console.log('📍 Received market context:', message);
+        console.log('📍 Received context:', message);
 
-        const { marketId, marketTitle, url, timestamp } = message;
+        const { contextType, marketId, marketTitle, category, chatName, url } = message;
 
         // Update store
-        if (marketId) {
+        if (contextType === 'market' && marketId) {
           useChatStore.getState().setMarketContext({
+            contextType: 'market',
             marketId,
             marketTitle,
             url,
-            timestamp,
+            timestamp: Date.now(),
+          });
+        } else if (contextType === 'category' && category) {
+          useChatStore.getState().setMarketContext({
+            contextType: 'category',
+            category,
+            chatName,
+            url,
+            timestamp: Date.now(),
           });
         } else {
-          // Clear market context if not on a market page
+          // Clear context if not on a market or category page
           useChatStore.getState().setMarketContext(null);
         }
       }
@@ -67,7 +76,7 @@ export function initializeMarketDetection() {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'local' && changes.currentMarketContext) {
         const context = changes.currentMarketContext.newValue;
-        if (context) {
+        if (context && context.contextType) {
           useChatStore.getState().setMarketContext(context);
         } else {
           useChatStore.getState().setMarketContext(null);

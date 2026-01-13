@@ -10,6 +10,8 @@ import { CreateGroupModal } from './CreateGroupModal';
 import { Leaderboard } from '../leaderboard/Leaderboard';
 import { RankedPFP } from '../common/RankedPFP';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
+import { JoinChatBanner } from './JoinChatBanner';
+import { useAutoJoinChat } from '../../hooks/useAutoJoinChat';
 import { roomService, userService } from '../../services/api';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatsList.css';
@@ -19,7 +21,6 @@ type ViewMode = 'chats' | 'chat' | 'profile' | 'settings' | 'other-profile' | 'l
 export const ChatsList = () => {
   const { user, logout, setAuth, token } = useAuthStore();
   const { unreadCount } = useNotificationStore();
-  const { currentMarketContext } = useChatStore();
   const [selectedChat, setSelectedChat] = useState<ChatRoomType | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chats');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -29,8 +30,15 @@ export const ChatsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chats, setChats] = useState<ChatRoomType[]>([]);
-  const [showMarketCTA, setShowMarketCTA] = useState(false);
+  const [isJoiningChat, setIsJoiningChat] = useState(false);
   const pfpRef = useRef<HTMLDivElement>(null);
+
+  // Use auto-join hook (modular logic)
+  const { shouldShowCTA, joinChat, currentContext } = useAutoJoinChat((chat) => {
+    setSelectedChat(chat);
+    setViewMode('chat');
+    setActiveChatCategory(chat.type === 'market' ? 'market' : 'global');
+  });
 
   // Refresh user data on mount
   useEffect(() => {
@@ -64,43 +72,7 @@ export const ChatsList = () => {
     loadChats();
   }, [activeChatCategory]); // Don't include viewMode - it causes issues
 
-  // Auto-join prediction chat when market context changes
-  useEffect(() => {
-    const handleMarketContextChange = async () => {
-      // Check if user has auto-join enabled
-      const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
-      
-      if (!currentMarketContext || !autoPredictionChat) {
-        // No market or auto-join disabled - show CTA if market detected
-        if (currentMarketContext && !autoPredictionChat) {
-          setShowMarketCTA(true);
-        } else {
-          setShowMarketCTA(false);
-        }
-        return;
-      }
-
-      try {
-        console.log('📍 Auto-joining prediction chat for market:', currentMarketContext.marketId);
-        
-        // Get or create market chat
-        const conversation = await roomService.getOrCreateMarketChat(
-          currentMarketContext.marketId,
-          currentMarketContext.marketTitle
-        );
-
-        // Auto-join the chat (switch view mode to chats if needed)
-        setSelectedChat(conversation);
-        setViewMode('chats');
-        setActiveChatCategory('market');
-        setShowMarketCTA(false);
-      } catch (error) {
-        console.error('Failed to auto-join prediction chat:', error);
-      }
-    };
-
-    handleMarketContextChange();
-  }, [currentMarketContext, user?.settings?.autoPredictionChat]); // React to market context changes
+  // Note: Auto-join logic is now handled by useAutoJoinChat hook
   
   const toggleFavorite = async (chatId: string) => {
     try {
@@ -763,57 +735,24 @@ export const ChatsList = () => {
           </svg>
         </button>
 
-        {/* Join Prediction Chat CTA (shown when auto-join is off and market is detected) */}
-        {showMarketCTA && currentMarketContext && (
-          <button
-            onClick={async () => {
-              try {
-                const conversation = await roomService.getOrCreateMarketChat(
-                  currentMarketContext.marketId,
-                  currentMarketContext.marketTitle
-                );
-                setSelectedChat(conversation);
-                setViewMode('chats');
-                setActiveChatCategory('market');
-                setShowMarketCTA(false);
-              } catch (error) {
-                console.error('Failed to join prediction chat:', error);
+        {/* Join Chat CTA (shown when auto-join is off and context is detected) */}
+        {shouldShowCTA && currentContext && (
+          <div style={{ marginBottom: '12px' }}>
+            <JoinChatBanner
+              contextType={currentContext.contextType}
+              title={
+                currentContext.contextType === 'market'
+                  ? currentContext.marketTitle || 'this market'
+                  : currentContext.chatName || 'this category'
               }
-            }}
-            style={{
-              width: '100%',
-              height: '40px',
-              backgroundColor: '#3D3A60',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <span style={{
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '13px',
-              color: '#7A9BCC',
-              fontWeight: '400',
-              maxWidth: '70%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              Join: {currentMarketContext.marketTitle}
-            </span>
-          </button>
+              onJoin={async () => {
+                setIsJoiningChat(true);
+                await joinChat();
+                setIsJoiningChat(false);
+              }}
+              loading={isJoiningChat}
+            />
+          </div>
         )}
 
         {/* Dynamic Chat Cards */}
