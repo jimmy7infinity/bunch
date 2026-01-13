@@ -53,7 +53,7 @@ export class AuthController {
     return this.authService.login(user);
   }
 
-  // Twitter OAuth
+  // Twitter OAuth with chrome.identity support
   @Get('twitter')
   async twitterLogin(@Query('redirect_uri') redirectUri: string, @Res() res: Response, @Req() req: any) {
     console.log('🔐 Twitter OAuth initiated, redirect_uri:', redirectUri);
