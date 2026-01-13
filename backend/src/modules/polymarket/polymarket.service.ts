@@ -154,7 +154,11 @@ export class PolymarketService {
       };
     }
 
-    // Mark as verified
+    // Mark as verified (profileData should be defined if we got here)
+    if (!profileData) {
+      throw new BadRequestException('Verification failed - no profile data');
+    }
+    
     await this.userModel.findByIdAndUpdate(userId, {
       'polymarket.verified': true,
       'polymarket.username': polymarketUsername,
