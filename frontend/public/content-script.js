@@ -108,12 +108,35 @@ function extractMarketInfo() {
 }
 
 /**
+ * Safely send message to extension (handles invalidated context)
+ */
+function safeSendMessage(message) {
+  try {
+    if (!chrome.runtime?.id) {
+      console.warn('⚠️ Extension context invalidated - please refresh the page');
+      return false;
+    }
+    
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        // Extension was reloaded or context lost
+        console.warn('⚠️ Extension context lost:', chrome.runtime.lastError.message);
+      }
+    });
+    return true;
+  } catch (error) {
+    console.warn('⚠️ Failed to send message to extension:', error.message);
+    return false;
+  }
+}
+
+/**
  * Send context to the side panel (market or category)
  */
 function sendContext(contextInfo) {
   if (!contextInfo) {
     // Not on a market or category page, send null context
-    chrome.runtime.sendMessage({
+    safeSendMessage({
       type: 'POLYMARKET_CONTEXT',
       contextType: null,
       marketId: null,
@@ -134,7 +157,7 @@ function sendContext(contextInfo) {
 
       console.log('📍 Detected Polymarket market:', contextInfo);
 
-      chrome.runtime.sendMessage({
+      safeSendMessage({
         type: 'POLYMARKET_CONTEXT',
         contextType: 'market',
         marketId: contextInfo.marketId,
@@ -146,7 +169,7 @@ function sendContext(contextInfo) {
     // Send category context
     console.log('📂 Detected Polymarket category:', contextInfo);
 
-    chrome.runtime.sendMessage({
+    safeSendMessage({
       type: 'POLYMARKET_CONTEXT',
       contextType: 'category',
       category: contextInfo.category,
@@ -240,12 +263,26 @@ function initializeDetection() {
   };
 }
 
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeDetection);
-} else {
-  initializeDetection();
+// Check if extension context is valid before initializing
+function safeInitialize() {
+  try {
+    if (!chrome.runtime?.id) {
+      console.warn('⚠️ Extension context not available - page may need refresh');
+      return;
+    }
+    
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeDetection);
+    } else {
+      initializeDetection();
+    }
+  } catch (error) {
+    console.error('Failed to initialize PolyBanter content script:', error);
+  }
 }
+
+safeInitialize();
 
 // Listen for messages from the side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

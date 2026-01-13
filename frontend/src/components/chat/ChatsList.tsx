@@ -67,21 +67,29 @@ export const ChatsList = () => {
   // Auto-join market chat when context changes
   useEffect(() => {
     const handleMarketContextChange = async () => {
+      console.log('🔍 Context change detected:', {
+        currentMarketContext,
+        autoPredictionChat: user?.settings?.autoPredictionChat,
+      });
+
       // Check if user has auto-join enabled
       const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
       
       if (!currentMarketContext) {
+        console.log('❌ No market context');
         setShowJoinPopup(false);
         return;
       }
 
       if (!autoPredictionChat) {
         // Show popup instead of auto-joining
+        console.log('👋 Auto-join disabled, showing popup');
         setShowJoinPopup(true);
         return;
       }
 
       // Auto-join is enabled
+      console.log('✅ Auto-join enabled, attempting to join...');
       try {
         let conversation: ChatRoomType;
 
@@ -106,15 +114,17 @@ export const ChatsList = () => {
 
           conversation = targetChat;
         } else {
+          console.warn('⚠️ Unknown context type:', currentMarketContext.contextType);
           return;
         }
 
+        console.log('✅ Joined chat:', conversation.name);
         setSelectedChat(conversation);
         setViewMode('chat');
         setActiveChatCategory(conversation.type === 'market' ? 'market' : 'global');
         setShowJoinPopup(false);
       } catch (error) {
-        console.error('Failed to auto-join chat:', error);
+        console.error('❌ Failed to auto-join chat:', error);
       }
     };
 
