@@ -41,6 +41,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // Keep the message channel open for async response
   }
+  
+  // Handle auth success from callback page
+  if (message.type === 'AUTH_SUCCESS') {
+    console.log('🎉 Auth success received from callback page, token present:', !!message.token);
+    
+    // Store token in chrome.storage
+    chrome.storage.local.set({ authToken: message.token }, () => {
+      console.log('✅ Token stored in chrome.storage from service worker');
+      sendResponse({ success: true });
+    });
+    
+    return true; // Keep message channel open
+  }
 });
 
 // Allow side panel to query current market context

@@ -46,36 +46,46 @@
     const token = params.get('token');
 
     console.log('🔑 Auth success page loaded, token present:', !!token);
+    console.log('🔍 Chrome runtime available:', typeof chrome !== 'undefined' && !!chrome.runtime);
 
-    if (token && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-      console.log('📦 Extension context detected, storing token');
-      
-      // Store in chrome.storage
-      chrome.storage.local.set({ authToken: token }, () => {
-        console.log('✅ Token stored in chrome.storage');
-        
-        // Close this tab after a brief delay
-        setTimeout(() => {
-          console.log('👋 Closing auth tab');
-          window.close();
-        }, 1500);
-      });
-    } else if (token) {
-      // Not an extension - this is a web page
-      // Store token and close window
-      console.log('🌐 Web context, storing token and closing');
-      
-      // Try to use window.opener to communicate with extension
-      if (window.opener) {
-        window.opener.postMessage({ type: 'AUTH_SUCCESS', token }, '*');
-      }
-      
-      // Close after delay
-      setTimeout(() => {
-        window.close();
-      }, 1500);
-    } else {
+    if (!token) {
       console.error('❌ No token found in URL');
+      document.querySelector('.container').innerHTML = '<h2>❌ Authentication Failed</h2><p>No token received</p>';
+    } else {
+      // Check if we have chrome.runtime (means we're opened by the extension)
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        console.log('📦 Chrome runtime detected, sending message to extension');
+        
+        try {
+          // Send message to extension background/service worker
+          chrome.runtime.sendMessage({ type: 'AUTH_SUCCESS', token }, (response) => {
+            console.log('✅ Message sent to extension, response:', response);
+            
+            // Close this tab after a brief delay
+            setTimeout(() => {
+              console.log('👋 Closing auth tab');
+              window.close();
+            }, 1000);
+          });
+        } catch (error) {
+          console.error('❌ Failed to send message to extension:', error);
+          
+          // Fallback: try storage API
+          if (chrome.storage) {
+            console.log('🔄 Trying chrome.storage fallback');
+            chrome.storage.local.set({ authToken: token }, () => {
+              console.log('✅ Token stored in chrome.storage');
+              setTimeout(() => window.close(), 1000);
+            });
+          }
+        }
+      } else {
+        console.log('🌐 Regular web context (not extension)');
+        // For regular web app, redirect to main page with token
+        setTimeout(() => {
+          window.location.href = '/?token=' + token;
+        }, 1000);
+      }
     }
   </script>
 </body>
