@@ -29,13 +29,7 @@ export class UsersController {
   @Patch('me')
   async updateMe(
     @Request() req: any,
-    @Body() updates: { 
-      username?: string; 
-      display_name?: string; 
-      avatar_url?: string; 
-      bio?: string;
-      settings?: { autoPredictionChat?: boolean };
-    },
+    @Body() updates: { username?: string; display_name?: string; avatar_url?: string; bio?: string },
   ) {
     try {
       const updatedUser = await this.usersService.updateProfile(req.user.userId, updates);
@@ -49,11 +43,6 @@ export class UsersController {
         bio: updatedUser.bio,
         rank: updatedUser.rank,
         is_online: updatedUser.is_online,
-        twitter_id: updatedUser.twitter_id,
-        twitter_username: updatedUser.twitter_username,
-        twitter_avatar: updatedUser.twitter_avatar,
-        polymarket: updatedUser.polymarket,
-        settings: updatedUser.settings,
       };
     } catch (error) {
       if (error.message === 'Username already taken') {

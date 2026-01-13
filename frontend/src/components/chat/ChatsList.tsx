@@ -29,7 +29,7 @@ export const ChatsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chats, setChats] = useState<ChatRoomType[]>([]);
-  const [showJoinPopup, setShowJoinPopup] = useState(false);
+  const [showMarketCTA, setShowMarketCTA] = useState(false);
   const pfpRef = useRef<HTMLDivElement>(null);
 
   // Refresh user data on mount
@@ -64,72 +64,70 @@ export const ChatsList = () => {
     loadChats();
   }, [activeChatCategory]); // Don't include viewMode - it causes issues
 
-  // Auto-join market chat when context changes
+  // Auto-join prediction chat or category chat when context changes
   useEffect(() => {
     const handleMarketContextChange = async () => {
-      console.log('🔍 Context change detected:', {
-        currentMarketContext,
-        autoPredictionChat: user?.settings?.autoPredictionChat,
-      });
-
       // Check if user has auto-join enabled
       const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
       
-      if (!currentMarketContext) {
-        console.log('❌ No market context');
-        setShowJoinPopup(false);
-        return;
-      }
-
-      if (!autoPredictionChat) {
-        // Show popup instead of auto-joining
-        console.log('👋 Auto-join disabled, showing popup');
-        setShowJoinPopup(true);
-        return;
-      }
-
-      // Auto-join is enabled
-      console.log('✅ Auto-join enabled, attempting to join...');
-      try {
-        let conversation: ChatRoomType;
-
-        if (currentMarketContext.contextType === 'market') {
-          console.log('📍 Auto-joining market chat:', currentMarketContext.marketId);
-          conversation = await roomService.getOrCreateMarketChat(
-            currentMarketContext.marketId!,
-            currentMarketContext.marketTitle!
+      // Handle category pages (e.g., /geopolitics)
+      if (currentMarketContext?.categorySlug) {
+        console.log('📍 Category page detected:', currentMarketContext.categorySlug);
+        
+        try {
+          // Find the global chat matching this category
+          const rooms = await roomService.getRooms('global');
+          const categoryChat = rooms.find(
+            room => room.slug === currentMarketContext.categorySlug
           );
-        } else if (currentMarketContext.contextType === 'category') {
-          console.log('📂 Auto-joining category chat:', currentMarketContext.chatName);
-          // Find global chat by name
-          const globalChats = await roomService.getRooms('global');
-          const targetChat = globalChats.find(
-            chat => chat.name === currentMarketContext.chatName
-          );
-
-          if (!targetChat) {
-            console.warn('⚠️ Global chat not found:', currentMarketContext.chatName);
-            return;
+          
+          if (categoryChat) {
+            console.log('📍 Auto-joining category chat:', categoryChat.name);
+            setSelectedChat(categoryChat);
+            setViewMode('chats');
+            setActiveChatCategory('global');
           }
-
-          conversation = targetChat;
-        } else {
-          console.warn('⚠️ Unknown context type:', currentMarketContext.contextType);
-          return;
+        } catch (error) {
+          console.error('Failed to join category chat:', error);
         }
+        
+        setShowMarketCTA(false);
+        return;
+      }
+      
+      // CRITICAL: Only proceed if we have valid market context with actual marketId
+      if (!currentMarketContext?.marketId) {
+        setShowMarketCTA(false);
+        return;
+      }
+      
+      // If auto-join is disabled, show CTA instead
+      if (!autoPredictionChat) {
+        setShowMarketCTA(true);
+        return;
+      }
 
-        console.log('✅ Joined chat:', conversation.name);
+      try {
+        console.log('📍 Auto-joining prediction chat for market:', currentMarketContext.marketId);
+        
+        // Get or create market chat
+        const conversation = await roomService.getOrCreateMarketChat(
+          currentMarketContext.marketId,
+          currentMarketContext.marketTitle!
+        );
+
+        // Auto-join the chat (switch view mode to chats if needed)
         setSelectedChat(conversation);
-        setViewMode('chat');
-        setActiveChatCategory(conversation.type === 'market' ? 'market' : 'global');
-        setShowJoinPopup(false);
+        setViewMode('chats');
+        setActiveChatCategory('market');
+        setShowMarketCTA(false);
       } catch (error) {
-        console.error('❌ Failed to auto-join chat:', error);
+        console.error('Failed to auto-join prediction chat:', error);
       }
     };
 
     handleMarketContextChange();
-  }, [currentMarketContext, user?.settings?.autoPredictionChat]);
+  }, [currentMarketContext, user?.settings?.autoPredictionChat]); // React to market context changes
   
   const toggleFavorite = async (chatId: string) => {
     try {
@@ -792,6 +790,58 @@ export const ChatsList = () => {
           </svg>
         </button>
 
+        {/* Join Prediction Chat CTA (shown when auto-join is off and market is detected) */}
+        {showMarketCTA && currentMarketContext && (
+          <button
+            onClick={async () => {
+              try {
+                const conversation = await roomService.getOrCreateMarketChat(
+                  currentMarketContext.marketId,
+                  currentMarketContext.marketTitle
+                );
+                setSelectedChat(conversation);
+                setViewMode('chats');
+                setActiveChatCategory('market');
+                setShowMarketCTA(false);
+              } catch (error) {
+                console.error('Failed to join prediction chat:', error);
+              }
+            }}
+            style={{
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#3D3A60',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '13px',
+              color: '#7A9BCC',
+              fontWeight: '400',
+              maxWidth: '70%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              Join: {currentMarketContext.marketTitle}
+            </span>
+          </button>
+        )}
 
         {/* Dynamic Chat Cards */}
         {isLoading ? (
@@ -1099,130 +1149,6 @@ export const ChatsList = () => {
         )}
         </div>
       </div>
-
-      {/* Bottom Join Popup - shown when auto-join is OFF and market/category detected */}
-      {showJoinPopup && currentMarketContext && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'calc(100% - 40px)',
-          maxWidth: '400px',
-          backgroundColor: '#2A2A2B',
-          border: '1px solid #3D3A60',
-          borderRadius: '14px',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-          zIndex: 1000,
-          animation: 'slideUp 0.3s ease-out',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '14px',
-                color: '#D3D3D3',
-                fontWeight: '600',
-                marginBottom: '4px',
-              }}>
-                {currentMarketContext.contextType === 'market' ? '📊 Market Chat Available' : '📁 Category Chat Available'}
-              </div>
-              <div style={{
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '12px',
-                color: '#909090',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {currentMarketContext.contextType === 'market' 
-                  ? currentMarketContext.marketTitle 
-                  : currentMarketContext.chatName}
-              </div>
-            </div>
-            <button
-              onClick={() => setShowJoinPopup(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#707070',
-                cursor: 'pointer',
-                padding: '4px',
-                fontSize: '20px',
-                lineHeight: '1',
-              }}
-            >
-              ×
-            </button>
-          </div>
-          <button
-            onClick={async () => {
-              try {
-                let conversation: ChatRoomType;
-
-                if (currentMarketContext.contextType === 'market') {
-                  conversation = await roomService.getOrCreateMarketChat(
-                    currentMarketContext.marketId!,
-                    currentMarketContext.marketTitle!
-                  );
-                } else {
-                  const globalChats = await roomService.getRooms('global');
-                  const targetChat = globalChats.find(
-                    chat => chat.name === currentMarketContext.chatName
-                  );
-                  if (!targetChat) return;
-                  conversation = targetChat;
-                }
-
-                setSelectedChat(conversation);
-                setViewMode('chat');
-                setActiveChatCategory(conversation.type === 'market' ? 'market' : 'global');
-                setShowJoinPopup(false);
-              } catch (error) {
-                console.error('Failed to join chat:', error);
-              }
-            }}
-            style={{
-              width: '100%',
-              height: '40px',
-              backgroundColor: '#3D3A60',
-              border: '1px solid #5C6B8A',
-              borderRadius: '10px',
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '14px',
-              color: '#7A9BCC',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#454277';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3D3A60';
-            }}
-          >
-            Join Chat
-          </button>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideUp {
-          from {
-            transform: translate(-50%, 20px);
-            opacity: 0;
-          }
-          to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 };

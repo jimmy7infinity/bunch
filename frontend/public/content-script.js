@@ -5,57 +5,40 @@ let currentMarketId = null;
 let currentMarketTitle = null;
 
 /**
- * Category mapping for global chats
+ * Category page mapping - maps Polymarket category URLs to global chat slugs
  */
-const CATEGORY_MAP = {
-  '/politics': 'Politics',
-  '/sports': 'Sports',
-  '/crypto': 'Crypto',
-  '/finance': 'Finance',
-  '/geopolitics': 'Geopolitics',
-  '/earnings': 'Earnings',
-  '/tech': 'Tech',
-  '/culture': 'Culture',
-  '/world': 'World',
-  '/economy': 'Economy',
-  '/climate': 'Climate & Science',
-  '/science': 'Climate & Science',
-  '/elections': 'Elections',
+const CATEGORY_MAPPING = {
+  '/politics': 'politics',
+  '/geopolitics': 'geopolitics',
+  '/sports': 'sports',
+  '/crypto': 'crypto',
+  '/finance': 'finance',
+  '/earnings': 'earnings',
+  '/tech': 'tech',
+  '/culture': 'culture',
+  '/elections': 'elections',
 };
-
-/**
- * Extract category context from URL
- */
-function extractCategoryInfo() {
-  const pathname = window.location.pathname;
-  
-  // Check if we're on a category page
-  for (const [path, chatName] of Object.entries(CATEGORY_MAP)) {
-    if (pathname.startsWith(path)) {
-      // Make sure it's not a market page within that category
-      const isMarket = /\/(event|market)\//.test(pathname);
-      if (!isMarket) {
-        return {
-          type: 'category',
-          category: path.replace('/', ''),
-          chatName,
-          url: window.location.href,
-        };
-      }
-    }
-  }
-  
-  return null;
-}
 
 /**
  * Extract market ID from Polymarket URL
  * Polymarket URLs are typically: https://polymarket.com/event/{slug}?tid={marketId}
  * or https://polymarket.com/event/{slug}
+ * or category pages: https://polymarket.com/geopolitics
  */
 function extractMarketInfo() {
   const url = window.location.href;
   const pathname = window.location.pathname;
+
+  // Check if we're on a category page first
+  const categorySlug = CATEGORY_MAPPING[pathname];
+  if (categorySlug) {
+    return {
+      marketId: null,
+      marketTitle: null,
+      url,
+      categorySlug, // Signal this is a category page
+    };
+  }
 
   // Check if we're on a market page (event or market)
   const marketMatch = pathname.match(/\/(event|market)\/([^\/\?]+)/);
@@ -100,7 +83,6 @@ function extractMarketInfo() {
   }
 
   return {
-    type: 'market',
     marketId,
     marketTitle: marketTitle || slug,
     url,
@@ -108,99 +90,48 @@ function extractMarketInfo() {
 }
 
 /**
- * Safely send message to extension (handles invalidated context)
+ * Send market context to the side panel
  */
-function safeSendMessage(message) {
-  try {
-    if (!chrome.runtime?.id) {
-      console.warn('⚠️ Extension context invalidated - please refresh the page');
-      return false;
-    }
-    
-    chrome.runtime.sendMessage(message, (response) => {
-      if (chrome.runtime.lastError) {
-        // Extension was reloaded or context lost
-        console.warn('⚠️ Extension context lost:', chrome.runtime.lastError.message);
-      }
-    });
-    return true;
-  } catch (error) {
-    console.warn('⚠️ Failed to send message to extension:', error.message);
-    return false;
-  }
-}
-
-/**
- * Send context to the side panel (market or category)
- */
-function sendContext(contextInfo) {
-  if (!contextInfo) {
-    // Not on a market or category page, send null context
-    safeSendMessage({
+function sendMarketContext(marketInfo) {
+  if (!marketInfo) {
+    // Not on a market page or category, send null context
+    chrome.runtime.sendMessage({
       type: 'POLYMARKET_CONTEXT',
-      contextType: null,
       marketId: null,
       marketTitle: null,
-      category: null,
-      chatName: null,
+      categorySlug: null,
     });
-    currentMarketId = null;
-    currentMarketTitle = null;
     return;
   }
 
-  if (contextInfo.type === 'market') {
-    // Only send if market has changed
-    if (contextInfo.marketId !== currentMarketId) {
-      currentMarketId = contextInfo.marketId;
-      currentMarketTitle = contextInfo.marketTitle;
-
-      console.log('📍 Detected Polymarket market:', contextInfo);
-
-      safeSendMessage({
-        type: 'POLYMARKET_CONTEXT',
-        contextType: 'market',
-        marketId: contextInfo.marketId,
-        marketTitle: contextInfo.marketTitle,
-        url: contextInfo.url,
-      });
-    }
-  } else if (contextInfo.type === 'category') {
-    // Send category context
-    console.log('📂 Detected Polymarket category:', contextInfo);
-
-    safeSendMessage({
+  // Handle category pages
+  if (marketInfo.categorySlug) {
+    console.log('📍 Detected Polymarket category:', marketInfo.categorySlug);
+    chrome.runtime.sendMessage({
       type: 'POLYMARKET_CONTEXT',
-      contextType: 'category',
-      category: contextInfo.category,
-      chatName: contextInfo.chatName,
-      url: contextInfo.url,
+      marketId: null,
+      marketTitle: null,
+      categorySlug: marketInfo.categorySlug,
+      url: marketInfo.url,
     });
-    
-    // Clear market context
-    currentMarketId = null;
-    currentMarketTitle = null;
+    return;
   }
-}
 
-/**
- * Detect current context (market or category)
- */
-function detectContext() {
-  // Try market first (more specific)
-  const marketInfo = extractMarketInfo();
-  if (marketInfo) {
-    return marketInfo;
+  // Only send if market has changed
+  if (marketInfo.marketId !== currentMarketId) {
+    currentMarketId = marketInfo.marketId;
+    currentMarketTitle = marketInfo.marketTitle;
+
+    console.log('📍 Detected Polymarket market:', marketInfo);
+
+    chrome.runtime.sendMessage({
+      type: 'POLYMARKET_CONTEXT',
+      marketId: marketInfo.marketId,
+      marketTitle: marketInfo.marketTitle,
+      url: marketInfo.url,
+      categorySlug: null,
+    });
   }
-  
-  // Try category
-  const categoryInfo = extractCategoryInfo();
-  if (categoryInfo) {
-    return categoryInfo;
-  }
-  
-  // No context
-  return null;
 }
 
 /**
@@ -208,8 +139,8 @@ function detectContext() {
  */
 function initializeDetection() {
   // Initial detection
-  const context = detectContext();
-  sendContext(context);
+  const marketInfo = extractMarketInfo();
+  sendMarketContext(marketInfo);
 
   // Watch for URL changes (SPA navigation)
   let lastUrl = window.location.href;
@@ -218,12 +149,12 @@ function initializeDetection() {
     const currentUrl = window.location.href;
     if (currentUrl !== lastUrl) {
       lastUrl = currentUrl;
-      console.log('🔄 URL changed, re-detecting context...');
+      console.log('🔄 URL changed, re-detecting market...');
       
       // Wait a bit for DOM to update
       setTimeout(() => {
-        const context = detectContext();
-        sendContext(context);
+        const marketInfo = extractMarketInfo();
+        sendMarketContext(marketInfo);
       }, 500);
     }
   });
@@ -237,8 +168,8 @@ function initializeDetection() {
   // Also watch for popstate events (back/forward navigation)
   window.addEventListener('popstate', () => {
     setTimeout(() => {
-      const context = detectContext();
-      sendContext(context);
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
     }, 500);
   });
 
@@ -249,45 +180,31 @@ function initializeDetection() {
   history.pushState = function(...args) {
     originalPushState.apply(this, args);
     setTimeout(() => {
-      const context = detectContext();
-      sendContext(context);
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
     }, 500);
   };
 
   history.replaceState = function(...args) {
     originalReplaceState.apply(this, args);
     setTimeout(() => {
-      const context = detectContext();
-      sendContext(context);
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
     }, 500);
   };
 }
 
-// Check if extension context is valid before initializing
-function safeInitialize() {
-  try {
-    if (!chrome.runtime?.id) {
-      console.warn('⚠️ Extension context not available - page may need refresh');
-      return;
-    }
-    
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeDetection);
-    } else {
-      initializeDetection();
-    }
-  } catch (error) {
-    console.error('Failed to initialize PolyBanter content script:', error);
-  }
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeDetection);
+} else {
+  initializeDetection();
 }
-
-safeInitialize();
 
 // Listen for messages from the side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_CURRENT_MARKET') {
-    const context = detectContext();
-    sendResponse(context);
+    const marketInfo = extractMarketInfo();
+    sendResponse(marketInfo);
   }
 });

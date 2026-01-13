@@ -1155,18 +1155,18 @@ export const ChatRoom = ({
               <div 
                 title={`Your position: ${myPosition === 'yes' ? 'Yes' : 'No'} (from Polymarket)`}
                 style={{
-                  width: '24px',
-                  height: '24px',
+                  width: '28px',
+                  height: '28px',
                   backgroundColor: '#19191A',
                   border: '1px solid transparent',
                   backgroundImage: `linear-gradient(#19191A, #19191A), linear-gradient(135deg, ${myPosition === 'yes' ? '#5BC854' : '#C85454'}, #333333)`,
                   backgroundOrigin: 'border-box',
                   backgroundClip: 'padding-box, border-box',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '14px',
                 }}
               >
                 {myPosition === 'yes' ? '🟢' : '🔴'}

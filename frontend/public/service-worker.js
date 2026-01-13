@@ -9,39 +9,27 @@ chrome.action.onClicked.addListener((tab) => {
 
 console.log('🚀 PolyBanter service worker loaded');
 
-// Store current context (market or category)
-let currentContext = null;
+// Store current market context
+let currentMarketContext = null;
 
 // Listen for messages from content script and side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'POLYMARKET_CONTEXT') {
-    console.log('📍 Context received:', message);
+    console.log('📍 Market context received:', message);
     
-    // Store the context with enhanced structure
-    if (message.contextType === 'market') {
-      currentContext = {
-        contextType: 'market',
-        marketId: message.marketId,
-        marketTitle: message.marketTitle,
-        url: message.url,
-        timestamp: Date.now(),
-      };
-    } else if (message.contextType === 'category') {
-      currentContext = {
-        contextType: 'category',
-        category: message.category,
-        chatName: message.chatName,
-        url: message.url,
-        timestamp: Date.now(),
-      };
-    } else {
-      // Clear context
-      currentContext = null;
-    }
+    // Store the context
+    currentMarketContext = {
+      marketId: message.marketId,
+      marketTitle: message.marketTitle,
+      url: message.url,
+      timestamp: Date.now(),
+    };
 
     // Store in chrome.storage for persistence
-    chrome.storage.local.set({ currentMarketContext: currentContext });
+    chrome.storage.local.set({ currentMarketContext });
 
+    // Try to send to all side panel instances
+    // Note: This will be picked up by the side panel when it queries for context
     sendResponse({ success: true });
   }
   
@@ -107,16 +95,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Allow side panel to query current context
+// Allow side panel to query current market context
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'polybanter-sidepanel') {
     console.log('🔌 Side panel connected');
 
     // Send current context immediately
-    if (currentContext) {
+    if (currentMarketContext) {
       port.postMessage({
         type: 'POLYMARKET_CONTEXT',
-        ...currentContext,
+        ...currentMarketContext,
       });
     }
 
@@ -125,7 +113,7 @@ chrome.runtime.onConnect.addListener((port) => {
       if (msg.type === 'GET_MARKET_CONTEXT') {
         port.postMessage({
           type: 'POLYMARKET_CONTEXT',
-          ...(currentContext || { contextType: null }),
+          ...currentMarketContext,
         });
       }
     });

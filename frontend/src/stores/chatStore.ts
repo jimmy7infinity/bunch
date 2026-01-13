@@ -4,16 +4,11 @@ import type { Message, ChatRoom, User } from '../types';
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 interface MarketContext {
-  contextType: 'market' | 'category';
-  // Market-specific fields
-  marketId?: string;
-  marketTitle?: string;
-  // Category-specific fields
-  category?: string;
-  chatName?: string;
-  // Common fields
+  marketId: string | null;
+  marketTitle: string | null;
   url?: string;
   timestamp?: number;
+  categorySlug?: string | null; // For category pages like /geopolitics
 }
 
 interface ChatState {

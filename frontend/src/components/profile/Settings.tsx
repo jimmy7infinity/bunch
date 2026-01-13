@@ -23,11 +23,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Auto-join prediction chats setting
   const [autoPredictionChat, setAutoPredictionChat] = useState(user?.settings?.autoPredictionChat ?? true);
 
-  // Sync local state when user changes
-  useEffect(() => {
-    setAutoPredictionChat(user?.settings?.autoPredictionChat ?? true);
-  }, [user?.settings?.autoPredictionChat]);
-
   // Load verification status on mount
   useEffect(() => {
     loadVerificationStatus();
@@ -104,17 +99,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
     setAutoPredictionChat(newValue);
     
     try {
-      const updatedUser = await userService.updateProfile({
+      await userService.updateProfile({
         settings: { autoPredictionChat: newValue },
       });
-      
-      // Update auth store with the complete updated user data
-      const currentToken = token;
-      if (currentToken) {
-        setAuth(updatedUser, currentToken);
-      }
-      
-      console.log('✅ Auto-join setting updated:', newValue);
+      await refreshUser();
     } catch (error) {
       console.error('Failed to update setting:', error);
       // Revert on error
