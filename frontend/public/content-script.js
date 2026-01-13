@@ -8,36 +8,40 @@ let currentMarketTitle = null;
  * Category page mapping - maps Polymarket category URLs to global chat slugs
  */
 const CATEGORY_MAPPING = {
-  '/politics': 'politics',
-  '/geopolitics': 'geopolitics',
-  '/sports': 'sports',
-  '/crypto': 'crypto',
-  '/finance': 'finance',
-  '/earnings': 'earnings',
-  '/tech': 'tech',
-  '/culture': 'culture',
-  '/elections': 'elections',
+  'politics': 'politics',
+  'geopolitics': 'geopolitics',
+  'sports': 'sports',
+  'crypto': 'crypto',
+  'finance': 'finance',
+  'earnings': 'earnings',
+  'tech': 'tech',
+  'culture': 'culture',
+  'elections': 'elections',
 };
 
 /**
  * Extract market ID from Polymarket URL
  * Polymarket URLs are typically: https://polymarket.com/event/{slug}?tid={marketId}
  * or https://polymarket.com/event/{slug}
- * or category pages: https://polymarket.com/geopolitics
+ * or category pages: https://polymarket.com/geopolitics, /sports/live, /politics/anything
  */
 function extractMarketInfo() {
   const url = window.location.href;
   const pathname = window.location.pathname;
 
-  // Check if we're on a category page first
-  const categorySlug = CATEGORY_MAPPING[pathname];
-  if (categorySlug) {
-    return {
-      marketId: null,
-      marketTitle: null,
-      url,
-      categorySlug, // Signal this is a category page
-    };
+  // Check if we're on a category page first (matches /category or /category/*)
+  const categoryMatch = pathname.match(/^\/([^\/]+)(?:\/|$)/);
+  if (categoryMatch) {
+    const topLevelPath = categoryMatch[1];
+    const categorySlug = CATEGORY_MAPPING[topLevelPath];
+    if (categorySlug) {
+      return {
+        marketId: null,
+        marketTitle: null,
+        url,
+        categorySlug, // Signal this is a category page
+      };
+    }
   }
 
   // Check if we're on a market page (event or market)

@@ -803,58 +803,6 @@ export const ChatsList = () => {
           </svg>
         </button>
 
-        {/* Join Prediction Chat CTA (shown when auto-join is off and market is detected) */}
-        {showMarketCTA && currentMarketContext && (
-          <button
-            onClick={async () => {
-              try {
-                const conversation = await roomService.getOrCreateMarketChat(
-                  currentMarketContext.marketId,
-                  currentMarketContext.marketTitle
-                );
-                setSelectedChat(conversation);
-                setViewMode('chats');
-                setActiveChatCategory('market');
-                setShowMarketCTA(false);
-              } catch (error) {
-                console.error('Failed to join prediction chat:', error);
-              }
-            }}
-            style={{
-              width: '100%',
-              height: '40px',
-              backgroundColor: '#3D3A60',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <span style={{
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '13px',
-              color: '#7A9BCC',
-              fontWeight: '400',
-              maxWidth: '70%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              Join: {currentMarketContext.marketTitle}
-            </span>
-          </button>
-        )}
 
         {/* Dynamic Chat Cards */}
         {isLoading ? (
@@ -1163,7 +1111,7 @@ export const ChatsList = () => {
         </div>
       </div>
 
-      {/* Chat Join CTA Button (fixed to bottom, styled like blue button) */}
+      {/* Chat Join CTA Button (fixed to bottom, purple gradient style) */}
       {showMarketCTA && ctaChatRoom && (
         <div
           style={{
@@ -1175,9 +1123,6 @@ export const ChatsList = () => {
             padding: '16px 20px',
             backgroundColor: '#19191A',
             borderTop: '1px solid #333333',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
             boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.3)',
           }}
         >
@@ -1190,43 +1135,38 @@ export const ChatsList = () => {
               setCtaChatRoom(null);
             }}
             style={{
-              flex: 1,
-              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '15px',
-              fontWeight: 600,
-              color: '#FFFFFF',
-              backgroundColor: '#4A9EFF',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '14px 20px',
-              cursor: 'pointer',
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#3D3A60',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#3D3A60, #3D3A60), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-            }}
-          >
-            <span>💬</span>
-            <span>Join {ctaChatRoom.name || ctaChatRoom.title} Chat</span>
-          </button>
-          <button
-            onClick={() => {
-              setShowMarketCTA(false);
-              setCtaChatRoom(null);
-            }}
-            style={{
-              backgroundColor: 'transparent',
-              border: '1px solid #707070',
-              borderRadius: '10px',
-              color: '#909090',
-              fontSize: '14px',
-              fontWeight: 600,
               cursor: 'pointer',
-              padding: '14px 16px',
-              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
             }}
           >
-            Dismiss
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A9BCC" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '13px',
+              color: '#7A9BCC',
+              fontWeight: '400',
+              maxWidth: '70%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              Join: {ctaChatRoom.name || ctaChatRoom.title}
+            </span>
           </button>
         </div>
       )}
