@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   
   refreshUser: async () => {
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/users/me');
       const user = response.data;
       localStorage.setItem('user', JSON.stringify(user));
       set({ user });

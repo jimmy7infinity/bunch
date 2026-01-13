@@ -15,7 +15,9 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req: any) {
-    return req.user;
+    // Fetch full user object from database instead of just JWT payload
+    const fullUser = await this.usersService.findById(req.user.userId);
+    return fullUser;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -29,21 +31,18 @@ export class UsersController {
   @Patch('me')
   async updateMe(
     @Request() req: any,
-    @Body() updates: { username?: string; display_name?: string; avatar_url?: string; bio?: string },
+    @Body() updates: { 
+      username?: string; 
+      display_name?: string; 
+      avatar_url?: string; 
+      bio?: string;
+      settings?: { autoPredictionChat?: boolean };
+    },
   ) {
     try {
       const updatedUser = await this.usersService.updateProfile(req.user.userId, updates);
-      return {
-        _id: (updatedUser as any)._id.toString(),
-        id: (updatedUser as any)._id.toString(),
-        wallet_address: updatedUser.wallet_address,
-        username: updatedUser.username,
-        display_name: updatedUser.display_name,
-        avatar_url: updatedUser.avatar_url,
-        bio: updatedUser.bio,
-        rank: updatedUser.rank,
-        is_online: updatedUser.is_online,
-      };
+      // Return full user object to preserve all fields
+      return updatedUser;
     } catch (error) {
       if (error.message === 'Username already taken') {
         return { error: 'Username already taken' };

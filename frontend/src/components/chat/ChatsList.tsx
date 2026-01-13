@@ -74,6 +74,7 @@ export const ChatsList = () => {
       if (currentMarketContext?.categorySlug) {
         console.log('📍 Category page detected:', currentMarketContext.categorySlug);
         
+        // Category pages always auto-join (no CTA for category pages)
         try {
           // Find the global chat matching this category
           const rooms = await roomService.getRooms('global');
@@ -1149,6 +1150,102 @@ export const ChatsList = () => {
         )}
         </div>
       </div>
+
+      {/* Market Join CTA Popup (bottom toast) */}
+      {showMarketCTA && currentMarketContext?.marketTitle && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            maxWidth: '90%',
+            width: 'auto',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#2A2A2A',
+              border: '1px solid #707070',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <p
+                style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                {currentMarketContext.marketTitle}
+              </p>
+              <p
+                style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#909090',
+                  margin: 0,
+                }}
+              >
+                Join the prediction chat
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const conversation = await roomService.getOrCreateMarketChat(
+                    currentMarketContext.marketId!,
+                    currentMarketContext.marketTitle!
+                  );
+                  setSelectedChat(conversation);
+                  setViewMode('chats');
+                  setActiveChatCategory('market');
+                  setShowMarketCTA(false);
+                } catch (error) {
+                  console.error('Failed to join market chat:', error);
+                }
+              }}
+              style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#FFFFFF',
+                backgroundColor: '#4A9EFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Join
+            </button>
+            <button
+              onClick={() => setShowMarketCTA(false)}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#909090',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '4px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

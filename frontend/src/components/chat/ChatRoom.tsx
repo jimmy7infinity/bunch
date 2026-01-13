@@ -1166,7 +1166,7 @@ export const ChatRoom = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '14px',
+                  fontSize: '10px',
                 }}
               >
                 {myPosition === 'yes' ? '🟢' : '🔴'}
