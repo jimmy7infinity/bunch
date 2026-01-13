@@ -72,8 +72,10 @@ export class AuthController {
       console.log('✅ User authenticated:', { userId: user._id, username: user.username });
       
       // Redirect to auth success page hosted on backend
-      // This works for both extension and web since it's a regular HTTPS URL
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+      // Use Railway URL in production, localhost in development
+      const backendUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://poly-banter.up.railway.app'
+        : 'http://localhost:3000';
       
       res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
     } catch (error) {
