@@ -28,9 +28,16 @@ export class PolymarketController {
   @Post('verification/confirm')
   async confirmVerification(
     @Request() req: any,
-    @Body('polymarketUsername') polymarketUsername: string,
+    @Body() body: any,
   ) {
+    console.log('=== Confirmation Request ===');
+    console.log('Body:', JSON.stringify(body));
+    console.log('User:', req.user);
+    
+    const polymarketUsername = body.polymarketUsername;
+    
     if (!polymarketUsername) {
+      console.log('ERROR: No username provided');
       return {
         success: false,
         message: 'Polymarket username is required',
@@ -38,7 +45,16 @@ export class PolymarketController {
     }
 
     const userId = req.user.userId;
-    return this.polymarketService.confirmVerification(userId, polymarketUsername);
+    console.log('Calling service with userId:', userId, 'username:', polymarketUsername);
+    
+    try {
+      const result = await this.polymarketService.confirmVerification(userId, polymarketUsername);
+      console.log('Service result:', result);
+      return result;
+    } catch (error) {
+      console.error('Service error:', error);
+      throw error;
+    }
   }
 
   /**

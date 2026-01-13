@@ -42,11 +42,19 @@ export class PolymarketService {
     userId: string,
     polymarketUsername: string,
   ): Promise<{ success: boolean; message: string; username?: string; wallet_address?: string }> {
+    console.log('=== confirmVerification Service ===');
+    console.log('userId:', userId);
+    console.log('polymarketUsername:', polymarketUsername);
+    
     // Get user
     const user = await this.userModel.findById(userId);
     if (!user) {
+      console.log('ERROR: User not found');
       throw new NotFoundException('User not found');
     }
+    
+    console.log('User found:', user._id);
+    console.log('User polymarket data:', user.polymarket);
 
     // Check if already verified
     if (user.polymarket?.verified) {
@@ -61,7 +69,11 @@ export class PolymarketService {
     const dbToken = user.polymarket?.verification_token;
     const memoryToken = this.verificationTokens.get(userId);
     
+    console.log('dbToken:', dbToken);
+    console.log('memoryToken:', memoryToken);
+    
     if (!dbToken && !memoryToken) {
+      console.log('ERROR: No token found in DB or memory');
       throw new BadRequestException('No verification token found. Please start verification first.');
     }
 
