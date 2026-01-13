@@ -92,37 +92,67 @@ export class PolymarketService {
       }
     }
 
-    // Fetch and verify Polymarket profile
-    try {
-      const profileData = await this.fetchPolymarketProfile(polymarketUsername);
-      
-      console.log('Looking for token:', tokenToUse);
-      console.log('HTML contains token?', profileData.html?.includes(tokenToUse!));
-      
-      // Debug: Search for partial token to see if it exists at all
-      const tokenPrefix = tokenToUse!.substring(0, 20);
-      console.log('Searching for token prefix:', tokenPrefix);
-      console.log('HTML contains prefix?', profileData.html?.includes(tokenPrefix));
-      
-      // Extract what token IS in the HTML
-      const tokenRegex = /PB-VERIFY-[a-f0-9]{24}-[a-f0-9]{16}/g;
-      const foundTokens = profileData.html?.match(tokenRegex);
-      console.log('Tokens found in HTML:', foundTokens);
-      
-      if (foundTokens && foundTokens.length > 0) {
-        console.log('Expected token:', tokenToUse);
-        console.log('Found token(s):', foundTokens);
-        console.log('Tokens match?', foundTokens.includes(tokenToUse!));
+    // Fetch and verify Polymarket profile with retry logic
+    // Polymarket updates can take a few seconds to propagate
+    const maxRetries = 5;
+    const retryDelays = [0, 2000, 4000, 6000, 8000]; // 0s, 2s, 4s, 6s, 8s (total ~20s max)
+    
+    let profileData;
+    let tokenFound = false;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        console.log(`Retry attempt ${attempt}/${maxRetries - 1} - waiting ${retryDelays[attempt]}ms...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
       }
       
-      // Check if token exists anywhere in the profile HTML (bio, description, etc.)
-      // This is more robust than looking for specific fields since Polymarket's structure may change
-      if (!profileData.html || !profileData.html.includes(tokenToUse!)) {
-        return {
-          success: false,
-          message: 'Verification token not found in Polymarket profile. Please add it to your bio and try again.',
-        };
+      try {
+        profileData = await this.fetchPolymarketProfile(polymarketUsername);
+        
+        console.log(`Attempt ${attempt + 1}: Looking for token:`, tokenToUse);
+        
+        // Extract what tokens ARE in the HTML
+        const tokenRegex = /PB-VERIFY-[a-f0-9]{24}-[a-f0-9]{16}/g;
+        const foundTokens = profileData.html?.match(tokenRegex);
+        console.log(`Attempt ${attempt + 1}: Tokens found in HTML:`, foundTokens);
+        
+        // Check if the correct token exists
+        if (profileData.html && profileData.html.includes(tokenToUse!)) {
+          console.log(`✓ Token found on attempt ${attempt + 1}!`);
+          tokenFound = true;
+          break;
+        }
+        
+        console.log(`✗ Token not found on attempt ${attempt + 1}`);
+        
+        // If this is the last attempt, we'll fail
+        if (attempt === maxRetries - 1) {
+          if (foundTokens && foundTokens.length > 0) {
+            return {
+              success: false,
+              message: `Found an old verification token. Please update your Polymarket bio with the current token and try again.`,
+            };
+          } else {
+            return {
+              success: false,
+              message: 'Verification token not found in Polymarket profile. Please add it to your bio and try again.',
+            };
+          }
+        }
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        if (attempt === maxRetries - 1) {
+          throw error;
+        }
       }
+    }
+    
+    if (!tokenFound) {
+      return {
+        success: false,
+        message: 'Verification token not found after multiple attempts. Please ensure the token is in your bio.',
+      };
+    }
 
       // Mark as verified
       await this.userModel.findByIdAndUpdate(userId, {

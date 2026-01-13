@@ -615,7 +615,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                         opacity: verificationStatus === 'loading' ? 0.6 : 1,
                       }}
                     >
-                      {verificationStatus === 'loading' ? 'Verifying...' : 'I\'ve added it - Verify'}
+                      {verificationStatus === 'loading' ? 'Checking profile... (may take up to 20s)' : 'I\'ve added it - Verify'}
                     </button>
                   </div>
                 </div>
