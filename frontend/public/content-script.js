@@ -97,9 +97,14 @@ function extractMarketInfo() {
  * Send market context to the side panel
  */
 function sendMarketContext(marketInfo) {
-  // Check if extension context is still valid
-  if (!chrome.runtime?.id) {
-    console.log('⚠️ Extension context invalidated - will reconnect on next page load');
+  try {
+    // Test if extension context is valid by accessing chrome.runtime
+    const isValid = chrome.runtime && chrome.runtime.id;
+    if (!isValid) {
+      return;
+    }
+  } catch (e) {
+    // Extension context invalidated
     return;
   }
 
@@ -144,9 +149,7 @@ function sendMarketContext(marketInfo) {
       });
     }
   } catch (error) {
-    // Extension context invalidated (happens after reload)
-    // Silently ignore - the content script will reload on next page load
-    console.log('⚠️ Extension error:', error.message);
+    // Silently ignore context errors
   }
 }
 
