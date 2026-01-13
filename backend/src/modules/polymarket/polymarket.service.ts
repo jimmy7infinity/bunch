@@ -57,21 +57,27 @@ export class PolymarketService {
       };
     }
 
-    // Get token from storage
-    const storedToken = this.verificationTokens.get(userId);
-    if (!storedToken) {
+    // Get token from database (primary source) or fallback to memory
+    const dbToken = user.polymarket?.verification_token;
+    const memoryToken = this.verificationTokens.get(userId);
+    
+    if (!dbToken && !memoryToken) {
       throw new BadRequestException('No verification token found. Please start verification first.');
     }
 
-    // Check token expiry
-    const now = new Date();
-    const elapsed = now.getTime() - storedToken.createdAt.getTime();
-    if (elapsed > this.TOKEN_EXPIRY_MS) {
-      this.verificationTokens.delete(userId);
-      await this.userModel.findByIdAndUpdate(userId, {
-        'polymarket.verification_token': null,
-      });
-      throw new BadRequestException('Verification token expired. Please start verification again.');
+    const tokenToUse = dbToken || memoryToken?.token;
+    
+    // For expiry check, we can't rely on memory after restart, so we skip expiry if only DB token exists
+    if (memoryToken) {
+      const now = new Date();
+      const elapsed = now.getTime() - memoryToken.createdAt.getTime();
+      if (elapsed > this.TOKEN_EXPIRY_MS) {
+        this.verificationTokens.delete(userId);
+        await this.userModel.findByIdAndUpdate(userId, {
+          'polymarket.verification_token': null,
+        });
+        throw new BadRequestException('Verification token expired. Please start verification again.');
+      }
     }
 
     // Fetch and verify Polymarket profile
@@ -79,7 +85,7 @@ export class PolymarketService {
       const profileData = await this.fetchPolymarketProfile(polymarketUsername);
       
       // Check if token exists in bio
-      if (!profileData.bio || !profileData.bio.includes(storedToken.token)) {
+      if (!profileData.bio || !profileData.bio.includes(tokenToUse!)) {
         return {
           success: false,
           message: 'Verification token not found in Polymarket bio. Please add it and try again.',

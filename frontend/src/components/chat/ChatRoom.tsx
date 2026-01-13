@@ -8,6 +8,8 @@ import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
 import { getRankColors } from '../../utils/ranks';
+import { ChatRoomHeader } from './ChatRoomHeader';
+import { ChatBoxHeader } from './ChatBoxHeader';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatRoom.css';
 
@@ -1150,8 +1152,8 @@ export const ChatRoom = ({
                 <button
                   onClick={() => setShowPositionPicker(!showPositionPicker)}
                   style={{
+                    width: '28px',
                     height: '28px',
-                    padding: '0 10px',
                     backgroundColor: '#19191A',
                     border: '1px solid transparent',
                     backgroundImage: myPosition 
@@ -1162,16 +1164,12 @@ export const ChatRoom = ({
                     borderRadius: '14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    justifyContent: 'center',
                     cursor: 'pointer',
-                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: '11px',
-                    color: myPosition ? (myPosition === 'yes' ? '#5BC854' : '#C85454') : '#B9B7B7',
-                    whiteSpace: 'nowrap',
+                    fontSize: '14px',
                   }}
                 >
                   {myPosition ? (myPosition === 'yes' ? '🟢' : '🔴') : '⚪'}
-                  <span>{myPosition ? (myPosition === 'yes' ? 'Yes' : 'No') : 'Position'}</span>
                 </button>
 
                 {/* Position Dropdown */}
@@ -1179,13 +1177,16 @@ export const ChatRoom = ({
                   <div style={{
                     position: 'absolute',
                     top: '35px',
-                    right: '0',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
                     backgroundColor: '#242424',
                     border: '1px solid #333333',
                     borderRadius: '12px',
                     padding: '8px',
                     zIndex: 100,
-                    minWidth: '120px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                   }}>
                     <button
@@ -1199,23 +1200,19 @@ export const ChatRoom = ({
                         }
                       }}
                       style={{
-                        width: '100%',
-                        padding: '10px 12px',
+                        width: '40px',
+                        height: '40px',
                         backgroundColor: myPosition === 'yes' ? '#1A2E1A' : 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                        fontSize: '13px',
-                        color: '#5BC854',
+                        fontSize: '20px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '4px',
+                        justifyContent: 'center',
                       }}
                     >
-                      <span>🟢</span>
-                      <span>Yes</span>
+                      🟢
                     </button>
 
                     <button
@@ -1229,23 +1226,19 @@ export const ChatRoom = ({
                         }
                       }}
                       style={{
-                        width: '100%',
-                        padding: '10px 12px',
+                        width: '40px',
+                        height: '40px',
                         backgroundColor: myPosition === 'no' ? '#2E1A1A' : 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                        fontSize: '13px',
-                        color: '#C85454',
+                        fontSize: '20px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '4px',
+                        justifyContent: 'center',
                       }}
                     >
-                      <span>🔴</span>
-                      <span>No</span>
+                      🔴
                     </button>
 
                     {myPosition && (
@@ -1260,14 +1253,14 @@ export const ChatRoom = ({
                           }
                         }}
                         style={{
-                          width: '100%',
-                          padding: '10px 12px',
+                          width: '40px',
+                          height: '32px',
                           backgroundColor: 'transparent',
                           border: '1px solid #333333',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                          fontSize: '12px',
+                          fontSize: '10px',
                           color: '#707070',
                           marginTop: '4px',
                         }}

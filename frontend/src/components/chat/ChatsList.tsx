@@ -320,9 +320,9 @@ export const ChatsList = () => {
               fontWeight: '400',
             }}
           >
-            {activeChatCategory === 'global' && 'Global Chats'}
-            {activeChatCategory === 'market' && 'Market Chats'}
-            {activeChatCategory === 'private' && 'Private Chats'}
+            {activeChatCategory === 'global' && 'Global Banter'}
+            {activeChatCategory === 'market' && 'Prediction Banter'}
+            {activeChatCategory === 'private' && 'Private Banter'}
             {activeChatCategory === 'favorites' && 'Favorites'}
           </span>
           {/* Dynamic Icon based on active category */}
