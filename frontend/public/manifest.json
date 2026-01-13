@@ -39,6 +39,12 @@
     "16": "icon-16.png",
     "48": "icon-48.png",
     "128": "icon-128.png"
+  },
+  "externally_connectable": {
+    "matches": [
+      "https://poly-banter.up.railway.app/*",
+      "http://localhost:3000/*"
+    ]
   }
 }
 
