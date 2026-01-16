@@ -73,6 +73,13 @@ class WebSocketService {
       this.notifyStatus('connected');
     });
 
+    // Listen for notifications
+    this.socket.on('notification', (notification) => {
+      console.log('🔔 Received notification:', notification);
+      // Dispatch custom event for the app to handle
+      window.dispatchEvent(new CustomEvent('ws-notification', { detail: notification }));
+    });
+
     return this.socket;
   }
 

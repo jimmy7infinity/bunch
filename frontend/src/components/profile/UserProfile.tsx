@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RankedPFP } from '../common/RankedPFP';
 import { useAuthStore } from '../../stores/authStore';
-import { userService, friendService, blockService, mediaService } from '../../services/api';
+import { useChatStore } from '../../stores/chatStore';
+import { userService, friendService, blockService, mediaService, dmService } from '../../services/api';
 import type { User } from '../../types';
 import './UserProfile.css';
 
@@ -14,6 +15,7 @@ interface UserProfileProps {
 
 export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack, onUserClick }) => {
   const { user: currentUser, setAuth, token } = useAuthStore();
+  const { setSelectedChat, setViewMode } = useChatStore();
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [bio, setBio] = useState('');
@@ -110,6 +112,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     } catch (error) {
       console.error('Failed to send friend request:', error);
       alert('Failed to send friend request. Please try again.');
+    }
+  };
+
+  const handleMessage = async () => {
+    try {
+      const conversation = await dmService.getOrCreateDM(userId);
+      setSelectedChat(conversation);
+      setViewMode('chats');
+      onBack(); // Close the profile view
+    } catch (error) {
+      console.error('Failed to open DM:', error);
+      alert('Failed to open chat. Please try again.');
     }
   };
 
@@ -691,6 +705,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             {/* Message / Message Request Button */}
             {friendshipStatus === 'friends' ? (
               <button
+                onClick={handleMessage}
                 className="profile-pill-button-primary"
                 style={{
                   flex: 1,
@@ -1260,12 +1275,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1000,
+          backgroundColor: '#19191A',
+          border: '1px solid transparent',
+          backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #5BC854, #4A9E43)',
+          backgroundOrigin: 'border-box',
+          backgroundClip: 'padding-box, border-box',
+          borderRadius: '20px',
+          padding: '12px 24px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
         }}>
           <span style={{
             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '16px',
+            fontSize: '14px',
             color: '#5BC854',
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+            fontWeight: '500',
           }}>
             Friend Request Sent!
           </span>

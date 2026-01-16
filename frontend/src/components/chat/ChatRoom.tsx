@@ -52,7 +52,16 @@ export const ChatRoom = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
-  const chatName = conversation.title || conversation.name || 'Chat';
+  // For DMs, show the other person's name
+  const chatName = (() => {
+    if (conversation.type === 'dm' && participants.length > 0) {
+      const otherParticipant = participants.find(p => p._id !== user?._id && p._id !== user?.id);
+      if (otherParticipant) {
+        return otherParticipant.display_name || otherParticipant.username || 'User';
+      }
+    }
+    return conversation.title || conversation.name || 'Chat';
+  })();
   const chatType = conversation.type;
   const onlineCount = conversation.participant_count || 0;
   
@@ -992,57 +1001,6 @@ export const ChatRoom = ({
             gap: '10px',
           }}
         >
-          {/* Push Notifications Bell Button - Blue when active */}
-          <button
-            onClick={async () => {
-              try {
-                const result = await roomService.toggleNotifications(conversation._id);
-                setHasNotifications(result.has_notifications);
-              } catch (error) {
-                console.error('Failed to toggle notifications:', error);
-              }
-            }}
-            className="nav-icon-button"
-            style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: '#19191A',
-              border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            {hasNotifications ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#bellGradientBlue)">
-                <defs>
-                  <linearGradient id="bellGradientBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#60A5FA" />
-                    <stop offset="100%" stopColor="#3B82F6" />
-                  </linearGradient>
-                </defs>
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="url(#bellGradientBlue)" fill="none" strokeWidth="2"/>
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#bellGradientOff)" strokeWidth="2">
-                <defs>
-                  <linearGradient id="bellGradientOff" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#B3B3B3" />
-                    <stop offset="100%" stopColor="#888888" />
-                  </linearGradient>
-                </defs>
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-            )}
-          </button>
-
           {/* AI Feed Button - Only for global/market chats - Green when active */}
           {(chatType === 'global' || chatType === 'market') && (
             <button

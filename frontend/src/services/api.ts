@@ -368,6 +368,14 @@ export const marketPositionService = {
   },
 };
 
+// DM service
+export const dmService = {
+  async getOrCreateDM(userId: string) {
+    const response = await api.post<{ conversation: any }>('/conversations/dm', { userId });
+    return response.data.conversation;
+  },
+};
+
 // Market status service (⚡ / 🐳)
 export const marketStatusService = {
   /**

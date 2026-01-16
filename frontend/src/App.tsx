@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from './stores/authStore';
+import { useNotificationStore } from './stores/notificationStore';
 import { WalletConnect } from './components/auth/WalletConnect';
 import { ChatsList } from './components/chat/ChatsList';
 import { NotificationBanner } from './components/common/NotificationBanner';
@@ -7,6 +8,7 @@ import { initializeMarketDetection } from './services/marketDetection';
 
 function App() {
   const { isAuthenticated, setAuth } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
@@ -93,6 +95,24 @@ function App() {
       initializeMarketDetection();
     }
   }, [isAuthenticated]);
+
+  // Listen for WebSocket notifications
+  useEffect(() => {
+    const handleNotification = (event: CustomEvent) => {
+      const notification = event.detail;
+      addNotification({
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        data: notification.data,
+      });
+    };
+
+    window.addEventListener('ws-notification', handleNotification as EventListener);
+    return () => {
+      window.removeEventListener('ws-notification', handleNotification as EventListener);
+    };
+  }, [addNotification]);
 
   // Listen for storage changes (auth updates) - for instant login without refresh
   useEffect(() => {

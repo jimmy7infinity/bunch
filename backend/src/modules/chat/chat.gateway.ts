@@ -34,6 +34,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private jwtService: JwtService,
   ) {}
 
+  afterInit(server: Server) {
+    // Make server available globally for other modules
+    global['socketServer'] = server;
+  }
+
   async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];

@@ -1,10 +1,14 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Request, Inject } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Server } from 'socket.io';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject('SOCKET_SERVER') private server: Server,
+  ) {}
 
   @Get('online')
   async getOnlineCount() {
@@ -103,7 +107,24 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/friend-request')
   async sendFriendRequest(@Request() req: any, @Param('id') userId: string) {
-    await this.usersService.sendFriendRequest(req.user.userId, userId);
+    const friendRequest = await this.usersService.sendFriendRequest(req.user.userId, userId);
+    
+    // Get sender info for notification
+    const sender = await this.usersService.findById(req.user.userId);
+    
+    // Emit notification to receiver
+    this.server.to(`user:${userId}`).emit('notification', {
+      type: 'friend_request',
+      title: 'New Friend Request',
+      message: `${sender.display_name || sender.username} sent you a friend request`,
+      data: {
+        requestId: friendRequest._id,
+        senderId: req.user.userId,
+        senderName: sender.display_name || sender.username,
+        senderAvatar: sender.avatar_url,
+      },
+    });
+    
     return { success: true };
   }
 

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -17,7 +17,16 @@ import { Friendship, FriendshipSchema } from './schemas/friendship.schema';
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [
+    UsersService,
+    {
+      provide: 'SOCKET_SERVER',
+      useFactory: () => {
+        // This will be set by ChatGateway when it initializes
+        return global['socketServer'];
+      },
+    },
+  ],
   exports: [UsersService],
 })
 export class UsersModule {}
