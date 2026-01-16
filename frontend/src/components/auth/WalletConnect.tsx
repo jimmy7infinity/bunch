@@ -4,7 +4,6 @@ import './WalletConnect.css';
 
 export const WalletConnect = () => {
   const [loading, setLoading] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
 
   // Debug: Log when component mounts
@@ -67,14 +66,13 @@ export const WalletConnect = () => {
           }}
         />
 
-        <div style={{ width: '80%', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-        {/* BUTTON 1 */}
+        {/* LOGIN BUTTON */}
         <button
           onClick={handleTwitterLogin}
           disabled={loading}
           className="gradient-border-button"
           style={{
-            width: '100%',
+            width: '80%',
             height: '50px',
             borderRadius: '25px',
             display: 'flex',
@@ -100,51 +98,6 @@ export const WalletConnect = () => {
             {loading ? 'connecting...' : 'connect to X'}
           </span>
         </button>
-
-        {/* BUTTON 2 */}
-        <div
-          className="gradient-border-button"
-          style={{
-            width: '100%',
-            height: '50px',
-            borderRadius: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            padding: '0 20px',
-          }}
-        >
-          <img 
-            src="/polymarket-logo.png" 
-            alt="Polymarket" 
-            style={{
-              width: '20px',
-              height: '20px',
-              position: 'absolute',
-              left: '24px',
-              objectFit: 'contain',
-            }}
-          />
-          <input
-            type="text"
-            value={walletAddress}
-            onChange={(e) => setWalletAddress(e.target.value)}
-            placeholder="paste your PolyMarket address"
-            style={{
-              width: '100%',
-              backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: '#B9B7B7',
-              fontSize: '10px',
-              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontWeight: '300',
-              textAlign: 'center',
-            }}
-          />
-        </div>
-        </div>
       </div>
     </div>
   );
