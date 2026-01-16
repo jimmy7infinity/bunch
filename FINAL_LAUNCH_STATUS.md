@@ -37,7 +37,7 @@
 
 **Quick Fix (MongoDB Atlas):**
 1. Go to MongoDB Atlas
-2. Database: `polybanter` → Collections → `conversations`
+2. Database: `grex` → Collections → `conversations`
 3. Click "Insert Document"
 4. Paste:
 ```json
@@ -189,7 +189,7 @@ db.conversations.find().forEach(function(conv) {
 Once everything is ready:
 
 ```bash
-cd /Users/jimmyinfinity/Projects/poly_banter/frontend/dist
+cd /Users/jimmyinfinity/Projects/grex/frontend/dist
 zip -r grex-extension-v0.1.0.zip .
 ```
 

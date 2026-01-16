@@ -3,34 +3,34 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:7
-    container_name: polybanter-mongodb
+    container_name: grex-mongodb
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: polybanter
+      MONGO_INITDB_DATABASE: grex
     volumes:
       - mongodb_data:/data/db
     networks:
-      - polybanter-network
+      - grex-network
 
   redis:
     image: redis:7-alpine
-    container_name: polybanter-redis
+    container_name: grex-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - polybanter-network
+      - grex-network
 
 volumes:
   mongodb_data:
   redis_data:
 
 networks:
-  polybanter-network:
+  grex-network:
     driver: bridge
 
 

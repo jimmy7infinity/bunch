@@ -15,7 +15,7 @@
 ### Option A: MongoDB Atlas (Recommended)
 
 1. Go to MongoDB Atlas: https://cloud.mongodb.com
-2. Navigate to your `polybanter` database
+2. Navigate to your `grex` database
 3. Open `conversations` collection
 4. Click "Insert Document"
 5. Paste this JSON:
@@ -247,7 +247,7 @@ db.conversations.findOne({ _id: ObjectId('CHAT_ID_HERE') })
 - Check Railway logs for backend errors
 - Check browser console for frontend errors
 - Review MongoDB for data issues
-- GitHub Issues: https://github.com/jimmy7infinity/poly_banter/issues
+- GitHub Issues: https://github.com/jimmy7infinity/grex/issues
 
 ---
 

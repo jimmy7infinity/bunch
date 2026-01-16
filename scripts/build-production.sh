@@ -14,7 +14,7 @@ if [ -z "$1" ]; then
   echo "❌ Error: Railway URL not provided"
   echo ""
   echo "Usage: ./scripts/build-production.sh <railway-url>"
-  echo "Example: ./scripts/build-production.sh https://polybanter-production.up.railway.app"
+  echo "Example: ./scripts/build-production.sh https://grex-production.up.railway.app"
   echo ""
   exit 1
 fi
@@ -57,7 +57,7 @@ echo ""
 echo "📦 Creating distribution package..."
 cd dist
 VERSION=$(node -p "require('../public/manifest.json').version")
-ZIP_NAME="polybanter-extension-v${VERSION}.zip"
+ZIP_NAME="grex-extension-v${VERSION}.zip"
 
 if [ -f "../$ZIP_NAME" ]; then
   rm "../$ZIP_NAME"

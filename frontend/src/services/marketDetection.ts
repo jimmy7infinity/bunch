@@ -16,7 +16,7 @@ export function initializeMarketDetection() {
 
   try {
     // Connect to background script
-    port = chrome.runtime.connect({ name: 'polybanter-sidepanel' });
+    port = chrome.runtime.connect({ name: 'grex-sidepanel' });
 
     console.log('🔌 Connected to extension background script');
 

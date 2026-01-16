@@ -46,7 +46,7 @@ sleep 5
 
 # Check if MongoDB is ready
 echo "🔍 Checking MongoDB..."
-if docker exec polybanter-mongodb mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+if docker exec grex-mongodb mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
   echo "✅ MongoDB is ready"
 else
   echo "⚠️  MongoDB might not be fully ready yet, but continuing..."
@@ -54,7 +54,7 @@ fi
 
 # Check if Redis is ready
 echo "🔍 Checking Redis..."
-if docker exec polybanter-redis redis-cli ping > /dev/null 2>&1; then
+if docker exec grex-redis redis-cli ping > /dev/null 2>&1; then
   echo "✅ Redis is ready"
 else
   echo "⚠️  Redis might not be fully ready yet, but continuing..."
@@ -77,7 +77,7 @@ PORT=3000
 API_PREFIX=api
 
 # Database
-MONGODB_URI=mongodb://admin:password@localhost:27017/polybanter?authSource=admin
+MONGODB_URI=mongodb://admin:password@localhost:27017/grex?authSource=admin
 
 # Redis
 REDIS_HOST=localhost

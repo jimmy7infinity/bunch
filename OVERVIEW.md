@@ -1310,7 +1310,7 @@ The Chrome extension side panel uses a vertical layout optimized for the narrow 
   
   "host_permissions": [
     "https://polymarket.com/*",
-    "https://api.polybanter.com/*"
+    "https://api.grex.com/*"
   ],
   
   "background": {
