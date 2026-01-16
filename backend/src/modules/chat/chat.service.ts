@@ -214,29 +214,45 @@ export class ChatService {
    * Join a conversation
    */
   async joinConversation(conversationId: string, userId: string, role: 'owner' | 'admin' | 'member' = 'member') {
-    // Check if already a participant
-    const existing = await this.participantModel.findOne({
-      conversation_id: new Types.ObjectId(conversationId),
-      user_id: new Types.ObjectId(userId),
-    }).exec();
+    try {
+      // Use findOneAndUpdate with upsert to avoid race conditions
+      const participant = await this.participantModel.findOneAndUpdate(
+        {
+          conversation_id: new Types.ObjectId(conversationId),
+          user_id: new Types.ObjectId(userId),
+        },
+        {
+          $setOnInsert: {
+            conversation_id: new Types.ObjectId(conversationId),
+            user_id: new Types.ObjectId(userId),
+            role,
+            joined_at: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      ).exec();
 
-    if (existing) {
-      return existing;
+      // Only increment participant count if this was a new participant
+      if (participant && !participant.joined_at) {
+        await this.conversationModel.findByIdAndUpdate(conversationId, {
+          $inc: { participant_count: 1 },
+        }).exec();
+      }
+
+      return participant;
+    } catch (error) {
+      // If duplicate key error, just fetch and return the existing participant
+      if (error.code === 11000) {
+        return await this.participantModel.findOne({
+          conversation_id: new Types.ObjectId(conversationId),
+          user_id: new Types.ObjectId(userId),
+        }).exec();
+      }
+      throw error;
     }
-
-    const participant = new this.participantModel({
-      conversation_id: new Types.ObjectId(conversationId),
-      user_id: new Types.ObjectId(userId),
-      role,
-    });
-    await participant.save();
-
-    // Update participant count
-    await this.conversationModel.findByIdAndUpdate(conversationId, {
-      $inc: { participant_count: 1 },
-    }).exec();
-
-    return participant;
   }
 
   /**
