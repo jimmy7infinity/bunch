@@ -1788,8 +1788,11 @@ export const ChatRoom = ({
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
                           {!isAI && (
                             <>
-                              <button 
-                                onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
+                              <button
+                                onClick={() => {
+                                  setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text });
+                                  setTimeout(() => messageInputRef.current?.focus(), 0);
+                                }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">
@@ -1856,8 +1859,11 @@ export const ChatRoom = ({
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '16px' }}>
                           {!isAI && (
                             <>
-                              <button 
-                                onClick={() => setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text })}
+                              <button
+                                onClick={() => {
+                                  setReplyingTo({ messageId: msg._id, username: senderName, preview: msg.text });
+                                  setTimeout(() => messageInputRef.current?.focus(), 0);
+                                }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', height: '16px' }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" strokeWidth="2">

@@ -194,8 +194,8 @@ export class UsersService {
     // Check if there's already a pending request
     const existingRequest = await this.friendRequestModel.findOne({
       $or: [
-        { sender_id: senderId, receiver_id: receiverId, status: 'pending' },
-        { sender_id: receiverId, receiver_id: senderId, status: 'pending' },
+        { from_user_id: senderId, to_user_id: receiverId, status: 'pending' },
+        { from_user_id: receiverId, to_user_id: senderId, status: 'pending' },
       ],
     }).exec();
 
@@ -204,8 +204,8 @@ export class UsersService {
     }
 
     const request = new this.friendRequestModel({
-      sender_id: senderId,
-      receiver_id: receiverId,
+      from_user_id: senderId,
+      to_user_id: receiverId,
       status: 'pending',
     });
 
@@ -214,12 +214,12 @@ export class UsersService {
 
   async acceptFriendRequest(requestId: string, userId: string): Promise<void> {
     const request: any = await this.friendRequestModel.findById(requestId).exec();
-    
+
     if (!request) {
       throw new NotFoundException('Friend request not found');
     }
 
-    if (request.receiver_id.toString() !== userId) {
+    if (request.to_user_id.toString() !== userId) {
       throw new BadRequestException('Not authorized to accept this request');
     }
 
@@ -229,10 +229,11 @@ export class UsersService {
 
     // Update request status
     request.status = 'accepted';
+    request.responded_at = new Date();
     await request.save();
 
     // Create friendship (store in sorted order for easy querying)
-    const [user1, user2] = [request.sender_id.toString(), request.receiver_id.toString()].sort();
+    const [user1, user2] = [request.from_user_id.toString(), request.to_user_id.toString()].sort();
     await this.friendshipModel.create({
       user1_id: user1,
       user2_id: user2,
@@ -241,16 +242,17 @@ export class UsersService {
 
   async rejectFriendRequest(requestId: string, userId: string): Promise<void> {
     const request: any = await this.friendRequestModel.findById(requestId).exec();
-    
+
     if (!request) {
       throw new NotFoundException('Friend request not found');
     }
 
-    if (request.receiver_id.toString() !== userId) {
+    if (request.to_user_id.toString() !== userId) {
       throw new BadRequestException('Not authorized to reject this request');
     }
 
     request.status = 'rejected';
+    request.responded_at = new Date();
     await request.save();
   }
 
@@ -306,14 +308,14 @@ export class UsersService {
 
     // Check for pending request
     const receivedRequest = await this.friendRequestModel
-      .findOne({ sender_id: otherUserId, receiver_id: userId, status: 'pending' })
+      .findOne({ from_user_id: otherUserId, to_user_id: userId, status: 'pending' })
       .exec();
     if (receivedRequest) {
       return 'pending';
     }
 
     const sentRequest = await this.friendRequestModel
-      .findOne({ sender_id: userId, receiver_id: otherUserId, status: 'pending' })
+      .findOne({ from_user_id: userId, to_user_id: otherUserId, status: 'pending' })
       .exec();
     if (sentRequest) {
       return 'request_sent';

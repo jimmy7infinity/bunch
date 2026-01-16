@@ -429,8 +429,15 @@ export class ChatService {
       .find(query)
       .sort({ created_at: -1 })
       .limit(limit)
-      .populate('sender_id', 'username display_name avatar_url rank')
-      .populate('reply_to', 'text sender_id')
+      .populate('sender_id', 'username display_name avatar_url rank polymarket')
+      .populate({
+        path: 'reply_to',
+        select: 'text sender_id',
+        populate: {
+          path: 'sender_id',
+          select: 'username display_name avatar_url',
+        },
+      })
       .exec();
   }
 
