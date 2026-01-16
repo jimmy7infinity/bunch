@@ -209,7 +209,15 @@ export const userService = {
     return response.data;
   },
 
-  async updateProfile(data: { display_name?: string; avatar_url?: string; bio?: string; username?: string }) {
+  async updateProfile(data: { 
+    display_name?: string; 
+    avatar_url?: string; 
+    bio?: string; 
+    username?: string;
+    settings?: {
+      autoPredictionChat?: boolean;
+    };
+  }) {
     const response = await api.patch<User>('/users/me', data);
     return response.data;
   },

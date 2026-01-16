@@ -864,7 +864,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             color: '#606060',
             marginTop: '16px',
           }}>
-            © 2024 All rights reserved
+            © 2026 All rights reserved
           </div>
         </div>
       </div>
