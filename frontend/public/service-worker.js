@@ -43,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('🔗 Extension redirect URI:', redirectUri);
     
     // Build auth URL with redirect_uri parameter
-    const backendUrl = 'https://poly-banter.up.railway.app';
+    const backendUrl = 'https://grex.up.railway.app';
     const authUrl = `${backendUrl}/api/auth/twitter?redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log('🚀 Launching web auth flow to:', authUrl);
@@ -98,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Allow side panel to query current market context
 chrome.runtime.onConnect.addListener((port) => {
-  if (port.name === 'polybanter-sidepanel') {
+  if (port.name === 'grex-sidepanel') {
     console.log('🔌 Side panel connected');
 
     // Send current context immediately
