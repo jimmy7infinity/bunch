@@ -73,6 +73,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.userId = userId;
       this.connectedUsers.set(client.id, userId);
 
+      // Join user's personal room for notifications (reports, friend requests, etc.)
+      client.join(`user:${userId}`);
+
       // Set user online
       await this.usersService.setOnlineStatus(userId, true);
 
