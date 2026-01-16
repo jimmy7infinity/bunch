@@ -10,8 +10,8 @@ import {
   Delete,
   Patch,
 } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { ChatService } from './chat.service';
+import { UsersService } from '../users/users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('conversations')
@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class ChatController {
   constructor(
     private chatService: ChatService,
-    private moduleRef: ModuleRef,
+    private usersService: UsersService,
   ) {}
 
   // ==================== CONVERSATION ENDPOINTS ====================
@@ -337,9 +337,7 @@ export class ChatController {
     }
 
     // Get user's wallet address
-    const { UsersService } = await import('../users/users.service');
-    const usersService = this.moduleRef.get(UsersService);
-    const user = await usersService.findById(req.user.userId);
+    const user = await this.usersService.findById(req.user.userId);
 
     if (!user || !user.polymarket?.wallet_address) {
       return {
