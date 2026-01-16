@@ -26,8 +26,7 @@ Edit `/backend/src/utils/content-moderation.ts`:
 ```typescript
 const BANNED_WORDS = [
   'nigger',
-  'nigga',
-  'faggot',
+
   // Add more here
 ];
 ```
@@ -53,7 +52,13 @@ Restart the backend after changes.
 
 3. **Ban the User**
    - Click on the user document
-   - Update these fields:
+   - Update the `status` field:
+     ```json
+     {
+       "status": "banned"
+     }
+     ```
+   - Optionally add reason and timestamp:
      ```json
      {
        "status": "banned",
@@ -63,10 +68,11 @@ Restart the backend after changes.
      ```
    - Click "Update"
 
-4. **Effect**
-   - User will be disconnected from WebSocket
-   - Cannot send messages
-   - Cannot login (if JWT auth checks status)
+4. **Effect** ⚡ INSTANT
+   - User is immediately disconnected from WebSocket
+   - Cannot reconnect or send messages
+   - All API requests blocked with ban message
+   - Works on next request (no server restart needed)
 
 ### Method 2: MongoDB Shell
 

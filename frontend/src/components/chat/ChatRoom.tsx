@@ -1927,9 +1927,23 @@ export const ChatRoom = ({
                                 }}
                               >
                                 <button
-                                  onClick={() => {
-                                    // TODO: Implement report functionality
-                                    console.log('Report message:', msg._id);
+                                  onClick={async () => {
+                                    try {
+                                      const reason = prompt('Why are you reporting this message?');
+                                      if (reason) {
+                                        await messageService.reportMessage(msg._id, reason);
+                                        addNotification({
+                                          type: 'system',
+                                          message: 'Report submitted. Admins will review it.',
+                                        });
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to report message:', error);
+                                      addNotification({
+                                        type: 'system',
+                                        message: 'Failed to submit report. Please try again.',
+                                      });
+                                    }
                                     setShowMessageMenu(null);
                                   }}
                                   style={{

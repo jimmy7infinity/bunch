@@ -98,6 +98,14 @@ export const messageService = {
     return response.data;
   },
 
+  async reportMessage(messageId: string, reason: string, additionalContext?: string) {
+    const response = await api.post(`/conversations/messages/${messageId}/report`, {
+      reason,
+      additionalContext,
+    });
+    return response.data;
+  },
+
   async searchMessages(roomId: string, query: string, limit = 20) {
     // Not implemented yet on backend
     return { data: [], total: 0, page: 1, limit, has_more: false };

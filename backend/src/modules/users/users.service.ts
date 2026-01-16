@@ -48,6 +48,10 @@ export class UsersService {
     return user;
   }
 
+  async getUsersByRole(roles: string[]): Promise<User[]> {
+    return this.userModel.find({ role: { $in: roles } }).exec();
+  }
+
   async findOrCreateFromTwitter(twitterProfile: any): Promise<User> {
     let user = await this.findByTwitterId(twitterProfile.id);
     

@@ -5,11 +5,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
+import { ChatScheduler } from './chat.scheduler';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { Conversation, ConversationSchema } from './schemas/conversation.schema';
 import { Participant, ParticipantSchema } from './schemas/participant.schema';
 import { UserMarketPosition, UserMarketPositionSchema } from './schemas/user-market-position.schema';
 import { MarketUserStatus, MarketUserStatusSchema } from './schemas/market-user-status.schema';
+import { Report, ReportSchema } from './schemas/report.schema';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -21,6 +23,7 @@ import { AuthModule } from '../auth/auth.module';
       { name: Participant.name, schema: ParticipantSchema },
       { name: UserMarketPosition.name, schema: UserMarketPositionSchema },
       { name: MarketUserStatus.name, schema: MarketUserStatusSchema },
+      { name: Report.name, schema: ReportSchema },
     ]),
     UsersModule,
     AuthModule,
@@ -33,7 +36,7 @@ import { AuthModule } from '../auth/auth.module';
     }),
   ],
   controllers: [ChatController],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, ChatScheduler],
   exports: [ChatService],
 })
 export class ChatModule {}

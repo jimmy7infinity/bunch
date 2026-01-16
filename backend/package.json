@@ -26,6 +26,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.20",
     "@nestjs/platform-socket.io": "^10.3.0",
+    "@nestjs/schedule": "^6.1.0",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.3.0",
     "@types/express-session": "^1.18.2",

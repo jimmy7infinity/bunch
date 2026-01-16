@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
@@ -17,6 +18,9 @@ import { Conversation, ConversationSchema } from './modules/chat/schemas/convers
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // Scheduling
+    ScheduleModule.forRoot(),
 
     // MongoDB
     MongooseModule.forRootAsync({

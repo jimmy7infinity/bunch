@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { createHash } from 'crypto';
@@ -7,6 +7,7 @@ import { Conversation, ConversationDocument, ConversationType } from './schemas/
 import { Participant, ParticipantDocument } from './schemas/participant.schema';
 import { UserMarketPosition, UserMarketPositionDocument, PositionType } from './schemas/user-market-position.schema';
 import { MarketUserStatus, MarketUserStatusDocument } from './schemas/market-user-status.schema';
+import { Report, ReportDocument } from './schemas/report.schema';
 
 @Injectable()
 export class ChatService {
@@ -16,6 +17,7 @@ export class ChatService {
     @InjectModel(Participant.name) private participantModel: Model<ParticipantDocument>,
     @InjectModel(UserMarketPosition.name) private userMarketPositionModel: Model<UserMarketPositionDocument>,
     @InjectModel(MarketUserStatus.name) private marketUserStatusModel: Model<MarketUserStatusDocument>,
+    @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
   ) {}
 
   // ==================== CONVERSATION MANAGEMENT ====================
@@ -605,5 +607,70 @@ export class ChatService {
       marketId,
       this.marketUserStatusModel
     );
+  }
+
+  // ==================== REPORTS ====================
+
+  /**
+   * Create a report
+   */
+  async createReport(
+    reporterId: string,
+    type: 'message' | 'user' | 'chat',
+    data: {
+      messageId?: string;
+      reportedUserId?: string;
+      conversationId?: string;
+      reason: string;
+      additionalContext?: string;
+    }
+  ) {
+    const report = await this.reportModel.create({
+      reporter_id: new Types.ObjectId(reporterId),
+      type,
+      message_id: data.messageId ? new Types.ObjectId(data.messageId) : undefined,
+      reported_user_id: data.reportedUserId ? new Types.ObjectId(data.reportedUserId) : undefined,
+      conversation_id: data.conversationId ? new Types.ObjectId(data.conversationId) : undefined,
+      reason: data.reason,
+      additional_context: data.additionalContext,
+      status: 'pending',
+      created_at: new Date(),
+    });
+
+    return report;
+  }
+
+  /**
+   * Get all pending reports (for admins)
+   */
+  async getPendingReports() {
+    return this.reportModel
+      .find({ status: 'pending' })
+      .populate('reporter_id', 'username display_name avatar_url')
+      .populate('reported_user_id', 'username display_name avatar_url')
+      .populate('message_id')
+      .sort({ created_at: -1 })
+      .exec();
+  }
+
+  /**
+   * Update report status
+   */
+  async updateReportStatus(
+    reportId: string,
+    reviewerId: string,
+    status: 'reviewed' | 'dismissed' | 'actioned',
+    notes?: string
+  ) {
+    return this.reportModel.findByIdAndUpdate(
+      reportId,
+      {
+        status,
+        reviewed_by: new Types.ObjectId(reviewerId),
+        reviewed_at: new Date(),
+        review_notes: notes,
+      },
+      { new: true }
+    ).exec();
   }
 }

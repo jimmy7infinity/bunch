@@ -9,14 +9,7 @@
 // This list can be expanded as needed
 const BANNED_WORDS = [
   'nigger',
-  'nigga',
   'n1gger',
-  'n1gga',
-  'faggot',
-  'f4ggot',
-  'tranny',
-  'retard',
-  'retarded',
   // Add more as needed
 ];
 

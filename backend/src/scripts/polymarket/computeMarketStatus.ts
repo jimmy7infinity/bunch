@@ -43,10 +43,10 @@ export async function computeMarketStatus(
   }
 
   try {
-    // Step 1: Fetch user's position for this market
-    const userPosition = await getUserMarketPosition(walletAddress, marketId);
+    // Step 1: Check if user is a whale (this also checks if they have a position)
+    const whaleResult = await isUserWhale(marketId, walletAddress);
 
-    if (!userPosition || userPosition.sizeUSD <= 0) {
+    if (!whaleResult) {
       console.log(`✗ User has no position in market ${marketId}`);
       
       // Delete any existing status record
@@ -68,17 +68,15 @@ export async function computeMarketStatus(
       return result;
     }
 
-    console.log(`✓ User has position: $${userPosition.sizeUSD.toFixed(2)}`);
+    console.log(`✓ User has position: $${whaleResult.sizeUSD.toFixed(2)}`);
 
-    // Step 2: Check if user is a whale
-    const isWhale = await isUserWhale(marketId, userPosition.sizeUSD);
+    // Step 2: Determine final status (whale overrides position)
+    const status: StatusType = whaleResult.isWhale ? 'whale' : 'position';
 
-    // Step 3: Determine final status (whale overrides position)
-    const status: StatusType = isWhale ? 'whale' : 'position';
+    console.log(`✓ User status: ${status} (${whaleResult.isWhale ? '🐳' : '⚡'})`);
+    console.log(`  Rank: ${whaleResult.rank}/${whaleResult.total}`);
 
-    console.log(`✓ User status: ${status} (${isWhale ? '🐳' : '⚡'})`);
-
-    // Step 4: Store in database
+    // Step 3: Store in database
     await marketUserStatusModel.findOneAndUpdate(
       {
         user_id: userId,
@@ -88,7 +86,7 @@ export async function computeMarketStatus(
         user_id: userId,
         market_id: marketId,
         status,
-        position_size_usd: userPosition.sizeUSD,
+        position_size_usd: whaleResult.sizeUSD,
         computed_at: new Date(),
         updated_at: new Date(),
       },
@@ -100,8 +98,8 @@ export async function computeMarketStatus(
 
     const result: ComputeStatusResult = {
       status,
-      positionSizeUSD: userPosition.sizeUSD,
-      isWhale,
+      positionSizeUSD: whaleResult.sizeUSD,
+      isWhale: whaleResult.isWhale,
       hasPosition: true,
     };
 

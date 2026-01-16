@@ -388,4 +388,91 @@ export class ChatController {
       hasPosition: result.hasPosition,
     };
   }
+
+  // ==================== REPORT ENDPOINTS ====================
+
+  /**
+   * Report a message
+   */
+  @Post('messages/:messageId/report')
+  async reportMessage(
+    @Request() req: any,
+    @Param('messageId') messageId: string,
+    @Body() body: { reason: string; additionalContext?: string }
+  ) {
+    const report = await this.chatService.createReport(
+      req.user.userId,
+      'message',
+      {
+        messageId,
+        reason: body.reason,
+        additionalContext: body.additionalContext,
+      }
+    );
+
+    // Notify admins
+    try {
+      const { Server } = await import('socket.io');
+      const socketServer = global['socketServer'] as Server;
+      
+      if (socketServer) {
+        // Get all admin/mod users
+        const adminUsers = await this.usersService.getUsersByRole(['admin', 'moderator', 'creator']);
+        
+        // Send notification to each admin
+        for (const admin of adminUsers) {
+          socketServer.to(`user:${admin._id}`).emit('notification', {
+            type: 'report',
+            message: `New report: ${body.reason}`,
+            reportId: report._id,
+            timestamp: new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to notify admins:', error);
+    }
+
+    return { success: true, reportId: report._id };
+  }
+
+  /**
+   * Get all pending reports (admin only)
+   */
+  @Get('reports/pending')
+  async getPendingReports(@Request() req: any) {
+    // Check if user is admin/mod
+    const user = await this.usersService.findById(req.user.userId);
+    if (!['admin', 'moderator', 'creator'].includes(user.role)) {
+      throw new NotFoundException('Unauthorized');
+    }
+
+    const reports = await this.chatService.getPendingReports();
+    return { reports };
+  }
+
+  /**
+   * Update report status (admin only)
+   */
+  @Patch('reports/:reportId')
+  async updateReport(
+    @Request() req: any,
+    @Param('reportId') reportId: string,
+    @Body() body: { status: 'reviewed' | 'dismissed' | 'actioned'; notes?: string }
+  ) {
+    // Check if user is admin/mod
+    const user = await this.usersService.findById(req.user.userId);
+    if (!['admin', 'moderator', 'creator'].includes(user.role)) {
+      throw new NotFoundException('Unauthorized');
+    }
+
+    const report = await this.chatService.updateReportStatus(
+      reportId,
+      req.user.userId,
+      body.status,
+      body.notes
+    );
+
+    return { success: true, report };
+  }
 }

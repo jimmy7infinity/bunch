@@ -54,6 +54,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = this.jwtService.verify(token);
       const userId = payload.sub;
 
+      // Check if user is banned
+      const user = await this.usersService.findById(userId);
+      if (user.status === 'banned') {
+        console.log(`❌ Banned user attempted connection: ${userId}`);
+        client.emit('error', { message: `Your account has been banned. Reason: ${user.banned_reason || 'Violation of terms of service'}` });
+        client.disconnect();
+        return;
+      }
+
+      if (user.status === 'suspended') {
+        console.log(`❌ Suspended user attempted connection: ${userId}`);
+        client.emit('error', { message: 'Your account is temporarily suspended' });
+        client.disconnect();
+        return;
+      }
+
       client.data.userId = userId;
       this.connectedUsers.set(client.id, userId);
 
