@@ -798,10 +798,71 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           }}>
             PolyBanter v1.0.0
           </div>
+
+          {/* Legal Section */}
+          <div style={{
+            marginTop: '24px',
+            paddingTop: '24px',
+            borderTop: '1px solid #2A2A2A',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            alignItems: 'center',
+          }}>
+            <div style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#808080',
+              fontWeight: '500',
+            }}>
+              Legal
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'center',
+            }}>
+              <a
+                href="https://github.com/jimmy7infinity/poly_banter/blob/main/PRIVACY_POLICY.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: '#606060',
+                  fontSize: '11px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#999'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#606060'}
+              >
+                Privacy Policy
+              </a>
+              <span style={{ color: '#404040', fontSize: '11px' }}>•</span>
+              <a
+                href="https://github.com/jimmy7infinity/poly_banter/blob/main/TERMS_OF_SERVICE.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: '#606060',
+                  fontSize: '11px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#999'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#606060'}
+              >
+                Terms of Service
+              </a>
+            </div>
+          </div>
+
           <div style={{
             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '11px',
             color: '#606060',
+            marginTop: '16px',
           }}>
             © 2024 All rights reserved
           </div>

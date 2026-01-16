@@ -98,6 +98,49 @@ export const WalletConnect = () => {
             {loading ? 'connecting...' : 'connect to X'}
           </span>
         </button>
+
+        {/* Legal Links */}
+        <div style={{
+          marginTop: '32px',
+          display: 'flex',
+          gap: '16px',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <a
+            href="https://github.com/jimmy7infinity/poly_banter/blob/main/PRIVACY_POLICY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#666',
+              fontSize: '10px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#999'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+          >
+            Privacy Policy
+          </a>
+          <span style={{ color: '#444', fontSize: '10px' }}>•</span>
+          <a
+            href="https://github.com/jimmy7infinity/poly_banter/blob/main/TERMS_OF_SERVICE.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#666',
+              fontSize: '10px',
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#999'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+          >
+            Terms of Service
+          </a>
+        </div>
       </div>
     </div>
   );
