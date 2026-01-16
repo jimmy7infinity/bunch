@@ -80,8 +80,9 @@ export const ChatRoom = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaMenuRef = useRef<HTMLDivElement>(null);
   
-  // Position state (for market chats) - now fetched from Polymarket API automatically
-  const [myPosition, setMyPosition] = useState<'yes' | 'no' | null>(null);
+  // Market status state (⚡ position / 🐳 whale) - only loaded when user opts in
+  const [myMarketStatus, setMyMarketStatus] = useState<'position' | 'whale' | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const [marketPositions, setMarketPositions] = useState<Record<string, 'yes' | 'no'>>({});
   
   // Whale state (for market chats)
@@ -107,45 +108,54 @@ export const ChatRoom = ({
     }
   };
   
-  // Load positions and whales for market chats
-  useEffect(() => {
-    const loadMarketData = async () => {
-      if (conversation.type !== 'market' || !conversation.market_id) return;
+  // Handle "Show my position" button click (user opt-in)
+  const handleShowMyPosition = async () => {
+    if (conversation.type !== 'market' || !conversation.market_id) return;
+    if (isLoadingStatus) return; // Prevent double-click
 
-      try {
-        // Load my position from Polymarket API (real blockchain data)
-        const myPosResult = await polymarketService.getMyMarketPosition(conversation.market_id);
-        // Outcome is "Yes" or "No" from Polymarket API
-        if (myPosResult.outcome) {
-          setMyPosition(myPosResult.outcome.toLowerCase() as 'yes' | 'no');
-        } else {
-          setMyPosition(null);
-        }
-
-        // Load all positions for this market (still using our DB for other users)
-        const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
-        const positionsMap: Record<string, 'yes' | 'no'> = {};
-        const activeUserIds: string[] = [];
-        
-        positionsResult.positions.forEach((pos) => {
-          const userId = pos.user_id._id || pos.user_id;
-          positionsMap[userId] = pos.position;
-          activeUserIds.push(userId);
-        });
-        setMarketPositions(positionsMap);
-
-        // Load whale data
-        if (activeUserIds.length > 0) {
-          const whalesResult = await polymarketService.getMarketWhales(conversation.market_id, activeUserIds);
-          setWhales(whalesResult.whales);
-        }
-      } catch (error) {
-        console.error('Failed to load market data:', error);
+    setIsLoadingStatus(true);
+    
+    try {
+      // TODO: Call the new backend endpoint to compute market status
+      // This will use the scripts we just created:
+      // - fetchUserPositions
+      // - computeWhalePercentile
+      // - computeMarketStatus
+      
+      // For now, using the old API as placeholder
+      const myPosResult = await polymarketService.getMyMarketPosition(conversation.market_id);
+      
+      if (myPosResult.outcome && myPosResult.size > 0) {
+        // User has a position - determine if whale
+        // TODO: Replace with actual backend call to computeMarketStatus
+        setMyMarketStatus('position'); // Will be 'whale' if top 10%
+      } else {
+        setMyMarketStatus(null);
       }
-    };
 
-    loadMarketData();
-  }, [conversation.type, conversation.market_id]);
+      // Load all positions for this market (for other users' badges)
+      const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
+      const positionsMap: Record<string, 'yes' | 'no'> = {};
+      const activeUserIds: string[] = [];
+      
+      positionsResult.positions.forEach((pos) => {
+        const userId = pos.user_id._id || pos.user_id;
+        positionsMap[userId] = pos.position;
+        activeUserIds.push(userId);
+      });
+      setMarketPositions(positionsMap);
+
+      // Load whale data
+      if (activeUserIds.length > 0) {
+        const whalesResult = await polymarketService.getMarketWhales(conversation.market_id, activeUserIds);
+        setWhales(whalesResult.whales);
+      }
+    } catch (error) {
+      console.error('Failed to load market status:', error);
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
   
   // Load messages and connect to WebSocket
   useEffect(() => {
@@ -1199,29 +1209,64 @@ export const ChatRoom = ({
             </span>
           </button>
 
-          {/* Right: Position Display (for market chats) + Online Indicator */}
+          {/* Right: Market Status Button/Display + Online Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Position Display - Shows actual Polymarket position (read-only) */}
-            {conversation.type === 'market' && conversation.market_id && myPosition && (
-              <div 
-                title={`Your position: ${myPosition === 'yes' ? 'Yes' : 'No'} (from Polymarket)`}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  backgroundColor: '#19191A',
-                  border: '1px solid transparent',
-                  backgroundImage: `linear-gradient(#19191A, #19191A), linear-gradient(135deg, ${myPosition === 'yes' ? '#5BC854' : '#C85454'}, #333333)`,
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderRadius: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                }}
-              >
-                {myPosition === 'yes' ? '🟢' : '🔴'}
-              </div>
+            {/* Market Status - Show button or badge */}
+            {conversation.type === 'market' && conversation.market_id && (
+              <>
+                {myMarketStatus ? (
+                  // Show status badge (⚡ or 🐳)
+                  <div 
+                    title={myMarketStatus === 'whale' ? 'You are a whale (top 10%)' : 'You have a position'}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      backgroundColor: '#19191A',
+                      border: '1px solid transparent',
+                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+                      backgroundOrigin: 'border-box',
+                      backgroundClip: 'padding-box, border-box',
+                      borderRadius: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                    }}
+                  >
+                    {myMarketStatus === 'whale' ? '🐳' : '⚡'}
+                  </div>
+                ) : (
+                  // Show "Get Status" button
+                  <button
+                    onClick={handleShowMyPosition}
+                    disabled={isLoadingStatus}
+                    style={{
+                      height: '28px',
+                      padding: '0 12px',
+                      backgroundColor: '#19191A',
+                      border: '1px solid transparent',
+                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                      backgroundOrigin: 'border-box',
+                      backgroundClip: 'padding-box, border-box',
+                      borderRadius: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: isLoadingStatus ? 'not-allowed' : 'pointer',
+                      opacity: isLoadingStatus ? 0.5 : 1,
+                    }}
+                  >
+                    <span style={{
+                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontSize: '11px',
+                      color: '#B9B7B7',
+                      fontWeight: '400',
+                    }}>
+                      {isLoadingStatus ? 'Loading...' : 'Get Status'}
+                    </span>
+                  </button>
+                )}
+              </>
             )}
 
             {/* Online Indicator */}
@@ -1434,7 +1479,7 @@ export const ChatRoom = ({
                             textAlign: isAI ? 'center' : (isOwnMessage ? 'right' : 'left'),
                           }}>
                             {isOwnMessage ? 'You' : senderName}
-                            {/* Position emoji + Whale emoji for market chats */}
+                            {/* Market status badges: ⚡ (position) or 🐳 (whale) */}
                             {conversation.type === 'market' && !isAI && (() => {
                               const senderId = msg.sender_id?._id || msg.sender_id?.id;
                               const position = marketPositions[senderId];
@@ -1442,14 +1487,11 @@ export const ChatRoom = ({
                               
                               return (
                                 <>
-                                  {position && (
-                                    <span style={{ marginLeft: '4px' }}>
-                                      {position === 'yes' ? '🟢' : '🔴'}
-                                    </span>
-                                  )}
-                                  {isWhale && (
-                                    <span style={{ marginLeft: '4px' }}>🐳</span>
-                                  )}
+                                  {isWhale ? (
+                                    <span style={{ marginLeft: '4px' }} title="Whale (top 10%)">🐳</span>
+                                  ) : position ? (
+                                    <span style={{ marginLeft: '4px' }} title="Has position">⚡</span>
+                                  ) : null}
                                 </>
                               );
                             })()}
