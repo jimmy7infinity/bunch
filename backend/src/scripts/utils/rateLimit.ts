@@ -1,5 +1,5 @@
 /**
- * Rate limiting utility for PolyBanter
+ * Rate limiting utility for Grex
  * 
  * Prevents abuse and controls API costs by limiting expensive operations
  * MVP implementation uses in-memory storage

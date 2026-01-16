@@ -43,7 +43,7 @@ async function seed() {
       username: 'jimmy7infinity',
       display_name: 'jimmy∞',
       avatar_url: 'https://pbs.twimg.com/profile_images/1713120244443848704/76Va0izy_normal.jpg',
-      bio: 'Building PolyBanter | Prediction markets enthusiast',
+      bio: 'Building Grex | Prediction markets enthusiast',
       status: 'active',
       role: 'admin',
       is_online: true,
@@ -209,7 +209,7 @@ async function seed() {
         from_user_id: hank._id,
         to_user_id: jimmy._id,
         status: 'pending',
-        message: 'Hey, love PolyBanter! Let\'s connect',
+        message: 'Hey, love Grex! Let\'s connect',
       },
       {
         from_user_id: iris._id,
@@ -524,7 +524,7 @@ async function seed() {
       {
         conversation_id: strangerThingsConv._id,
         sender_id: jimmy._id,
-        text: 'Love how PolyBanter creates instant chats for any market',
+        text: 'Love how Grex creates instant chats for any market',
         created_at: new Date(now - 1000 * 60 * 1),
       },
     ]);

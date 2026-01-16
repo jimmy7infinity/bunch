@@ -1,4 +1,4 @@
-# PolyBanter Security Audit
+# Grex Security Audit
 
 **Date:** January 16, 2026  
 **Status:** Pre-Launch Security Review

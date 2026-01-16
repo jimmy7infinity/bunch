@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# PolyBanter Production Build Script
+# Grex Production Build Script
 # Builds the extension for production deployment
 
 set -e
 
-echo "🏗️  PolyBanter Production Build"
+echo "🏗️  Grex Production Build"
 echo "=============================="
 echo ""
 

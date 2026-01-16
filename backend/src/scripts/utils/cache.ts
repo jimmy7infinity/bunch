@@ -1,5 +1,5 @@
 /**
- * Simple caching utility for PolyBanter
+ * Simple caching utility for Grex
  * 
  * MVP implementation uses in-memory cache with TTL
  * Can be upgraded to Redis later for production scaling

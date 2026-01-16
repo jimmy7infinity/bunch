@@ -1,8 +1,8 @@
-# PolyBanter — Chrome Extension Side Panel for Polymarket Social
+# Grex — Chrome Extension Side Panel for Polymarket Social
 
 ## Executive Summary
 
-**PolyBanter** is a Chrome extension that transforms Polymarket into a social platform. It adds a persistent side panel to Chrome that enables real-time chat, AI-powered market insights, user rankings, and community engagement—all without leaving your current page.
+**Grex** is a Chrome extension that transforms Polymarket into a social platform. It adds a persistent side panel to Chrome that enables real-time chat, AI-powered market insights, user rankings, and community engagement—all without leaving your current page.
 
 **Key Features:**
 - 🗨️ **Multi-category chat system** — Global, themed (Politics, Crypto, etc.), market-specific, private groups, and DMs
@@ -21,7 +21,7 @@
 
 ## Purpose
 
-PolyBanter is a Chrome extension side panel that provides real-time social features, market chat, and community engagement for Polymarket users. It lives alongside your browsing experience, offering instant access to market discussions, user rankings, and social features without leaving your current page.
+Grex is a Chrome extension side panel that provides real-time social features, market chat, and community engagement for Polymarket users. It lives alongside your browsing experience, offering instant access to market discussions, user rankings, and social features without leaving your current page.
 
 ## Platform
 
@@ -29,7 +29,7 @@ PolyBanter is a Chrome extension side panel that provides real-time social featu
 
 ## High-Level Summary
 
-PolyBanter combines:
+Grex combines:
 - **Multi-category chat system** — Global, themed, market-specific, private groups, DMs, and AI insights
 - **Social networking** — Follow users, build reputation, earn achievement-based roles
 - **User rankings** — Leaderboards and achievement system with visual roles/badges
@@ -38,7 +38,7 @@ PolyBanter combines:
 
 ## Chat Categories
 
-PolyBanter organizes conversations into six distinct categories:
+Grex organizes conversations into six distinct categories:
 
 1. **Global** — Public chat for all users, general Polymarket discussion
 2. **Theme/Category** — Public chats organized by topic (e.g., Politics, Crypto, Sports, Entertainment)
@@ -823,7 +823,7 @@ The AI system monitors market activity and generates contextual insights when si
 
 **Prompt Template Example:**
 ```
-You are an AI analyst for PolyBanter, a Polymarket social platform.
+You are an AI analyst for Grex, a Polymarket social platform.
 
 Market: "{market_title}"
 Category: {category}
@@ -1206,7 +1206,7 @@ The Chrome extension side panel uses a vertical layout optimized for the narrow 
 
 ```
 ┌─────────────────────────────────┐
-│  PolyBanter          [👤] [⚙️]  │ ← Header (user avatar, settings)
+│  Grex          [👤] [⚙️]  │ ← Header (user avatar, settings)
 ├─────────────────────────────────┤
 │  🌍 Global                  [12]│ ← Navigation tabs (unread counts)
 │  💼 Politics               [3] │
@@ -1294,7 +1294,7 @@ The Chrome extension side panel uses a vertical layout optimized for the narrow 
 ```json
 {
   "manifest_version": 3,
-  "name": "PolyBanter",
+  "name": "Grex",
   "version": "1.0.0",
   "description": "Social chat for Polymarket",
   
@@ -1319,7 +1319,7 @@ The Chrome extension side panel uses a vertical layout optimized for the narrow 
   },
   
   "action": {
-    "default_title": "Open PolyBanter"
+    "default_title": "Open Grex"
   },
   
   "icons": {
@@ -1897,7 +1897,7 @@ GitHub → GitHub Actions → Build → Test → Deploy
 
 ## Conclusion
 
-PolyBanter represents a comprehensive social layer for Polymarket that transforms prediction markets from isolated trading experiences into vibrant community hubs. By combining real-time chat, AI-powered insights, gamified rankings, and seamless Chrome integration, we're creating a platform that makes market participation more engaging, informed, and social.
+Grex represents a comprehensive social layer for Polymarket that transforms prediction markets from isolated trading experiences into vibrant community hubs. By combining real-time chat, AI-powered insights, gamified rankings, and seamless Chrome integration, we're creating a platform that makes market participation more engaging, informed, and social.
 
 ### Key Differentiators
 
@@ -1917,7 +1917,7 @@ PolyBanter represents a comprehensive social layer for Polymarket that transform
 
 ### Next Steps
 
-This overview provides a complete blueprint for building PolyBanter. With a clear 12-16 week roadmap, well-defined technical architecture, and comprehensive feature set, we're ready to begin development.
+This overview provides a complete blueprint for building Grex. With a clear 12-16 week roadmap, well-defined technical architecture, and comprehensive feature set, we're ready to begin development.
 
 **Let's build the future of social prediction markets.** 🚀
 

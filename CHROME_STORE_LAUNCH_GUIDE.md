@@ -1,7 +1,7 @@
 # Chrome Web Store Launch Guide
 
 **Date:** January 16, 2026  
-**Extension:** PolyBanter
+**Extension:** Grex
 
 ---
 
@@ -86,7 +86,7 @@ zip -r polybanter-extension.zip .
 **Max 45 characters**
 
 ```
-PolyBanter - Chat for Polymarket
+Grex - Chat for Polymarket
 ```
 
 #### Short Description (Required)
@@ -100,7 +100,7 @@ Real-time chat for Polymarket traders. Discuss predictions, share insights, and 
 **Max 16,000 characters**
 
 ```markdown
-PolyBanter brings real-time chat to Polymarket, the world's largest prediction market.
+Grex brings real-time chat to Polymarket, the world's largest prediction market.
 
 🎯 KEY FEATURES
 
@@ -154,7 +154,7 @@ PolyBanter brings real-time chat to Polymarket, the world's largest prediction m
 • GitHub: https://github.com/jimmy7infinity/poly_banter
 • Support: [link]
 
-PolyBanter is built by traders, for traders. Join the conversation!
+Grex is built by traders, for traders. Join the conversation!
 ```
 
 #### Category (Required)
@@ -216,7 +216,7 @@ unzip -l polybanter-extension.zip
 
 **Extension Name:**
 ```
-PolyBanter
+Grex
 ```
 
 **Summary:**
@@ -247,7 +247,7 @@ Real-time chat for Polymarket traders
 
 **Single Purpose:**
 ```
-PolyBanter provides real-time chat functionality for Polymarket users, enabling community discussions around prediction markets.
+Grex provides real-time chat functionality for Polymarket users, enabling community discussions around prediction markets.
 ```
 
 **Permission Justification:**
@@ -368,7 +368,7 @@ https://github.com/jimmy7infinity/poly_banter/blob/main/PRIVACY_POLICY.md
 
 1. **Twitter/X Announcement**
    ```
-   🚀 PolyBanter is now live!
+   🚀 Grex is now live!
    
    Real-time chat for @Polymarket traders
    

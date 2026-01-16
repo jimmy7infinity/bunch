@@ -1,4 +1,4 @@
-# PolyBanter MVP Launch Checklist
+# Grex MVP Launch Checklist
 
 ## ✅ Core Features Complete
 

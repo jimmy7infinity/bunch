@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# PolyBanter Local Setup Script
+# Grex Local Setup Script
 # This script sets up the development environment
 
 set -e
 
-echo "🚀 PolyBanter Local Setup"
+echo "🚀 Grex Local Setup"
 echo "=========================="
 echo ""
 

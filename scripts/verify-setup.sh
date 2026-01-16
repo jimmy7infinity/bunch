@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# PolyBanter Setup Verification Script
+# Grex Setup Verification Script
 # Verifies that everything is configured correctly
 
 set -e
 
-echo "🔍 PolyBanter Setup Verification"
+echo "🔍 Grex Setup Verification"
 echo "================================"
 echo ""
 

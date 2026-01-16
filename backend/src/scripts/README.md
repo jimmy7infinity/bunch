@@ -1,6 +1,6 @@
-# PolyBanter Backend Scripts
+# Grex Backend Scripts
 
-This directory contains all backend scripts for PolyBanter, organized by function.
+This directory contains all backend scripts for Grex, organized by function.
 
 ## 📁 Directory Structure
 

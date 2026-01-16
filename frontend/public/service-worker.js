@@ -7,7 +7,7 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
-console.log('🚀 PolyBanter service worker loaded');
+console.log('🚀 Grex service worker loaded');
 
 // Store current market context
 let currentMarketContext = null;

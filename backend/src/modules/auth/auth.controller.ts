@@ -34,7 +34,7 @@ export class AuthController {
   async getNonce() {
     // Generate a random nonce for the user to sign
     const nonce = Math.floor(Math.random() * 1000000).toString();
-    const message = `Sign this message to authenticate with PolyBanter.\n\nNonce: ${nonce}`;
+    const message = `Sign this message to authenticate with Grex.\n\nNonce: ${nonce}`;
     
     return {
       message,

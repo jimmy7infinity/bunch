@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "0.1.0",
-  "description": "PolyBanter Backend API",
+  "description": "Grex Backend API",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",

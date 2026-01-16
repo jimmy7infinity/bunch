@@ -273,7 +273,7 @@ export class PolymarketService {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
-          'User-Agent': 'Mozilla/5.0 (compatible; PolyBanter/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; Grex/1.0)',
         },
         cache: 'no-store', // Disable caching
       });

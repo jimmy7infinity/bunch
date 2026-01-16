@@ -403,7 +403,7 @@ export const ChatsList = () => {
           {/* Logo */}
           <img 
             src="/logo.png" 
-            alt="PolyBanter"
+            alt="Grex"
             style={{
               width: '30px',
               height: '30px',

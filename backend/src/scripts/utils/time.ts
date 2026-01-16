@@ -1,5 +1,5 @@
 /**
- * Time utility functions for PolyBanter scripts
+ * Time utility functions for Grex scripts
  */
 
 /**

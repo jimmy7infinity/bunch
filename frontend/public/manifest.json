@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PolyBanter",
+  "name": "Grex",
   "version": "0.1.0",
-  "description": "Social chat for Polymarket - Connect with traders in real-time",
+  "description": "Real-time chat for Polymarket traders - Connect with the community",
   "side_panel": {
     "default_path": "index.html"
   },
@@ -29,7 +29,7 @@
     }
   ],
   "action": {
-    "default_title": "Open PolyBanter",
+    "default_title": "Open Grex",
     "default_icon": {
       "16": "icon-16.png",
       "48": "icon-48.png",

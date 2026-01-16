@@ -1,14 +1,14 @@
-# Terms of Service for PolyBanter
+# Terms of Service for Grex
 
 **Last Updated:** January 16, 2026
 
 ## Acceptance of Terms
 
-By using PolyBanter, you agree to these Terms of Service. If you disagree, do not use the service.
+By using Grex, you agree to these Terms of Service. If you disagree, do not use the service.
 
 ## Service Description
 
-PolyBanter is a Chrome extension that provides chat functionality for Polymarket users. It is provided "as is" without warranties.
+Grex is a Chrome extension that provides chat functionality for Polymarket users. It is provided "as is" without warranties.
 
 ## User Accounts
 
@@ -69,7 +69,7 @@ We reserve the right to:
 
 ## Intellectual Property
 
-- PolyBanter name and logo are our property
+- Grex name and logo are our property
 - Do not use our branding without permission
 - Respect others' intellectual property
 
@@ -86,7 +86,7 @@ You agree to their respective terms of service.
 ## Disclaimers
 
 ### No Financial Advice
-- PolyBanter is for discussion only
+- Grex is for discussion only
 - Not financial, legal, or investment advice
 - Do your own research
 - We are not responsible for your trading decisions
@@ -134,4 +134,4 @@ For questions about these terms:
 
 ---
 
-**By using PolyBanter, you agree to these Terms of Service.**
+**By using Grex, you agree to these Terms of Service.**

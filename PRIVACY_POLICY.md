@@ -1,10 +1,10 @@
-# Privacy Policy for PolyBanter
+# Privacy Policy for Grex
 
 **Last Updated:** January 16, 2026
 
 ## Introduction
 
-PolyBanter ("we", "our", or "us") respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our Chrome extension and services.
+Grex ("we", "our", or "us") respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our Chrome extension and services.
 
 ## Information We Collect
 
@@ -67,7 +67,7 @@ You have the right to:
 
 ## Children's Privacy
 
-PolyBanter is not intended for users under 18. We do not knowingly collect data from children.
+Grex is not intended for users under 18. We do not knowingly collect data from children.
 
 ## Changes to This Policy
 
@@ -80,4 +80,4 @@ For privacy concerns, contact us at:
 
 ---
 
-**By using PolyBanter, you agree to this Privacy Policy.**
+**By using Grex, you agree to this Privacy Policy.**

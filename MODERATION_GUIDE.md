@@ -1,4 +1,4 @@
-# PolyBanter Moderation Guide
+# Grex Moderation Guide
 
 ## Content Moderation
 
