@@ -86,7 +86,7 @@ export class AuthController {
         // Web app flow - redirect to auth success page
         console.log('🌐 Web OAuth (no extension redirect_uri), redirecting to auth-success');
         const backendUrl = process.env.NODE_ENV === 'production' 
-          ? 'https://poly-banter.up.railway.app'
+          ? 'https://grex.up.railway.app'
           : 'http://localhost:3000';
         
         res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
