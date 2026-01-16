@@ -1934,13 +1934,15 @@ export const ChatRoom = ({
                                         await messageService.reportMessage(msg._id, reason);
                                         addNotification({
                                           type: 'system',
-                                          message: 'Report submitted. Admins will review it.',
+                                          title: 'Report Submitted',
+                                          message: 'Admins will review your report.',
                                         });
                                       }
                                     } catch (error) {
                                       console.error('Failed to report message:', error);
                                       addNotification({
                                         type: 'system',
+                                        title: 'Report Failed',
                                         message: 'Failed to submit report. Please try again.',
                                       });
                                     }
