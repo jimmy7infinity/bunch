@@ -9,7 +9,9 @@ import {
   Param,
   Delete,
   Patch,
+  NotFoundException,
 } from '@nestjs/common';
+import { Server } from 'socket.io';
 import { ChatService } from './chat.service';
 import { UsersService } from '../users/users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -412,8 +414,7 @@ export class ChatController {
 
     // Notify admins
     try {
-      const { Server } = await import('socket.io');
-      const socketServer = global['socketServer'] as Server;
+      const socketServer = (global as any).socketServer as Server;
       
       if (socketServer) {
         // Get all admin/mod users
@@ -421,10 +422,10 @@ export class ChatController {
         
         // Send notification to each admin
         for (const admin of adminUsers) {
-          socketServer.to(`user:${admin._id}`).emit('notification', {
+          socketServer.to(`user:${(admin as any)._id}`).emit('notification', {
             type: 'report',
             message: `New report: ${body.reason}`,
-            reportId: report._id,
+            reportId: (report as any)._id,
             timestamp: new Date(),
           });
         }

@@ -38,7 +38,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   afterInit(server: Server) {
     // Make server available globally for other modules
-    global['socketServer'] = server;
+    (global as any).socketServer = server;
   }
 
   async handleConnection(client: Socket) {

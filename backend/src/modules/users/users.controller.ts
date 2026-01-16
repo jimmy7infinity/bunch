@@ -118,7 +118,7 @@ export class UsersController {
       title: 'New Friend Request',
       message: `${sender.display_name || sender.username} sent you a friend request`,
       data: {
-        requestId: friendRequest._id,
+        requestId: (friendRequest as any)._id,
         senderId: req.user.userId,
         senderName: sender.display_name || sender.username,
         senderAvatar: sender.avatar_url,

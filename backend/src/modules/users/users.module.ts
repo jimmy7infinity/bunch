@@ -23,7 +23,7 @@ import { Friendship, FriendshipSchema } from './schemas/friendship.schema';
       provide: 'SOCKET_SERVER',
       useFactory: () => {
         // This will be set by ChatGateway when it initializes
-        return global['socketServer'];
+        return (global as any).socketServer;
       },
     },
   ],
