@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
 import { UsersService } from '../users/users.service';
+import { moderateContent, moderationTracker } from '../../utils/content-moderation';
 
 @WebSocketGateway({
   cors: {
@@ -27,6 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private connectedUsers: Map<string, string> = new Map(); // socketId -> userId
+  private messageRateLimits: Map<string, { count: number; resetAt: number }> = new Map(); // userId -> rate limit info
 
   constructor(
     private chatService: ChatService,
@@ -188,6 +190,49 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const { conversationId, text, replyTo, mentions } = data;
+
+      // Rate limiting: 10 messages per 10 seconds
+      const now = Date.now();
+      const userLimit = this.messageRateLimits.get(userId);
+      
+      if (userLimit) {
+        if (now < userLimit.resetAt) {
+          if (userLimit.count >= 10) {
+            return { 
+              error: 'Rate limit exceeded', 
+              reason: 'Too many messages. Please slow down.',
+              retryAfter: Math.ceil((userLimit.resetAt - now) / 1000)
+            };
+          }
+          userLimit.count++;
+        } else {
+          // Reset window
+          this.messageRateLimits.set(userId, { count: 1, resetAt: now + 10000 });
+        }
+      } else {
+        this.messageRateLimits.set(userId, { count: 1, resetAt: now + 10000 });
+      }
+
+      // Content moderation check
+      const moderation = moderateContent(text);
+      if (!moderation.allowed) {
+        console.log(`🚫 Message blocked for user ${userId}: ${moderation.reason}`);
+        
+        // Record violation
+        const shouldBan = moderationTracker.recordViolation(userId);
+        
+        if (shouldBan) {
+          console.log(`⚠️ User ${userId} should be banned (3+ violations in 24h)`);
+          // You can implement auto-ban here or just log for manual review
+          // await this.usersService.banUser(userId);
+        }
+        
+        return { 
+          error: 'Message not allowed', 
+          reason: moderation.reason,
+          violations: moderationTracker.getViolationCount(userId)
+        };
+      }
 
       // Create message in database
       const message = await this.chatService.createMessage(

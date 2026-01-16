@@ -59,11 +59,14 @@ export interface ChatRoom {
   has_notifications?: boolean;
   last_message?: Message; // Legacy, kept for compatibility
   last_message_id?: Message; // New populated field
+  last_message_at?: string; // Timestamp of last message
   created_at?: string;
   updated_at?: string;
   // Market-specific fields
   market_id?: string;
   market_title?: string;
+  // Global chat fields
+  slug?: string; // For global chats like 'general', 'politics', etc.
   // Additional metadata
   metadata?: Record<string, any>;
 }
