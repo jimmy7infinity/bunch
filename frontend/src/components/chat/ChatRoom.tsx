@@ -52,16 +52,6 @@ export const ChatRoom = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
-  // For DMs, show the other person's name
-  const chatName = (() => {
-    if (conversation.type === 'dm' && participants.length > 0) {
-      const otherParticipant = participants.find(p => p._id !== user?._id && p._id !== user?.id);
-      if (otherParticipant) {
-        return otherParticipant.display_name || otherParticipant.username || 'User';
-      }
-    }
-    return conversation.title || conversation.name || 'Chat';
-  })();
   const chatType = conversation.type;
   const onlineCount = conversation.participant_count || 0;
   
@@ -75,6 +65,17 @@ export const ChatRoom = ({
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const [participants, setParticipants] = useState<any[]>([]);
+  
+  // For DMs, show the other person's name (computed after participants state is declared)
+  const chatName = (() => {
+    if (conversation.type === 'dm' && participants.length > 0) {
+      const otherParticipant = participants.find(p => p._id !== user?._id && p._id !== user?.id);
+      if (otherParticipant) {
+        return otherParticipant.display_name || otherParticipant.username || 'User';
+      }
+    }
+    return conversation.title || conversation.name || 'Chat';
+  })();
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const reactionPickerRef = useRef<HTMLDivElement>(null);
   const mentionPickerRef = useRef<HTMLDivElement>(null);

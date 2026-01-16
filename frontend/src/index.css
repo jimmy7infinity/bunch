@@ -5,7 +5,7 @@
 
 /* Minimum width for extension side panel */
 body, html, #root {
-  min-width: 380px;
+  min-width: 420px;
 }
 
 /* Custom scrollbar styling */

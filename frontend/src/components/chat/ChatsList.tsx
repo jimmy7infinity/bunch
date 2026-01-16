@@ -55,14 +55,24 @@ export const ChatsList = () => {
         setIsLoading(true);
         let rooms = await roomService.getRooms(activeChatCategory);
         
-        // Sort global chats to put "General" first
-        if (activeChatCategory === 'global') {
-          rooms = rooms.sort((a, b) => {
+        // Sort chats: favorites first, then special sorting rules
+        rooms = rooms.sort((a, b) => {
+          // Favorites always come first
+          if (a.is_favorite && !b.is_favorite) return -1;
+          if (!a.is_favorite && b.is_favorite) return 1;
+          
+          // Within same favorite status, apply category-specific sorting
+          if (activeChatCategory === 'global') {
+            // "General" comes first among globals
             if (a.slug === 'general') return -1;
             if (b.slug === 'general') return 1;
-            return 0;
-          });
-        }
+          }
+          
+          // Default: sort by last message time (most recent first)
+          const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+          const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+          return bTime - aTime;
+        });
         
         setChats(rooms);
       } catch (error) {
@@ -180,9 +190,30 @@ export const ChatsList = () => {
   const toggleFavorite = async (chatId: string) => {
     try {
       const result = await roomService.toggleFavorite(chatId);
-    setChats(prev => prev.map(chat => 
-        chat._id === chatId ? { ...chat, is_favorite: result.is_favorite } : chat
-    ));
+      setChats(prev => {
+        // Update the chat's favorite status
+        const updated = prev.map(chat =>
+          chat._id === chatId ? { ...chat, is_favorite: result.is_favorite } : chat
+        );
+        
+        // Re-sort: favorites first, then by category rules
+        return updated.sort((a, b) => {
+          // Favorites always come first
+          if (a.is_favorite && !b.is_favorite) return -1;
+          if (!a.is_favorite && b.is_favorite) return 1;
+          
+          // Within same favorite status, apply category-specific sorting
+          if (activeChatCategory === 'global') {
+            if (a.slug === 'general') return -1;
+            if (b.slug === 'general') return 1;
+          }
+          
+          // Default: sort by last message time
+          const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+          const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+          return bTime - aTime;
+        });
+      });
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
     }
