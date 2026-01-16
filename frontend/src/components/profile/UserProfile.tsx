@@ -959,7 +959,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               {/* Polymarket Profile Link */}
               {userData?.polymarket?.verified && userData?.polymarket?.username && (
                 <a
-                  href={`https://polymarket.com/profile/${userData.polymarket.username}`}
+                  href={`https://polymarket.com/@${userData.polymarket.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

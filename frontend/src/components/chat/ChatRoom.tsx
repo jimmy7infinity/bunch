@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { websocketService } from '../../services/websocket';
-import { messageService, mediaService, roomService, marketPositionService, polymarketService } from '../../services/api';
+import { messageService, mediaService, roomService, marketPositionService, polymarketService, marketStatusService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
@@ -72,6 +72,7 @@ export const ChatRoom = ({
   const messageMenuRef = useRef<HTMLDivElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const searchPanelRef = useRef<HTMLDivElement>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState<string | null>(null);
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -116,22 +117,42 @@ export const ChatRoom = ({
     setIsLoadingStatus(true);
     
     try {
-      // TODO: Call the new backend endpoint to compute market status
-      // This will use the scripts we just created:
+      // Call the new backend endpoint to compute market status
+      // This uses the scripts we created:
       // - fetchUserPositions
-      // - computeWhalePercentile
+      // - computeWhalePercentile  
       // - computeMarketStatus
+      const result = await marketStatusService.computeMyStatus(conversation.market_id);
       
-      // For now, using the old API as placeholder
-      const myPosResult = await polymarketService.getMyMarketPosition(conversation.market_id);
-      
-      if (myPosResult.outcome && myPosResult.size > 0) {
-        // User has a position - determine if whale
-        // TODO: Replace with actual backend call to computeMarketStatus
-        setMyMarketStatus('position'); // Will be 'whale' if top 10%
-      } else {
-        setMyMarketStatus(null);
+      if (!result.success) {
+        // Handle rate limiting
+        if (result.rateLimited) {
+          const minutes = Math.ceil((result.timeUntilReset || 0) / 60);
+          addNotification({
+            type: 'system',
+            title: 'Rate Limit',
+            message: `Please wait ${minutes} minute${minutes !== 1 ? 's' : ''} before refreshing status again.`,
+          });
+          return;
+        }
+        
+        // Handle other errors
+        addNotification({
+          type: 'system',
+          title: 'Error',
+          message: result.message || 'Failed to compute market status',
+        });
+        return;
       }
+
+      // Set the computed status (⚡ or 🐳)
+      setMyMarketStatus(result.status || null);
+      
+      console.log('✓ Market status computed:', {
+        status: result.status,
+        isWhale: result.isWhale,
+        positionSizeUSD: result.positionSizeUSD,
+      });
 
       // Load all positions for this market (for other users' badges)
       const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
@@ -152,6 +173,11 @@ export const ChatRoom = ({
       }
     } catch (error) {
       console.error('Failed to load market status:', error);
+      addNotification({
+        type: 'system',
+        title: 'Error',
+        message: 'Failed to load market status. Please try again.',
+      });
     } finally {
       setIsLoadingStatus(false);
     }
@@ -310,7 +336,7 @@ export const ChatRoom = ({
     }
   }, [conversationMessages.length]); // Only trigger on message count change, not on every update
   
-  // Close reaction picker when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showReactionPicker && reactionPickerRef.current && !reactionPickerRef.current.contains(event.target as Node)) {
@@ -322,11 +348,19 @@ export const ChatRoom = ({
       if (showMediaMenu && mediaMenuRef.current && !mediaMenuRef.current.contains(event.target as Node)) {
         setShowMediaMenu(false);
       }
+      if (isSearchOpen && searchPanelRef.current && !searchPanelRef.current.contains(event.target as Node)) {
+        // Don't close if clicking the search button itself
+        const target = event.target as HTMLElement;
+        if (!target.closest('.nav-icon-button')) {
+          setIsSearchOpen(false);
+          setSearchQuery('');
+        }
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showReactionPicker, showMessageMenu, showMediaMenu]);
+  }, [showReactionPicker, showMessageMenu, showMediaMenu, isSearchOpen]);
   
   // Reaction emojis
   const reactionEmojis = ['❤️', '👍', '😂', '👎', '🔥', '😮', '🤬', '🔫'];
@@ -800,18 +834,20 @@ export const ChatRoom = ({
 
         {/* Search Input - Slides in when search is active */}
         {isSearchOpen && (
-          <div style={{
-            position: 'absolute',
-            top: '75px',
-            left: 0,
-            right: 0,
-            backgroundColor: '#19191A',
-            padding: '10px 20px',
-            borderBottom: '1px solid #333333',
-            zIndex: 10,
-            maxHeight: '300px',
-            overflowY: 'auto',
-          }}>
+          <div 
+            ref={searchPanelRef}
+            style={{
+              position: 'absolute',
+              top: '75px',
+              left: 0,
+              right: 0,
+              backgroundColor: '#19191A',
+              padding: '10px 20px',
+              borderBottom: '1px solid #333333',
+              zIndex: 10,
+              maxHeight: '300px',
+              overflowY: 'auto',
+            }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -877,10 +913,14 @@ export const ChatRoom = ({
                     result.text.slice(contextStart, contextEnd) + 
                     (contextEnd < result.text.length ? '...' : '');
                   
+                  const senderName = result.sender_id?.display_name || result.sender_id?.username || 'Unknown';
+                  const isAI = result.is_ai === true;
+                  const messageTime = new Date(result.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                  
                   return (
                     <button
-                      key={result.id}
-                      onClick={() => scrollToMessage(result.id)}
+                      key={result._id}
+                      onClick={() => scrollToMessage(result._id)}
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -896,10 +936,10 @@ export const ChatRoom = ({
                       <div style={{
                         fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                         fontSize: '11px',
-                        color: result.sender === 'ai' ? '#60F6AB' : '#909090',
+                        color: isAI ? '#60F6AB' : '#909090',
                         marginBottom: '4px',
                       }}>
-                        {result.username} • {result.time}
+                        {senderName} • {messageTime}
                       </div>
                       <div style={{
                         fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1369,7 +1409,7 @@ export const ChatRoom = ({
                 {/* Render actual messages from database */}
                 {Array.isArray(conversationMessages) && conversationMessages
                   .filter(msg => !msg.deleted) // Hide deleted messages
-                  .map((msg) => {
+                  .map((msg, index, filteredMessages) => {
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
@@ -1382,7 +1422,57 @@ export const ChatRoom = ({
                     ? `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`
                     : 'linear-gradient(135deg, #707070, #333333)';
                   
+                  // Check if we need to show a date separator
+                  const currentDate = new Date(msg.created_at);
+                  const previousMsg = index > 0 ? filteredMessages[index - 1] : null;
+                  const previousDate = previousMsg ? new Date(previousMsg.created_at) : null;
+                  
+                  const showDateSeparator = !previousDate || 
+                    currentDate.toDateString() !== previousDate.toDateString();
+                  
+                  // Format date for separator
+                  const formatDateSeparator = (date: Date) => {
+                    const today = new Date();
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    if (date.toDateString() === today.toDateString()) {
+                      return 'Today';
+                    } else if (date.toDateString() === yesterday.toDateString()) {
+                      return 'Yesterday';
+                    } else {
+                      return date.toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+                      });
+                    }
+                  };
+                  
                   return (
+                    <React.Fragment key={msg._id}>
+                      {/* Date Separator */}
+                      {showDateSeparator && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          margin: '20px 0 10px 0',
+                        }}>
+                          <div style={{ flex: 1, height: '1px', backgroundColor: '#333333' }} />
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '11px',
+                            color: '#707070',
+                            padding: '0 10px',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {formatDateSeparator(currentDate)}
+                          </span>
+                          <div style={{ flex: 1, height: '1px', backgroundColor: '#333333' }} />
+                        </div>
+                      )}
             <div 
                       key={msg._id}
                       ref={el => { messageRefs.current[msg._id] = el; }}
@@ -1495,6 +1585,21 @@ export const ChatRoom = ({
                                 </>
                               );
                             })()}
+                            {/* Polymarket verified badge */}
+                            {!isAI && msg.sender_id?.polymarket?.verified && (
+                              <img 
+                                src="/polymarket-logo.png" 
+                                alt="Polymarket Verified"
+                                title="Polymarket Verified"
+                                style={{
+                                  width: '10px',
+                                  height: '10px',
+                                  marginLeft: '4px',
+                                  display: 'inline-block',
+                                  verticalAlign: 'middle',
+                                }}
+                              />
+                            )}
                           </span>
 
                           {/* Reply Preview - clickable to scroll to original message */}
@@ -1885,56 +1990,67 @@ export const ChatRoom = ({
                   </div>
 
                   {/* Reactions Display - with full-width background and proper gap */}
-                  {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                    <div style={{ 
-                      backgroundColor: '#19191A',
-                      marginLeft: '-12px',
-                      marginRight: '-12px',
-                      marginTop: '4px',
-                      marginBottom: '-8px',
-                      padding: '8px 12px',
-                      borderBottomLeftRadius: isOwnMessage ? '0' : (isAI ? '20px' : '32.5px'),
-                      borderBottomRightRadius: isOwnMessage ? '32.5px' : (isAI ? '20px' : '32.5px'),
-                      display: 'flex', 
-                      gap: '4px', 
-                      flexWrap: 'wrap',
-                    }}>
-                      {Object.entries(msg.reactions).map(([emoji, userIds]) => {
-                        const currentUserId = user?._id || user?.id || '';
-                        const userHasReacted = Array.isArray(userIds) && userIds.includes(currentUserId);
-                        const reactionCount = Array.isArray(userIds) ? userIds.length : 0;
-                        
-                        // Don't show reactions with 0 count
-                        if (reactionCount === 0) return null;
-                        
-                        return (
-                          <button
-                            key={emoji}
-                            onClick={() => toggleReaction(msg._id, emoji)}
-                            style={{
-                              backgroundColor: userHasReacted ? '#3A3A3A' : '#242424',
-                              border: `1px solid ${userHasReacted ? '#555' : '#333'}`,
-                              borderRadius: '12px',
-                              padding: '2px 6px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '3px',
-                            }}
-                          >
-                            <span>{emoji}</span>
-                            <span style={{ fontSize: '10px', color: '#909090' }}>{reactionCount}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {(() => {
+                    // Filter out reactions with 0 count
+                    const activeReactions = msg.reactions 
+                      ? Object.entries(msg.reactions).filter(([emoji, userIds]) => {
+                          const reactionCount = Array.isArray(userIds) ? userIds.length : 0;
+                          return reactionCount > 0;
+                        })
+                      : [];
+                    
+                    // Only show reactions container if there are active reactions
+                    if (activeReactions.length === 0) return null;
+                    
+                    return (
+                      <div style={{ 
+                        backgroundColor: '#19191A',
+                        marginLeft: '-12px',
+                        marginRight: '-12px',
+                        marginTop: '4px',
+                        marginBottom: '-8px',
+                        padding: '8px 12px',
+                        borderBottomLeftRadius: isOwnMessage ? '0' : (isAI ? '20px' : '32.5px'),
+                        borderBottomRightRadius: isOwnMessage ? '32.5px' : (isAI ? '20px' : '32.5px'),
+                        display: 'flex', 
+                        gap: '4px', 
+                        flexWrap: 'wrap',
+                      }}>
+                        {activeReactions.map(([emoji, userIds]) => {
+                          const currentUserId = user?._id || user?.id || '';
+                          const userHasReacted = Array.isArray(userIds) && userIds.includes(currentUserId);
+                          const reactionCount = Array.isArray(userIds) ? userIds.length : 0;
+                          
+                          return (
+                            <button
+                              key={emoji}
+                              onClick={() => toggleReaction(msg._id, emoji)}
+                              style={{
+                                backgroundColor: userHasReacted ? '#3A3A3A' : '#242424',
+                                border: `1px solid ${userHasReacted ? '#555' : '#333'}`,
+                                borderRadius: '12px',
+                                padding: '2px 6px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <span>{emoji}</span>
+                              <span style={{ fontSize: '10px', color: '#909090' }}>{reactionCount}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
                             );
                           })()}
               </div>
             </div>
+                    </React.Fragment>
                   );
                 })}
               </>

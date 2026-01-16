@@ -10,13 +10,17 @@ import {
   Delete,
   Patch,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private moduleRef: ModuleRef,
+  ) {}
 
   // ==================== CONVERSATION ENDPOINTS ====================
 
@@ -286,5 +290,104 @@ export class ChatController {
   @Delete('markets/:marketId/position')
   async clearPosition(@Request() req: any, @Param('marketId') marketId: string) {
     return this.chatService.clearUserPosition(req.user.userId, marketId);
+  }
+
+  // ==================== MARKET STATUS ENDPOINTS (⚡ / 🐳) ====================
+
+  /**
+   * Compute market status for current user
+   * POST /conversations/markets/:marketId/compute-status
+   * 
+   * This endpoint:
+   * - Fetches user's position from Polymarket
+   * - Computes whale threshold
+   * - Returns ⚡ (position) or 🐳 (whale) status
+   * - Rate limited: 1 per market per 5 minutes
+   */
+  @Post('markets/:marketId/compute-status')
+  async computeMarketStatus(
+    @Request() req: any,
+    @Param('marketId') marketId: string,
+  ) {
+    // Import rate limiter
+    const { rateLimit, RateLimitWindows } = await import('../../scripts/utils/rateLimit');
+
+    try {
+      // Check rate limit
+      await rateLimit.checkRateLimit({
+        userId: req.user.userId,
+        action: 'set_market_status',
+        key: marketId,
+        windowMs: RateLimitWindows.SET_MARKET_STATUS,
+      });
+    } catch (error) {
+      // Rate limit exceeded
+      const timeUntilReset = rateLimit.getTimeUntilReset({
+        userId: req.user.userId,
+        action: 'set_market_status',
+        key: marketId,
+      });
+
+      return {
+        success: false,
+        rateLimited: true,
+        timeUntilReset,
+        message: error.message,
+      };
+    }
+
+    // Get user's wallet address
+    const { UsersService } = await import('../users/users.service');
+    const usersService = this.moduleRef.get(UsersService);
+    const user = await usersService.findById(req.user.userId);
+
+    if (!user || !user.polymarket?.wallet_address) {
+      return {
+        success: false,
+        message: 'Polymarket wallet not connected. Please verify your account.',
+      };
+    }
+
+    // Compute status
+    const result = await this.chatService.computeUserMarketStatus(
+      req.user.userId,
+      user.polymarket.wallet_address,
+      marketId,
+    );
+
+    return {
+      success: true,
+      status: result.status,
+      positionSizeUSD: result.positionSizeUSD,
+      isWhale: result.isWhale,
+      hasPosition: result.hasPosition,
+    };
+  }
+
+  /**
+   * Get cached market status (no computation)
+   * GET /conversations/markets/:marketId/my-status
+   */
+  @Get('markets/:marketId/my-status')
+  async getMyMarketStatus(@Request() req: any, @Param('marketId') marketId: string) {
+    const result = await this.chatService.getCachedMarketStatus(
+      req.user.userId,
+      marketId,
+    );
+
+    if (!result) {
+      return {
+        success: false,
+        message: 'No status computed yet. Click "Get Status" to compute.',
+      };
+    }
+
+    return {
+      success: true,
+      status: result.status,
+      positionSizeUSD: result.positionSizeUSD,
+      isWhale: result.isWhale,
+      hasPosition: result.hasPosition,
+    };
   }
 }

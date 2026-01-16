@@ -12,6 +12,7 @@ async function seedGlobalChats() {
   );
 
   const globalChats = [
+    { title: 'General', slug: 'general' },
     { title: 'Politics', slug: 'politics' },
     { title: 'Sports', slug: 'sports' },
     { title: 'Crypto', slug: 'crypto' },

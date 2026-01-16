@@ -53,7 +53,17 @@ export const ChatsList = () => {
     const loadChats = async () => {
       try {
         setIsLoading(true);
-        const rooms = await roomService.getRooms(activeChatCategory);
+        let rooms = await roomService.getRooms(activeChatCategory);
+        
+        // Sort global chats to put "General" first
+        if (activeChatCategory === 'global') {
+          rooms = rooms.sort((a, b) => {
+            if (a.slug === 'general') return -1;
+            if (b.slug === 'general') return 1;
+            return 0;
+          });
+        }
+        
         setChats(rooms);
       } catch (error) {
         console.error('Failed to load chats:', error);
@@ -814,7 +824,7 @@ export const ChatsList = () => {
           gap: '20px',
           padding: '0 15px',
         }}>
-        {/* AI Feed Announcement */}
+        {/* Insights Announcement */}
         <button
           className="ai-feed-announcement"
           style={{
@@ -839,7 +849,7 @@ export const ChatsList = () => {
             color: '#60F6AB',
             fontWeight: '400',
           }}>
-            AI Feed
+            Insights
           </span>
           {/* AI Brain/Sparkle Icon */}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#60F6AB">

@@ -6,6 +6,7 @@ import { Message, MessageDocument } from './schemas/message.schema';
 import { Conversation, ConversationDocument, ConversationType } from './schemas/conversation.schema';
 import { Participant, ParticipantDocument } from './schemas/participant.schema';
 import { UserMarketPosition, UserMarketPositionDocument, PositionType } from './schemas/user-market-position.schema';
+import { MarketUserStatus, MarketUserStatusDocument } from './schemas/market-user-status.schema';
 
 @Injectable()
 export class ChatService {
@@ -14,6 +15,7 @@ export class ChatService {
     @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
     @InjectModel(Participant.name) private participantModel: Model<ParticipantDocument>,
     @InjectModel(UserMarketPosition.name) private userMarketPositionModel: Model<UserMarketPositionDocument>,
+    @InjectModel(MarketUserStatus.name) private marketUserStatusModel: Model<MarketUserStatusDocument>,
   ) {}
 
   // ==================== CONVERSATION MANAGEMENT ====================
@@ -549,5 +551,36 @@ export class ChatService {
     }).exec();
 
     return { success: true };
+  }
+
+  // ==================== MARKET STATUS (⚡ / 🐳) ====================
+
+  /**
+   * Compute market status for a user (⚡ position / 🐳 whale)
+   * This is the entry point that calls the computeMarketStatus script
+   */
+  async computeUserMarketStatus(userId: string, walletAddress: string, marketId: string) {
+    // Import the script dynamically to avoid circular dependencies
+    const { computeMarketStatus } = await import('../../scripts/polymarket/computeMarketStatus');
+    
+    return computeMarketStatus(
+      userId,
+      walletAddress,
+      marketId,
+      this.marketUserStatusModel
+    );
+  }
+
+  /**
+   * Get cached market status (no computation)
+   */
+  async getCachedMarketStatus(userId: string, marketId: string) {
+    const { getCachedMarketStatus } = await import('../../scripts/polymarket/computeMarketStatus');
+    
+    return getCachedMarketStatus(
+      userId,
+      marketId,
+      this.marketUserStatusModel
+    );
   }
 }

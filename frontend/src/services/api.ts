@@ -368,6 +368,43 @@ export const marketPositionService = {
   },
 };
 
+// Market status service (⚡ / 🐳)
+export const marketStatusService = {
+  /**
+   * Compute market status for current user
+   * Returns: { success, status: 'position' | 'whale' | null, positionSizeUSD, isWhale, hasPosition }
+   * Or: { success: false, rateLimited: true, timeUntilReset, message }
+   */
+  async computeMyStatus(marketId: string) {
+    const response = await api.post<{
+      success: boolean;
+      status?: 'position' | 'whale' | null;
+      positionSizeUSD?: number;
+      isWhale?: boolean;
+      hasPosition?: boolean;
+      rateLimited?: boolean;
+      timeUntilReset?: number;
+      message?: string;
+    }>(`/conversations/markets/${marketId}/compute-status`);
+    return response.data;
+  },
+
+  /**
+   * Get cached market status (no computation)
+   */
+  async getMyCachedStatus(marketId: string) {
+    const response = await api.get<{
+      success: boolean;
+      status?: 'position' | 'whale' | null;
+      positionSizeUSD?: number;
+      isWhale?: boolean;
+      hasPosition?: boolean;
+      message?: string;
+    }>(`/conversations/markets/${marketId}/my-status`);
+    return response.data;
+  },
+};
+
 export default api;
 
 

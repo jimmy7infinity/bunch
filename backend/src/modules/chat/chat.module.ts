@@ -9,6 +9,7 @@ import { Message, MessageSchema } from './schemas/message.schema';
 import { Conversation, ConversationSchema } from './schemas/conversation.schema';
 import { Participant, ParticipantSchema } from './schemas/participant.schema';
 import { UserMarketPosition, UserMarketPositionSchema } from './schemas/user-market-position.schema';
+import { MarketUserStatus, MarketUserStatusSchema } from './schemas/market-user-status.schema';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
       { name: Conversation.name, schema: ConversationSchema },
       { name: Participant.name, schema: ParticipantSchema },
       { name: UserMarketPosition.name, schema: UserMarketPositionSchema },
+      { name: MarketUserStatus.name, schema: MarketUserStatusSchema },
     ]),
     UsersModule,
     AuthModule,

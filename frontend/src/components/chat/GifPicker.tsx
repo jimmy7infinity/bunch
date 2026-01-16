@@ -36,23 +36,44 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
     }
   }, [isOpen]);
 
-  const loadFeaturedGifs = async () => {
-    setIsLoading(true);
-    const featured = await mediaService.getFeaturedGifs();
-    setGifs(featured);
-    setIsLoading(false);
-  };
-
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
+  // Debounced search effect
+  useEffect(() => {
+    if (!searchQuery.trim()) {
       loadFeaturedGifs();
       return;
     }
-    setIsLoading(true);
-    const results = await mediaService.searchGifs(query);
-    setGifs(results);
-    setIsLoading(false);
+
+    const timeoutId = setTimeout(() => {
+      performSearch(searchQuery);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const loadFeaturedGifs = async () => {
+    try {
+      setIsLoading(true);
+      const featured = await mediaService.getFeaturedGifs();
+      setGifs(featured);
+    } catch (error) {
+      console.error('Failed to load featured GIFs:', error);
+      setGifs([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const performSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const results = await mediaService.searchGifs(query);
+      setGifs(results);
+    } catch (error) {
+      console.error('Failed to search GIFs:', error);
+      setGifs([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -127,7 +148,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
             type="text"
             placeholder="Search for GIFs..."
             value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus
             style={{
               width: '100%',
