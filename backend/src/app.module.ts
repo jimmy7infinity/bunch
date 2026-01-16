@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { MediaModule } from './modules/media/media.module';
 import { PolymarketModule } from './modules/polymarket/polymarket.module';
+import { Conversation, ConversationSchema } from './modules/chat/schemas/conversation.schema';
 
 @Module({
   imports: [
@@ -25,6 +26,11 @@ import { PolymarketModule } from './modules/polymarket/polymarket.module';
       }),
       inject: [ConfigService],
     }),
+
+    // Import Conversation schema for AppController
+    MongooseModule.forFeature([
+      { name: Conversation.name, schema: ConversationSchema },
+    ]),
 
     // Feature modules
     UsersModule,
