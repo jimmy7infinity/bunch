@@ -796,7 +796,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             color: '#606060',
             marginBottom: '5px',
           }}>
-            Grex v1.0.0
+            Bunch v1.0.0
           </div>
 
           {/* Legal Section */}

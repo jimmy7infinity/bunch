@@ -21,7 +21,7 @@ export class AppController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'Grex API',
+      service: 'Bunch API',
       version: 'oauth2-v1',
     };
   }

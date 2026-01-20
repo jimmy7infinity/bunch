@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getHello(): object {
     return {
-      message: 'Welcome to Grex API',
+      message: 'Welcome to Bunch API',
       version: '0.1.0',
       endpoints: {
         health: '/api/health',

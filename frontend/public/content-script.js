@@ -1,5 +1,5 @@
 // Content script for detecting Polymarket market pages
-console.log('🎯 Grex content script loaded');
+console.log('🎯 Bunch content script loaded');
 
 let currentMarketId = null;
 let currentMarketTitle = null;

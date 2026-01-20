@@ -1,12 +1,12 @@
 const CLOUDINARY_CLOUD_NAME = 'djzec1vdb';
-const CLOUDINARY_UPLOAD_PRESET = 'grex'; // You'll need to create this in Cloudinary
+const CLOUDINARY_UPLOAD_PRESET = 'bunch'; // You'll need to create this in Cloudinary
 
 export const cloudinaryService = {
   async uploadImage(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    formData.append('folder', 'grex_chats');
+    formData.append('folder', 'bunch_chats');
 
     try {
       const response = await fetch(

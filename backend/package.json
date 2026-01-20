@@ -1,7 +1,7 @@
 {
-  "name": "grex-backend",
+  "name": "bunch-backend",
   "version": "0.1.0",
-  "description": "Grex Backend API",
+  "description": "Bunch Backend API",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",

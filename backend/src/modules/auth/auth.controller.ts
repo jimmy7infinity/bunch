@@ -34,7 +34,7 @@ export class AuthController {
   async getNonce() {
     // Generate a random nonce for the user to sign
     const nonce = Math.floor(Math.random() * 1000000).toString();
-    const message = `Sign this message to authenticate with Grex.\n\nNonce: ${nonce}`;
+    const message = `Sign this message to authenticate with Bunch.\n\nNonce: ${nonce}`;
     
     return {
       message,
@@ -86,7 +86,7 @@ export class AuthController {
         // Web app flow - redirect to auth success page
         console.log('🌐 Web OAuth (no extension redirect_uri), redirecting to auth-success');
         const backendUrl = process.env.NODE_ENV === 'production' 
-          ? 'https://grex.up.railway.app'
+          ? 'https://bunch.up.railway.app'
           : 'http://localhost:3000';
         
         res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);

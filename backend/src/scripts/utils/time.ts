@@ -1,5 +1,5 @@
 /**
- * Time utility functions for Grex scripts
+ * Time utility functions for Bunch scripts
  */
 
 /**

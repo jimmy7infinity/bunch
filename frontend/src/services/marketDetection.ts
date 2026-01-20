@@ -16,7 +16,7 @@ export function initializeMarketDetection() {
 
   try {
     // Connect to background script
-    port = chrome.runtime.connect({ name: 'grex-sidepanel' });
+    port = chrome.runtime.connect({ name: 'bunch-sidepanel' });
 
     console.log('🔌 Connected to extension background script');
 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Grex Setup Verification Script
+# Bunch Setup Verification Script
 # Verifies that everything is configured correctly
 
 set -e
 
-echo "🔍 Grex Setup Verification"
+echo "🔍 Bunch Setup Verification"
 echo "================================"
 echo ""
 

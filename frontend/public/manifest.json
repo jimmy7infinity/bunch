@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Grex",
+  "name": "Bunch",
   "version": "0.1.0",
   "description": "Real-time chat for Polymarket traders - Connect with the community",
   "side_panel": {
@@ -29,7 +29,7 @@
     }
   ],
   "action": {
-    "default_title": "Open Grex",
+    "default_title": "Open Bunch",
     "default_icon": {
       "16": "icon-16.png",
       "48": "icon-48.png",

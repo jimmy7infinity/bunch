@@ -7,7 +7,7 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
-console.log('🚀 Grex service worker loaded');
+console.log('🚀 Bunch service worker loaded');
 
 // Store current market context
 let currentMarketContext = null;
@@ -43,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('🔗 Extension redirect URI:', redirectUri);
     
     // Build auth URL with redirect_uri parameter
-    const backendUrl = 'https://grex.up.railway.app';
+    const backendUrl = 'https://bunch.up.railway.app';
     const authUrl = `${backendUrl}/api/auth/twitter?redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log('🚀 Launching web auth flow to:', authUrl);
@@ -98,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Allow side panel to query current market context
 chrome.runtime.onConnect.addListener((port) => {
-  if (port.name === 'grex-sidepanel') {
+  if (port.name === 'bunch-sidepanel') {
     console.log('🔌 Side panel connected');
 
     // Send current context immediately
