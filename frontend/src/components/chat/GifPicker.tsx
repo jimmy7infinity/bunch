@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mediaService } from '../../services/api';
+import { tenorService } from '../../services/tenor';
 
 interface TenorGif {
   id: string;
@@ -53,7 +53,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
   const loadFeaturedGifs = async () => {
     try {
       setIsLoading(true);
-      const featured = await mediaService.getFeaturedGifs();
+      const featured = await tenorService.getFeaturedGifs();
       setGifs(featured);
     } catch (error) {
       console.error('Failed to load featured GIFs:', error);
@@ -66,7 +66,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({ isOpen, onClose, onSelectG
   const performSearch = async (query: string) => {
     try {
       setIsLoading(true);
-      const results = await mediaService.searchGifs(query);
+      const results = await tenorService.searchGifs(query);
       setGifs(results);
     } catch (error) {
       console.error('Failed to search GIFs:', error);
