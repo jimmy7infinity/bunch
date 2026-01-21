@@ -176,6 +176,32 @@ export class ChatService {
         },
       })
       .sort({ last_message_at: -1 })
+  }
+
+  /**
+   * Create or get a global chat
+   */
+  async createOrGetGlobalChat(title: string, slug: string) {
+    const existing = await this.conversationModel.findOne({
+      type: 'global',
+      slug,
+    });
+
+    if (existing) {
+      return { chat: existing, created: false };
+    }
+
+    const newChat = await this.conversationModel.create({
+      type: 'global',
+      title,
+      slug,
+      is_private: false,
+      participant_count: 0,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    return { chat: newChat, created: true }
       .exec();
   }
 

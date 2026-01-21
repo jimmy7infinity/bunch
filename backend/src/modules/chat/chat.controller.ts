@@ -45,6 +45,35 @@ export class ChatController {
   }
 
   /**
+   * Seed global chats (dev/admin only - remove in production)
+   */
+  @Post('seed-global')
+  async seedGlobalChats() {
+    const globalChats = [
+      { title: 'General', slug: 'general' },
+      { title: 'Politics', slug: 'politics' },
+      { title: 'Sports', slug: 'sports' },
+      { title: 'Crypto', slug: 'crypto' },
+      { title: 'Finance', slug: 'finance' },
+      { title: 'Geopolitics', slug: 'geopolitics' },
+      { title: 'Earnings', slug: 'earnings' },
+      { title: 'Tech', slug: 'tech' },
+      { title: 'Culture', slug: 'culture' },
+      { title: 'World Economy', slug: 'world-economy' },
+      { title: 'Climate & Science', slug: 'climate-science' },
+      { title: 'Elections', slug: 'elections' },
+    ];
+
+    const results = [];
+    for (const chat of globalChats) {
+      const result = await this.chatService.createOrGetGlobalChat(chat.title, chat.slug);
+      results.push(result);
+    }
+
+    return { success: true, created: results };
+  }
+
+  /**
    * Get all market chats
    */
   @Get('market')
