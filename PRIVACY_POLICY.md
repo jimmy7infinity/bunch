@@ -1,10 +1,10 @@
-# Privacy Policy for Grex
+# Privacy Policy for Bunch
 
 **Last Updated:** January 16, 2026
 
 ## Introduction
 
-Grex ("we", "our", or "us") respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our Chrome extension and services.
+Bunch ("we", "our", or "us") respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our Chrome extension and services.
 
 ## Information We Collect
 
@@ -67,7 +67,7 @@ You have the right to:
 
 ## Children's Privacy
 
-Grex is not intended for users under 18. We do not knowingly collect data from children.
+Bunch is not intended for users under 18. We do not knowingly collect data from children.
 
 ## Changes to This Policy
 
@@ -80,4 +80,4 @@ For privacy concerns, contact us at:
 
 ---
 
-**By using Grex, you agree to this Privacy Policy.**
+**By using Bunch, you agree to this Privacy Policy.**
