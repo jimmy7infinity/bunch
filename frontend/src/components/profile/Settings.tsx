@@ -671,8 +671,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '15px 0',
+            gap: '12px',
           }}>
-            <div>
+            <div style={{ flex: '1', minWidth: 0 }}>
               <div style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: '13px',
@@ -701,6 +702,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'background-color 0.3s',
+                flexShrink: 0,
               }}
             >
               <div style={{
