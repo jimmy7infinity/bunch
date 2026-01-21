@@ -369,6 +369,30 @@ export class UsersService {
       .exec();
     return !!block;
   }
+
+  /**
+   * Ban a user (admin/mod/creator only)
+   */
+  async banUser(userId: string, reason: string, permanent: boolean = false): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      status: 'banned',
+      banned_reason: reason,
+      banned_at: new Date(),
+      banned_until: permanent ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days if not permanent
+    }).exec();
+  }
+
+  /**
+   * Unban a user (admin/mod/creator only)
+   */
+  async unbanUser(userId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      status: 'active',
+      banned_reason: null,
+      banned_at: null,
+      banned_until: null,
+    }).exec();
+  }
 }
 
 

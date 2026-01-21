@@ -233,6 +233,11 @@ export const userService = {
     });
     return response.data;
   },
+
+  async banUser(userId: string, reason: string, permanent: boolean = false) {
+    const response = await api.post(`/users/${userId}/ban`, { reason, permanent });
+    return response.data;
+  },
 };
 
 export const friendService = {

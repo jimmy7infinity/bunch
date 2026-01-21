@@ -1926,6 +1926,78 @@ export const ChatRoom = ({
                                   boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                 }}
                               >
+                                {/* Delete button - for mods/admins or message owner */}
+                                {(user && (
+                                  msg.sender_id._id === user._id || 
+                                  msg.sender_id._id === user.id ||
+                                  ['admin', 'moderator', 'creator'].includes(user.role)
+                                )) && (
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm('Are you sure you want to delete this message?')) {
+                                        handleDeleteMessage(msg._id);
+                                        setShowMessageMenu(null);
+                                      }
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#FF6B6B',
+                                      cursor: 'pointer',
+                                      padding: '6px 10px',
+                                      textAlign: 'left',
+                                      fontSize: '12px',
+                                      borderRadius: '8px',
+                                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    }}
+                                  >
+                                    Delete Message
+                                  </button>
+                                )}
+
+                                {/* Ban user button - for mods/admins only, not on own messages */}
+                                {user && ['admin', 'moderator', 'creator'].includes(user.role) && 
+                                 msg.sender_id._id !== user._id && 
+                                 msg.sender_id._id !== user.id && (
+                                  <button
+                                    onClick={async () => {
+                                      const reason = prompt('Reason for ban:');
+                                      if (reason && window.confirm(`Ban ${msg.sender_id.username}? This will immediately disconnect them.`)) {
+                                        try {
+                                          await userService.banUser(msg.sender_id._id || msg.sender_id.id, reason);
+                                          addNotification({
+                                            type: 'system',
+                                            title: 'User Banned',
+                                            message: `${msg.sender_id.username} has been banned.`,
+                                          });
+                                        } catch (error) {
+                                          console.error('Failed to ban user:', error);
+                                          addNotification({
+                                            type: 'system',
+                                            title: 'Ban Failed',
+                                            message: 'Failed to ban user. Please try again.',
+                                          });
+                                        }
+                                        setShowMessageMenu(null);
+                                      }
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#FF4444',
+                                      cursor: 'pointer',
+                                      padding: '6px 10px',
+                                      textAlign: 'left',
+                                      fontSize: '12px',
+                                      borderRadius: '8px',
+                                      fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    }}
+                                  >
+                                    Ban User
+                                  </button>
+                                )}
+
+                                {/* Report button - for all users */}
                                 <button
                                   onClick={async () => {
                                     try {
@@ -1942,7 +2014,7 @@ export const ChatRoom = ({
                                       console.error('Failed to report message:', error);
                                       addNotification({
                                         type: 'system',
-                                        title: 'Report Failed',
+                                          title: 'Report Failed',
                                         message: 'Failed to submit report. Please try again.',
                                       });
                                     }
@@ -1951,7 +2023,7 @@ export const ChatRoom = ({
                                   style={{
                                     background: 'none',
                                     border: 'none',
-                                    color: '#FF4444',
+                                    color: '#FFA500',
                                     cursor: 'pointer',
                                     padding: '6px 10px',
                                     textAlign: 'left',

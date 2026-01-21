@@ -148,6 +148,51 @@ export class UsersController {
     await this.usersService.unblockUser(req.user.userId, userId);
     return { success: true };
   }
+
+  /**
+   * Ban a user (admin/mod/creator only)
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/ban')
+  async banUser(
+    @Request() req: any, 
+    @Param('id') targetUserId: string,
+    @Body() body: { reason?: string; permanent?: boolean }
+  ) {
+    // Check if requester is admin/mod/creator
+    const requester = await this.usersService.findById(req.user.userId);
+    if (!['admin', 'moderator', 'creator'].includes(requester.role)) {
+      throw new Error('Unauthorized: Only admins, moderators, and creators can ban users');
+    }
+
+    // Don't allow banning other admins/mods/creators
+    const targetUser = await this.usersService.findById(targetUserId);
+    if (['admin', 'moderator', 'creator'].includes(targetUser.role)) {
+      throw new Error('Cannot ban other admins, moderators, or creators');
+    }
+
+    // Ban the user
+    await this.usersService.banUser(targetUserId, body.reason || 'Violation of terms of service', body.permanent || false);
+
+    // Disconnect user if they're online (force logout)
+    try {
+      const socketServer = (global as any).socketServer as Server;
+      if (socketServer) {
+        socketServer.to(`user:${targetUserId}`).emit('banned', {
+          reason: body.reason || 'Violation of terms of service',
+        });
+        // Disconnect all their sockets
+        const sockets = await socketServer.in(`user:${targetUserId}`).fetchSockets();
+        for (const socket of sockets) {
+          socket.disconnect(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to disconnect banned user:', error);
+    }
+
+    return { success: true, message: 'User banned successfully' };
+  }
 }
 
 

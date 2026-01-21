@@ -480,12 +480,19 @@ export class ChatService {
   }
 
   /**
-   * Delete a message
+   * Delete a message (user can delete own, mods/admins can delete any)
    */
-  async deleteMessage(messageId: string, userId: string): Promise<any> {
+  async deleteMessage(messageId: string, userId: string, userRole?: string): Promise<any> {
+    // Check if user is mod/admin/creator - they can delete any message
+    const canDeleteAny = ['admin', 'moderator', 'creator'].includes(userRole || '');
+    
+    const query = canDeleteAny 
+      ? { _id: messageId } // Admins can delete any message
+      : { _id: messageId, sender_id: new Types.ObjectId(userId) }; // Users can only delete their own
+    
     const message = await this.messageModel
       .findOneAndUpdate(
-        { _id: messageId, sender_id: new Types.ObjectId(userId) }, // Convert userId to ObjectId
+        query,
         { deleted: true },
         { new: true }
       )

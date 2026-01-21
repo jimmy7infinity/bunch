@@ -71,6 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       client.data.userId = userId;
+      client.data.userRole = user.role; // Store user role for permission checks
       this.connectedUsers.set(client.id, userId);
 
       // Join user's personal room for notifications (reports, friend requests, etc.)
@@ -324,6 +325,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const userId = client.data.userId;
+      const userRole = client.data.userRole; // Get user role from socket data
 
       if (!userId) {
         return { error: 'Unauthorized' };
@@ -331,8 +333,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const { messageId } = data;
 
-      // Delete message and get the message to find conversation
-      const deletedMessage = await this.chatService.deleteMessage(messageId, userId);
+      // Delete message (mods/admins can delete any, users only their own)
+      const deletedMessage = await this.chatService.deleteMessage(messageId, userId, userRole);
       
       if (!deletedMessage) {
         return { error: 'Message not found or unauthorized' };
