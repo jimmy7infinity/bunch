@@ -2352,7 +2352,7 @@ export const ChatRoom = ({
                   handleSendMessage();
                 }
               }}
-              placeholder="Type your message here… (use @ to mention)"
+              placeholder="Type your message here…"
               style={{
                 flex: 1,
                 backgroundColor: 'transparent',

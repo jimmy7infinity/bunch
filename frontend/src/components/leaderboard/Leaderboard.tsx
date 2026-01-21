@@ -20,19 +20,8 @@ interface LeaderboardUser {
 export const Leaderboard: React.FC<LeaderboardProps> = ({ onBack, onUserClick }) => {
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'ranks'>('leaderboard');
 
-  // Mock leaderboard data - will be replaced with actual API call
-  const mockLeaderboard: LeaderboardUser[] = [
-    { id: '1', username: 'top_player', pfp: '👤', rank: 'CREATOR', score: 25420, position: 1 },
-    { id: '2', username: 'second_best', pfp: '👤', rank: 'ADMIN', score: 24230, position: 2 },
-    { id: '3', username: 'third_place', pfp: '👤', rank: 'MOD', score: 23150, position: 3 },
-    { id: '4', username: 'player_four', pfp: '👤', rank: 'LEGEND+', score: 15420, position: 4 },
-    { id: '5', username: 'player_five', pfp: '👤', rank: 'ICON+', score: 14230, position: 5 },
-    { id: '6', username: 'player_six', pfp: '👤', rank: 'TITAN+', score: 13150, position: 6 },
-    { id: '7', username: 'player_seven', pfp: '👤', rank: 'HERO+', score: 11890, position: 7 },
-    { id: '8', username: 'player_eight', pfp: '👤', rank: 'CHAMP+', score: 10540, position: 8 },
-    { id: '9', username: 'player_nine', pfp: '👤', rank: 'CAPTAIN+', score: 9320, position: 9 },
-    { id: '10', username: 'player_ten', pfp: '👤', rank: 'VETERAN+', score: 7890, position: 10 },
-  ];
+  // Leaderboard data - coming soon
+  const mockLeaderboard: LeaderboardUser[] = [];
 
   const getPositionColor = (position: number) => {
     switch (position) {
@@ -230,12 +219,30 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onBack, onUserClick })
             width: '95%',
             backgroundColor: '#19191A',
             borderRadius: '30px',
-            padding: '10px',
+            padding: '40px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
+            gap: '20px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '300px',
           }}>
-            {mockLeaderboard.map((user) => {
+            {mockLeaderboard.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#707070',
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div>
+                <div style={{ fontSize: '20px', color: '#B9B7B7', marginBottom: '10px', fontWeight: '600' }}>
+                  Coming Soon
+                </div>
+                <div style={{ fontSize: '14px', color: '#707070' }}>
+                  Leaderboard will be available soon
+                </div>
+              </div>
+            ) : (
+              mockLeaderboard.map((user) => {
               return (
                 <div
                   key={user.id}
@@ -309,11 +316,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onBack, onUserClick })
                   </div>
                 </div>
               );
-            })}
+            })
+            )}
           </div>
         </div>
       ) : (
-        <RanksDisplay />
+        <RanksDisplay comingSoon={true} />
       )}
     </div>
   );
