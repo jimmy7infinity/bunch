@@ -138,15 +138,6 @@ export class ChatController {
   }
 
   /**
-   * Get a specific conversation
-   */
-  @Get(':id')
-  async getConversation(@Param('id') id: string) {
-    const conversation = await this.chatService.getConversation(id);
-    return { conversation };
-  }
-
-  /**
    * Get participants of a conversation
    */
   @Get(':id/participants')
@@ -198,6 +189,16 @@ export class ChatController {
   async toggleNotifications(@Request() req: any, @Param('id') id: string) {
     const has_notifications = await this.chatService.toggleNotifications(id, req.user.userId);
     return { has_notifications };
+  }
+
+  /**
+   * Get a specific conversation
+   * NOTE: This route MUST be defined AFTER all :id/* routes to prevent route conflicts
+   */
+  @Get(':id')
+  async getConversation(@Param('id') id: string) {
+    const conversation = await this.chatService.getConversation(id);
+    return { conversation };
   }
 
   // ==================== MESSAGE ENDPOINTS ====================
