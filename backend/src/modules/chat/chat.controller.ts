@@ -45,10 +45,16 @@ export class ChatController {
   }
 
   /**
-   * Seed global chats (dev/admin only - remove in production)
+   * Seed global chats (admin/creator only)
    */
+  @UseGuards(JwtAuthGuard)
   @Post('seed-global')
-  async seedGlobalChats() {
+  async seedGlobalChats(@Request() req: any) {
+    // Check if user is admin/creator
+    const user = await this.usersService.findById(req.user.userId);
+    if (!['admin', 'creator'].includes(user.role)) {
+      throw new Error('Unauthorized: Only admins and creators can seed global chats');
+    }
     const globalChats = [
       { title: 'General', slug: 'general' },
       { title: 'Politics', slug: 'politics' },
