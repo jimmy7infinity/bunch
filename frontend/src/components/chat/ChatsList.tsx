@@ -1106,9 +1106,11 @@ export const ChatsList = () => {
                 whiteSpace: 'nowrap',
                 flex: 1,
               }}>
-                {chat.last_message_id?.text || chat.metadata?.description || 'No messages yet'}
+                {(chat.last_message_id && !chat.last_message_id.deleted) 
+                  ? chat.last_message_id.text 
+                  : (chat.metadata?.description || 'No messages yet')}
               </p>
-              {chat.last_message_id?.created_at && (
+              {chat.last_message_id?.created_at && !chat.last_message_id.deleted && (
                 <span style={{
                   fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                   fontSize: '10px',

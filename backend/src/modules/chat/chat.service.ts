@@ -524,6 +524,31 @@ export class ChatService {
       )
       .exec();
     
+    if (!message) {
+      return null;
+    }
+
+    // Check if this was the last message in the conversation
+    const conversation = await this.conversationModel.findOne({
+      last_message_id: new Types.ObjectId(messageId),
+    }).exec();
+
+    if (conversation) {
+      // Find the next most recent non-deleted message
+      const newLastMessage = await this.messageModel
+        .findOne({
+          conversation_id: conversation._id,
+          deleted: false,
+        })
+        .sort({ created_at: -1 })
+        .exec();
+
+      // Update conversation's last_message_id
+      await this.conversationModel.findByIdAndUpdate(conversation._id, {
+        last_message_id: newLastMessage ? newLastMessage._id : null,
+      }).exec();
+    }
+    
     return message;
   }
 
