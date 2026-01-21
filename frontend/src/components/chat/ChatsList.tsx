@@ -88,8 +88,8 @@ export const ChatsList = () => {
   // Auto-join prediction chat or category chat when context changes
   useEffect(() => {
     const handleMarketContextChange = async () => {
-      // Check if user has auto-join enabled
-      const autoPredictionChat = user?.settings?.autoPredictionChat ?? true;
+      // Check if user has auto-join enabled (defaults to false for new users)
+      const autoPredictionChat = user?.settings?.autoPredictionChat ?? false;
       
       console.log('🔍 Market context changed:', {
         categorySlug: currentMarketContext?.categorySlug,
@@ -172,6 +172,14 @@ export const ChatsList = () => {
         }
 
         console.log('📍 Auto-joining prediction chat for market:', currentMarketContext.marketId);
+
+        // Join the room first (backend registers participant)
+        try {
+          await roomService.joinRoom(conversation._id);
+          console.log('✅ Successfully auto-joined market chat:', conversation.title || conversation.name);
+        } catch (joinError) {
+          console.error('Failed to join market chat:', joinError);
+        }
 
         // Auto-join the chat (switch view mode to chats if needed)
         setSelectedChat(conversation);

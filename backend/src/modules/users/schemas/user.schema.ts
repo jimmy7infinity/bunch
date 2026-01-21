@@ -32,7 +32,7 @@ export class User {
     verified_at?: Date;
   };
 
-  @Prop({ type: Object, default: { autoPredictionChat: true } })
+  @Prop({ type: Object, default: { autoPredictionChat: false } })
   settings?: {
     autoPredictionChat: boolean;
   };
