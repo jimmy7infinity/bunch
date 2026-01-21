@@ -243,36 +243,33 @@ export class ChatService {
    */
   async joinConversation(conversationId: string, userId: string, role: 'owner' | 'admin' | 'member' = 'member') {
     try {
-      // Use findOneAndUpdate with upsert to avoid race conditions
-      const participant = await this.participantModel.findOneAndUpdate(
-        {
-          conversation_id: new Types.ObjectId(conversationId),
-          user_id: new Types.ObjectId(userId),
-        },
-        {
-          $setOnInsert: {
-            conversation_id: new Types.ObjectId(conversationId),
-            user_id: new Types.ObjectId(userId),
-            role,
-            joined_at: new Date(),
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-        }
-      ).exec();
+      // First check if participant already exists
+      const existingParticipant = await this.participantModel.findOne({
+        conversation_id: new Types.ObjectId(conversationId),
+        user_id: new Types.ObjectId(userId),
+      }).exec();
 
-      // Only increment participant count if this was a new participant
-      if (participant && !participant.joined_at) {
-        await this.conversationModel.findByIdAndUpdate(conversationId, {
-          $inc: { participant_count: 1 },
-        }).exec();
+      // If already a participant, just return it
+      if (existingParticipant) {
+        return existingParticipant;
       }
+
+      // Create new participant
+      const participant = await this.participantModel.create({
+        conversation_id: new Types.ObjectId(conversationId),
+        user_id: new Types.ObjectId(userId),
+        role,
+        joined_at: new Date(),
+      });
+
+      // Increment participant count (only runs for new participants)
+      await this.conversationModel.findByIdAndUpdate(conversationId, {
+        $inc: { participant_count: 1 },
+      }).exec();
 
       return participant;
     } catch (error) {
-      // If duplicate key error, just fetch and return the existing participant
+      // If duplicate key error (race condition), fetch and return existing
       if (error.code === 11000) {
         return await this.participantModel.findOne({
           conversation_id: new Types.ObjectId(conversationId),
