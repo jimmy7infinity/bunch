@@ -176,6 +176,7 @@ export class ChatService {
         },
       })
       .sort({ last_message_at: -1 })
+      .exec();
   }
 
   /**
@@ -185,7 +186,7 @@ export class ChatService {
     const existing = await this.conversationModel.findOne({
       type: 'global',
       slug,
-    });
+    }).exec();
 
     if (existing) {
       return { chat: existing, created: false };
@@ -201,8 +202,7 @@ export class ChatService {
       updated_at: new Date(),
     });
 
-    return { chat: newChat, created: true }
-      .exec();
+    return { chat: newChat, created: true };
   }
 
   /**
