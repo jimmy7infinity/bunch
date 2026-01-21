@@ -58,6 +58,16 @@ export const ChatRoom = ({
   // Use actual message count instead of isEmpty prop
   const isEmpty = !isLoadingMessages && conversationMessages.length === 0;
   
+  // Debug logging
+  console.log('[ChatRoom] Render state:', {
+    conversationId: conversation._id,
+    conversationType: conversation.type,
+    storeMessagesCount: storeMessages.length,
+    conversationMessagesCount: conversationMessages.length,
+    isLoadingMessages,
+    isEmpty,
+  });
+  
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ messageId: string; username: string; preview: string } | null>(null);
@@ -205,7 +215,14 @@ export const ChatRoom = ({
     
     const loadMessages = async () => {
       try {
+        console.log('[ChatRoom] Loading messages for conversation:', conversation._id);
         const response = await messageService.getMessages(conversation._id, 50);
+        console.log('[ChatRoom] Received messages response:', {
+          conversationId: conversation._id,
+          conversationType: conversation.type,
+          messagesCount: response.data?.length || 0,
+          messages: response.data,
+        });
         setStoreMessages(response.data || []);
         
         // Scroll to bottom after messages are loaded
@@ -215,7 +232,7 @@ export const ChatRoom = ({
           }
         }, 100); // Small delay to ensure DOM is updated
       } catch (error) {
-        console.error('Failed to load messages:', error);
+        console.error('[ChatRoom] Failed to load messages:', error);
       } finally {
         setIsLoadingMessages(false);
       }
