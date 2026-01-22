@@ -29,7 +29,15 @@ export class ChatService {
     let conversation = await this.conversationModel.findOne({
       type: 'market',
       market_id: marketId,
-    }).exec();
+    })
+    .populate({
+      path: 'last_message_id',
+      populate: {
+        path: 'sender_id',
+        select: 'username display_name avatar_url rank',
+      },
+    })
+    .exec();
 
     if (!conversation) {
       conversation = new this.conversationModel({
@@ -57,7 +65,15 @@ export class ChatService {
     let conversation = await this.conversationModel.findOne({
       type: 'dm',
       dm_hash: dmHash,
-    }).exec();
+    })
+    .populate({
+      path: 'last_message_id',
+      populate: {
+        path: 'sender_id',
+        select: 'username display_name avatar_url rank',
+      },
+    })
+    .exec();
 
     if (!conversation) {
       conversation = new this.conversationModel({
@@ -97,7 +113,16 @@ export class ChatService {
       await this.joinConversation(conversation._id.toString(), memberId, 'member');
     }
 
-    return conversation;
+    // Populate before returning
+    return this.conversationModel.findById(conversation._id)
+      .populate({
+        path: 'last_message_id',
+        populate: {
+          path: 'sender_id',
+          select: 'username display_name avatar_url rank',
+        },
+      })
+      .exec();
   }
 
   /**
@@ -230,6 +255,13 @@ export class ChatService {
       .find({
         type: 'market',
         title: { $regex: query, $options: 'i' },
+      })
+      .populate({
+        path: 'last_message_id',
+        populate: {
+          path: 'sender_id',
+          select: 'username display_name avatar_url rank',
+        },
       })
       .limit(limit)
       .sort({ last_message_at: -1 })
