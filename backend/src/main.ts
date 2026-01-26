@@ -69,8 +69,10 @@ async function bootstrap() {
     }),
   );
 
-  // API prefix
-  app.setGlobalPrefix(process.env.API_PREFIX || 'api');
+  // API prefix (exclude legal pages from prefix)
+  app.setGlobalPrefix(process.env.API_PREFIX || 'api', {
+    exclude: ['privacy', 'terms', 'health', '/'],
+  });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
