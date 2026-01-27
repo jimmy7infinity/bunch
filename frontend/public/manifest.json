@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bunch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Real-time chat for Polymarket traders - Connect with the community",
   "side_panel": {
     "default_path": "index.html"
@@ -9,12 +9,10 @@
   "permissions": [
     "sidePanel",
     "storage",
-    "tabs",
     "identity"
   ],
   "host_permissions": [
     "https://polymarket.com/*",
-    "http://localhost:3000/*",
     "https://*.railway.app/*"
   ],
   "background": {
