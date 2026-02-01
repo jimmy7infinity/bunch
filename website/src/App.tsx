@@ -12,11 +12,13 @@ import HowToStep3Section from './components/HowToStep3Section/HowToStep3Section'
 import FooterSection from './components/FooterSection/FooterSection'
 import bunchLogo from './assets/images/bunch_logo.png'
 
+import darkIconBunch from './assets/images/dark-icon-bunch.png'
+
 function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Hide loading screen after a longer delay
+    // Hide loading screen after a short delay
     const timer = setTimeout(() => {
       setLoading(false)
     }, 3000)
@@ -28,7 +30,7 @@ function App() {
     <>
       {loading && (
         <div className="loading-screen">
-          <img src={bunchLogo} alt="Bunch Logo" className="loading-logo" />
+          <img src={darkIconBunch} alt="Bunch Logo" className="loading-logo" />
         </div>
       )}
       

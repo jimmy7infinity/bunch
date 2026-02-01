@@ -147,11 +147,11 @@
 }
 
 .bouncing-arrow {
-  animation: bounce 2s ease-in-out infinite;
+  animation: arrowBounce 2s ease-in-out infinite;
   margin-top: 10px;
 }
 
-@keyframes bounce {
+@keyframes arrowBounce {
   0%, 100% {
     transform: translateY(0);
   }

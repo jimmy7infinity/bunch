@@ -124,6 +124,38 @@ img {
           drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.25));
 }
 
+/* Download Button Bounce Animation */
+@keyframes downloadButtonBounceAnimation {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.main-download-button.download-button-bounce,
+.main-download-button-2.download-button-bounce,
+.main-download-button-with-icon.download-button-bounce {
+  animation: downloadButtonBounceAnimation 1.8s ease-in-out infinite !important;
+}
+
+.main-download-button.download-button-bounce:hover,
+.main-download-button-2.download-button-bounce:hover,
+.main-download-button-with-icon.download-button-bounce:hover {
+  animation: downloadButtonBounceAnimation 1.2s ease-in-out infinite !important;
+  transform: none !important;
+}
+
+.main-download-button.download-button-bounce:active,
+.main-download-button-2.download-button-bounce:active,
+.main-download-button-with-icon.download-button-bounce:active {
+  transform: none !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .snap-section {
