@@ -277,7 +277,7 @@ export const ChatsList = () => {
     
     // Filter by favorites if favorites tab is active
     if (activeChatCategory === 'favorites') {
-      return matchesSearch && chat.is_favorite;
+      return matchesSearch && !!chat.is_favorite;
     }
     
     return matchesSearch;
@@ -408,7 +408,7 @@ export const ChatsList = () => {
       height: '100vh',
       width: '100%',
       backgroundColor: '#19191A',
-      padding: '0 20px', // Add padding here instead
+      padding: '0 20px',
     }}>
       {/* TOP BAR / NAV - Large Variant */}
       <div 
@@ -421,6 +421,10 @@ export const ChatsList = () => {
           alignItems: 'center',
           justifyContent: 'flex-start',
           position: 'relative',
+          marginLeft: '-20px',
+          marginRight: '-20px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
           padding: '20px',
           gap: '20px',
         }}
@@ -737,7 +741,9 @@ export const ChatsList = () => {
               height: '40px',
               backgroundColor: '#19191A',
               border: '1px solid transparent',
-              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundImage: activeChatCategory === 'favorites' 
+                ? 'linear-gradient(#19191A, #19191A)' 
+                : 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               borderRadius: '20px',
@@ -748,9 +754,9 @@ export const ChatsList = () => {
               opacity: activeChatCategory === 'favorites' ? 0.5 : 1,
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="url(#starGradient)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={activeChatCategory === 'favorites' ? '#FFD700' : 'url(#starGradientFavBtn)'}>
               <defs>
-                <radialGradient id="starGradient" cx="50%" cy="50%" r="50%">
+                <radialGradient id="starGradientFavBtn" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor="#AE8B2A" />
                   <stop offset="100%" stopColor="#8F6B17" />
                 </radialGradient>
@@ -1050,15 +1056,11 @@ export const ChatsList = () => {
                   cursor: 'pointer',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={chat.is_favorite ? "url(#starGradientOn)" : "none"} stroke={chat.is_favorite ? "none" : "url(#starGradientOff)"} strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={chat.is_favorite ? "#FFD700" : "url(#starGradientOff)"}>
                   <defs>
-                    <radialGradient id="starGradientOn" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#FFD700" />
-                      <stop offset="100%" stopColor="#FFA500" />
-                    </radialGradient>
                     <radialGradient id="starGradientOff" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#B3B3B3" />
-                      <stop offset="100%" stopColor="#888888" />
+                      <stop offset="0%" stopColor="#AE8B2A" />
+                      <stop offset="100%" stopColor="#8F6B17" />
                     </radialGradient>
                   </defs>
                   <polygon points="12,2 15,8.5 22,9.5 17,14.5 18,21.5 12,18 6,21.5 7,14.5 2,9.5 9,8.5" />

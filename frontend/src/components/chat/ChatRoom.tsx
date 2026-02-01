@@ -1064,15 +1064,11 @@ export const ChatRoom = ({
               cursor: 'pointer',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "url(#starGradientOn)" : "url(#starGradientOff)"}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "#FFD700" : "url(#starGradientOff)"}>
               <defs>
-                <radialGradient id="starGradientOn" cx="50%" cy="50%" r="50%">
+                <radialGradient id="starGradientOff" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor="#AE8B2A" />
                   <stop offset="100%" stopColor="#8F6B17" />
-                </radialGradient>
-                <radialGradient id="starGradientOff" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#B3B3B3" />
-                  <stop offset="100%" stopColor="#888888" />
                 </radialGradient>
               </defs>
               <polygon points="12,2 15,8.5 22,9.5 17,14.5 18,21.5 12,18 6,21.5 7,14.5 2,9.5 9,8.5" />
@@ -2056,9 +2052,11 @@ export const ChatRoom = ({
                         marginTop: isImageMessage ? '6px' : '4px',
                         marginBottom: isImageMessage ? '0' : '-8px',
                         padding: isImageMessage ? '6px 8px' : '8px 12px',
-                        borderRadius: isImageMessage ? '12px' : (isOwnMessage ? '0 0 32.5px 0' : (isAI ? '0 0 20px 20px' : '0 0 32.5px 32.5px')),
+                        borderBottomLeftRadius: isOwnMessage ? '32.5px' : '0',
+                        borderBottomRightRadius: isOwnMessage ? '0' : '32.5px',
+                        borderTopLeftRadius: '0',
+                        borderTopRightRadius: '0',
                         display: 'flex',
-                        width: '100%',
                         gap: '4px', 
                         flexWrap: 'wrap',
                       }}>
