@@ -91,12 +91,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #19191A;
+  background: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  animation: fadeOut 0.5s ease-out 0.8s forwards;
+  animation: fadeOut 0.5s ease-out 2.5s forwards;
 }
 
 @keyframes fadeOut {
@@ -109,7 +109,7 @@
 .loading-logo {
   width: 120px;
   height: 120px;
-  animation: float 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(192, 192, 192, 0.3));
 }
 
 /* Shape Blur Background Effects - Removed */
@@ -134,6 +134,15 @@
 
 .download-button-bounce:hover {
   animation: bounce 1s ease-in-out infinite;
+}
+
+/* Override the hover transform when bounce is active */
+.download-button-bounce.main-download-button:hover {
+  transform: none;
+}
+
+.download-button-bounce.main-download-button-2:hover {
+  transform: none;
 }
 
 /* Download Button Glow - Removed */

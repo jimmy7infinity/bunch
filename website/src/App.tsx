@@ -16,10 +16,10 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Hide loading screen after a short delay
+    // Hide loading screen after a longer delay
     const timer = setTimeout(() => {
       setLoading(false)
-    }, 1200)
+    }, 3000)
 
     return () => clearTimeout(timer)
   }, [])
