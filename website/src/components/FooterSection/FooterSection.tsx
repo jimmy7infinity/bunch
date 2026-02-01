@@ -11,7 +11,7 @@ const FooterSection: React.FC = () => {
   }
 
   return (
-    <section className="snap-section footer-section">
+    <section id="footer" className="snap-section footer-section">
       <div className="mini-download-section-footer">
         <button className="mini-download-button" onClick={handleDownload}>
           <img src={darkIconBunch} alt="Bunch" className="mini-button-icon-top" />

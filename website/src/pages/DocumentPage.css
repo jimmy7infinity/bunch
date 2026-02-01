@@ -19,6 +19,7 @@
   font-weight: 500;
   margin-bottom: 40px;
   transition: color 0.2s ease;
+  cursor: pointer;
 }
 
 .back-link:hover {

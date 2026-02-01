@@ -21,12 +21,21 @@ body {
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  position: relative;
+}
+
+/* Hide scroll when navigating from hash links */
+.snap-container.instant-scroll {
+  scroll-behavior: auto;
 }
 
 .snap-section {
+  min-height: 100vh;
   height: 100vh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  position: relative;
+  overflow: hidden;
 }
 
 /* Custom scrollbar */

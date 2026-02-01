@@ -6,7 +6,7 @@ const TermsPage: React.FC = () => {
   return (
     <div className="document-page">
       <div className="document-container">
-        <Link to="/" className="back-link">← Back to Home</Link>
+        <Link to="/#footer" className="back-link">← Back</Link>
         
         <h1>Terms of Service</h1>
         <p className="last-updated">Last Updated: January 2025</p>

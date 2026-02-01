@@ -14,11 +14,22 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Skip loading screen if navigating with a hash (from Terms/Privacy back button)
+    if (window.location.hash) {
       setLoading(false)
-    }, 3000)
-
-    return () => clearTimeout(timer)
+      // Instant scroll to the footer
+      requestAnimationFrame(() => {
+        const element = document.querySelector(window.location.hash)
+        if (element) {
+          element.scrollIntoView({ behavior: 'instant' })
+        }
+      })
+    } else {
+      const timer = setTimeout(() => {
+        setLoading(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   return (
@@ -29,7 +40,7 @@ const HomePage: React.FC = () => {
         </div>
       )}
       
-      <div className="snap-container">
+      <div className={`snap-container ${window.location.hash ? 'instant-scroll' : ''}`}>
         <LandingSection />
         <WhatIsBunchSection />
         <FeaturesSection />
