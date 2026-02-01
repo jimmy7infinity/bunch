@@ -1,0 +1,239 @@
+.landing-section {
+  position: relative;
+  background-color: #19191A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Thin yellow header line */
+.header-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: url('../../assets/images/yellow-fill.jpg') center center;
+  background-size: cover;
+  z-index: 10;
+}
+
+/* Shadow break element */
+.shadow-break-element {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  box-shadow: 10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+}
+
+/* Top header (15px to 120px) */
+.top-header {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  right: 0;
+  height: 105px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  z-index: 8;
+}
+
+.bunch-title {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 40px;
+  letter-spacing: 0.2em;
+  margin: 0;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.header-logo {
+  width: 48px;
+  height: 48px;
+}
+
+.header-logo-right {
+  transform: scaleX(-1);
+}
+
+/* Divider line under header */
+.divider-line-container {
+  position: absolute;
+  top: 140px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  z-index: 6;
+}
+
+.divider-line-container .divider-line {
+  width: 1250px;
+  max-width: 90%;
+}
+
+/* Main content area */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 180px;
+  gap: 24px;
+}
+
+.main-logo {
+  width: 225px;
+  height: 225px;
+}
+
+/* Tagline container */
+.tagline-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.tagline-text {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.4em;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.tagline-divider {
+  width: 6px;
+  height: 48px;
+}
+
+/* Small divider */
+.divider-line-container-small {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.divider-line-container-small .divider-line {
+  width: 400px;
+  max-width: 80%;
+}
+
+/* Description text */
+.description-text {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  color: #FFD87D;
+  text-align: center;
+  margin-top: 12px;
+  max-width: 90%;
+}
+
+/* Download button */
+.main-download-button {
+  margin-top: 21px;
+  position: relative;
+}
+
+.download-text {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 20px;
+  color: #C4C4C4;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.download-icon {
+  position: absolute;
+  right: 32px;
+}
+
+/* Chrome text */
+.chrome-text {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  color: #FFFFFF;
+  margin-top: -4px;
+}
+
+/* Chrome icon */
+.chrome-icon {
+  width: 30px;
+  height: 30px;
+  margin-top: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1440px) {
+  .divider-line-container .divider-line {
+    width: 85%;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-top: 160px;
+  }
+  
+  .bunch-title {
+    font-size: 32px;
+  }
+  
+  .header-logo {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .main-logo {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .tagline-text {
+    font-size: 16px;
+  }
+  
+  .tagline-divider {
+    width: 4px;
+    height: 36px;
+  }
+  
+  .tagline-container {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bunch-title {
+    font-size: 28px;
+    letter-spacing: 0.15em;
+  }
+  
+  .main-logo {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .tagline-text {
+    font-size: 14px;
+    letter-spacing: 0.3em;
+  }
+  
+  .tagline-container {
+    gap: 8px;
+  }
+  
+  .tagline-divider {
+    width: 3px;
+    height: 28px;
+  }
+}
