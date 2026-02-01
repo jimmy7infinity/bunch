@@ -76,7 +76,7 @@ body {
   box-shadow: 
     inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
     inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
-  border-radius: 2px;
+  border-radius: 100px;
 }
 
 /* Yellow line with inner shadow */
@@ -93,8 +93,10 @@ body {
   width: 405px;
   height: 60px;
   background: #19191A;
-  border: 2px solid;
-  border-image: linear-gradient(to bottom right, #FFFF02, #FFB200) 1;
+  border: 2px solid transparent;
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(to bottom right, #FFFF02, #FFB200);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
   border-radius: 100px;
   box-shadow: 
     -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.05),
@@ -114,6 +116,12 @@ body {
 
 .main-download-button:active {
   transform: translateY(0px);
+}
+
+/* All images with drop shadows */
+img {
+  filter: drop-shadow(-2.5px -2.5px 5px rgba(255, 255, 255, 0.02))
+          drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.25));
 }
 
 /* Responsive adjustments */

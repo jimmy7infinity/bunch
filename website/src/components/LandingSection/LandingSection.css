@@ -12,21 +12,23 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 15px;
+  width: 100%;
+  height: 7.5px;
   background: url('../../assets/images/yellow-fill.jpg') center center;
   background-size: cover;
   z-index: 10;
 }
 
-/* Shadow break element */
+/* Shadow break element - this is the header rectangle that creates the step effect */
 .shadow-break-element {
   position: absolute;
-  top: 120px;
+  top: 0;
   left: 0;
   right: 0;
-  height: 1px;
+  height: 120px;
+  background: #19191A;
   box-shadow: 10px 10px 20px 0px rgba(0, 0, 0, 0.25);
-  z-index: 5;
+  z-index: 4;
 }
 
 /* Top header (15px to 120px) */
@@ -38,28 +40,45 @@
   height: 105px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+}
+
+.top-header-center {
+  display: flex;
+  align-items: center;
   gap: 40px;
-  z-index: 8;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .bunch-title {
   font-family: 'Lalezar', sans-serif;
   font-size: 40px;
-  letter-spacing: 0.2em;
+  letter-spacing: 1em;
   margin: 0;
   text-shadow: 
     -1px -1px 2px rgba(255, 255, 255, 0.05),
     2px 2px 4px rgba(0, 0, 0, 0.25);
+  /* Fix for letter-spacing adding space after last letter */
+  text-indent: 1em;
 }
 
 .header-logo {
   width: 48px;
   height: 48px;
+  flex-shrink: 0;
+}
+
+.header-logo-left {
+  /* Positioned at far left */
 }
 
 .header-logo-right {
   transform: scaleX(-1);
+  /* Positioned at far right */
 }
 
 /* Divider line under header */
@@ -69,7 +88,7 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  z-index: 6;
+  z-index: 5;
 }
 
 .divider-line-container .divider-line {
@@ -107,6 +126,8 @@
   text-shadow: 
     -1px -1px 2px rgba(255, 255, 255, 0.05),
     2px 2px 4px rgba(0, 0, 0, 0.25);
+  /* Fix for letter-spacing adding space after last letter */
+  text-indent: 0.4em;
 }
 
 .tagline-divider {
@@ -134,7 +155,7 @@
   color: #FFD87D;
   text-align: center;
   margin-top: 12px;
-  max-width: 90%;
+  white-space: nowrap;
 }
 
 /* Download button */
@@ -186,6 +207,8 @@
   
   .bunch-title {
     font-size: 32px;
+    letter-spacing: 0.6em;
+    text-indent: 0.6em;
   }
   
   .header-logo {
@@ -210,12 +233,18 @@
   .tagline-container {
     gap: 12px;
   }
+  
+  .description-text {
+    white-space: normal;
+    max-width: 90%;
+  }
 }
 
 @media (max-width: 480px) {
   .bunch-title {
     font-size: 28px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
   }
   
   .main-logo {
@@ -226,6 +255,7 @@
   .tagline-text {
     font-size: 14px;
     letter-spacing: 0.3em;
+    text-indent: 0.3em;
   }
   
   .tagline-container {

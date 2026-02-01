@@ -201,3 +201,15 @@ Position: X: 2 Y: 2
 Blur: 4
 Spread: 0
 Color: 000000 Opacity: 25%
+
+All images should have the following Drop shadows:
+Drop Shadow 1:
+Position: X: -2.5 Y: -2.5
+Blur: 5
+Spread: 0
+Color: FFFFFF Opacity: 2%
+Drop Shadow 1:
+Position: X: 5 Y: 5
+Blur: 10
+Spread: 0
+Color: 000000 Opacity: 25%

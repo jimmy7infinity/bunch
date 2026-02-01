@@ -1,0 +1,185 @@
+.howto-step2-section {
+  background-color: #19191A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  position: relative;
+}
+
+.mini-download-section-howto {
+  position: absolute;
+  left: 40px;
+  top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+}
+
+.howto-step2-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 40px;
+}
+
+.step-number-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #19191A;
+  border: 2px solid transparent;
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(to bottom, #707070, #333333);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.08),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  margin: 0;
+}
+
+.step-number-text {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 40px;
+  color: #DEDEDE;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.08),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.howto-logo {
+  width: 48px;
+  height: 48px;
+  margin: 0 0 10px 0;
+}
+
+.howto-title {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.4em;
+  margin: 10px 0 20px 0;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+  text-indent: 0.4em;
+}
+
+.howto-step2-image {
+  width: 720px;
+  max-width: 90%;
+  height: auto;
+  border-radius: 8px;
+  filter: drop-shadow(-2.5px -2.5px 5px rgba(255, 255, 255, 0.02))
+          drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.25));
+  margin: 0;
+}
+
+.howto-step2-image:first-of-type {
+  margin-bottom: 2px;
+}
+
+.black-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #19191A;
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+  margin: 10px 0 0 0;
+}
+
+.howto-divider {
+  width: 250px;
+  max-width: 90%;
+  margin: 10px 0 0 0;
+}
+
+.grey-dots-top,
+.grey-dots-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.grey-dots-top {
+  margin: 10px 0;
+}
+
+.grey-dots-bottom {
+  margin: 20px 0;
+}
+
+.grey-dot {
+  border-radius: 50%;
+  background: #BAB9B9;
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+}
+
+.dot-small {
+  width: 10px;
+  height: 10px;
+}
+
+.dot-medium {
+  width: 15px;
+  height: 15px;
+}
+
+.dot-large {
+  width: 20px;
+  height: 20px;
+}
+
+.dot-xlarge {
+  width: 25px;
+  height: 25px;
+}
+
+@media (max-width: 768px) {
+  .howto-step2-content {
+    padding: 40px 20px;
+  }
+  
+  .howto-logo {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .howto-title {
+    font-size: 28px;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+  }
+  
+  .step-number-circle {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .step-number-text {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mini-download-section-howto {
+    left: 20px;
+    top: 20px;
+  }
+  
+  .howto-title {
+    font-size: 24px;
+    letter-spacing: 0.25em;
+    text-indent: 0.25em;
+  }
+}

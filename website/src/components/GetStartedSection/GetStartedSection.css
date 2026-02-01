@@ -1,0 +1,246 @@
+.get-started-section {
+  background-color: #19191A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.get-started-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 40px;
+}
+
+.get-started-logo {
+  width: 155px;
+  height: 155px;
+  margin: 0;
+  padding: 0;
+}
+
+.get-started-title {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 40px;
+  letter-spacing: 0.4em;
+  margin: 5px 0 0 0;
+  padding: 0;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+  /* Fix for letter-spacing adding space after last letter */
+  text-indent: 0.4em;
+}
+
+.get-started-divider {
+  width: 390px;
+  margin: 5px 0 10px 0;
+  padding: 0;
+}
+
+.main-download-button-2 {
+  width: 405px;
+  height: 60px;
+  background: #19191A;
+  border: 2px solid transparent;
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(to bottom right, #FFFF02, #FFB200);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  position: relative;
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.05),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
+  margin: 0;
+}
+
+.main-download-button-2:hover {
+  transform: translateY(-2px);
+}
+
+.main-download-button-2:active {
+  transform: translateY(0px);
+}
+
+.button-chrome-icon {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  left: 22px;
+}
+
+.button-text {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 20px;
+  color: #C4C4C4;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.button-download-icon {
+  position: absolute;
+  right: 22px;
+}
+
+.black-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #19191A;
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+  margin: 20px 0;
+}
+
+.how-to-title {
+  font-family: 'Lalezar', sans-serif;
+  font-size: 36px;
+  letter-spacing: 0.3em;
+  color: #C1C1C1;
+  margin: 0;
+  text-shadow: 
+    -1px -1px 2px rgba(255, 255, 255, 0.05),
+    2px 2px 4px rgba(0, 0, 0, 0.25);
+  /* Fix for letter-spacing adding space after last letter */
+  text-indent: 0.3em;
+}
+
+.dots-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.grey-dot {
+  border-radius: 50%;
+  background: #BAB9B9;
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+}
+
+.dot-large {
+  width: 30px;
+  height: 30px;
+}
+
+.dot-medium {
+  width: 20px;
+  height: 20px;
+}
+
+.dot-small {
+  width: 15px;
+  height: 15px;
+}
+
+.bouncing-arrow {
+  animation: bounce 2s ease-in-out infinite;
+  margin-top: 10px;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@media (max-width: 768px) {
+  .get-started-content {
+    padding: 40px 20px;
+  }
+  
+  .get-started-logo {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .get-started-title {
+    font-size: 32px;
+    letter-spacing: 0.3em;
+  }
+  
+  .main-download-button-2 {
+    width: 320px;
+    height: 55px;
+  }
+  
+  .button-text {
+    font-size: 18px;
+  }
+  
+  .how-to-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .get-started-content {
+    padding: 20px 15px;
+  }
+  
+  .get-started-logo {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .get-started-title {
+    font-size: 28px;
+    letter-spacing: 0.25em;
+  }
+  
+  .main-download-button-2 {
+    width: 280px;
+    height: 50px;
+  }
+  
+  .button-chrome-icon {
+    width: 25px;
+    height: 25px;
+    left: 18px;
+  }
+  
+  .button-text {
+    font-size: 16px;
+  }
+  
+  .button-download-icon {
+    width: 14px;
+    height: 14px;
+    right: 18px;
+  }
+  
+  .how-to-title {
+    font-size: 24px;
+  }
+  
+  .dot-large {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .dot-medium {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .dot-small {
+    width: 12px;
+    height: 12px;
+  }
+}

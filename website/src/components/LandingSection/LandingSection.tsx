@@ -19,7 +19,9 @@ const LandingSection: React.FC = () => {
       {/* Header with BUNCH text and logos */}
       <div className="top-header">
         <img src={bunchLogo} alt="Bunch Logo" className="header-logo header-logo-left" />
-        <h1 className="bunch-title yellow-fill-text">BUNCH</h1>
+        <div className="top-header-center">
+          <h1 className="bunch-title yellow-fill-text">BUNCH</h1>
+        </div>
         <img src={bunchLogo} alt="Bunch Logo" className="header-logo header-logo-right" />
       </div>
       

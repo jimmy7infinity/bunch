@@ -1,0 +1,137 @@
+.features2-section {
+  background-color: #19191A;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.features2-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.features2-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 1400px;
+  width: 100%;
+}
+
+.feature2-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 5px;
+}
+
+.feature2-image-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 5px;
+}
+
+.feature2-image-wrapper {
+  width: 283px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.feature2-image-container img {
+  height: auto;
+  border-radius: 8px;
+  filter: drop-shadow(-2.5px -2.5px 5px rgba(255, 255, 255, 0.02))
+          drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.25));
+}
+
+.feature2-line {
+  width: 60px;
+  height: 5px;
+  background: #FFD655;
+  border-radius: 100px;
+  box-shadow: 
+    inset -2px -2px 4px 0px rgba(93, 93, 93, 0.25),
+    inset 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.feature2-text-container {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 5px;
+}
+
+.feature2-text {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: #C2C1C1;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 400px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .feature2-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .feature2-image-container {
+    justify-content: center;
+    padding-right: 0;
+  }
+  
+  .feature2-line {
+    margin: 0 auto;
+  }
+  
+  .feature2-text-container {
+    justify-content: center;
+    padding-left: 0;
+  }
+  
+  .feature2-text {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 768px) {
+  .features2-content {
+    padding: 30px 20px;
+  }
+  
+  .features2-grid {
+    gap: 15px;
+  }
+  
+  .feature2-text {
+    font-size: 13px;
+  }
+  
+  .feature2-line {
+    width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .features2-content {
+    padding: 20px 15px;
+  }
+  
+  .feature2-text {
+    font-size: 12px;
+  }
+  
+  .feature2-line {
+    width: 40px;
+  }
+}
