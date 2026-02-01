@@ -1,3 +1,12 @@
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 /* Loading Animation */
 @keyframes fadeIn {
   from {
@@ -118,7 +127,16 @@
   animation: scaleIn 0.5s ease-out;
 }
 
-/* Download Button Glow */
+/* Download Button Bounce */
+.download-button-bounce {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.download-button-bounce:hover {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+/* Download Button Glow - Removed */
 .download-button-glow {
   animation: borderGlow 3.5s ease-in-out infinite;
 }

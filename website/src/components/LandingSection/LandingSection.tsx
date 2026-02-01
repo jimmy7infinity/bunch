@@ -55,7 +55,7 @@ const LandingSection: React.FC = () => {
         </p>
         
         {/* Main download button */}
-        <button className="main-download-button" onClick={handleDownload}>
+        <button className="main-download-button download-button-bounce" onClick={handleDownload}>
           <span className="download-text">DOWNLOAD</span>
           <svg className="download-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M8 12L3 7L4.4 5.6L7 8.2V0H9V8.2L11.6 5.6L13 7L8 12ZM2 16C1.45 16 0.979 15.804 0.587 15.412C0.195 15.02 0 14.549 0 14V11H2V14H14V11H16V14C16 14.55 15.804 15.021 15.412 15.413C15.02 15.805 14.549 16 14 16H2Z" fill="#C4C4C4"/>

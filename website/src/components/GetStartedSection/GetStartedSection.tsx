@@ -17,7 +17,7 @@ const GetStartedSection: React.FC = () => {
         
         <div className="divider-line get-started-divider"></div>
         
-        <button className="main-download-button-2" onClick={handleDownload}>
+        <button className="main-download-button-2 download-button-bounce" onClick={handleDownload}>
           <img src={chromeIcon} alt="Chrome" className="button-chrome-icon" />
           <span className="button-text">DOWNLOAD</span>
           <svg className="button-download-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

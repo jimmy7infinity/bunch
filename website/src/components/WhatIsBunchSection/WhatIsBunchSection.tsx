@@ -52,7 +52,7 @@ const WhatIsBunchSection: React.FC = () => {
         </div>
         
         {/* Main download button */}
-        <button className="main-download-button main-download-button-with-icon" onClick={handleDownload}>
+        <button className="main-download-button main-download-button-with-icon download-button-bounce" onClick={handleDownload}>
           <img src={chromeIcon} alt="Chrome" className="button-chrome-icon-left" />
           <span className="download-text">DOWNLOAD</span>
           <svg className="download-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
