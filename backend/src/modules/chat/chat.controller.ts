@@ -39,8 +39,8 @@ export class ChatController {
    * Get all global chats
    */
   @Get('global')
-  async getGlobalChats() {
-    const conversations = await this.chatService.getGlobalChats();
+  async getGlobalChats(@Request() req: any) {
+    const conversations = await this.chatService.getGlobalChats(req.user.userId);
     return { conversations };
   }
 
@@ -83,8 +83,8 @@ export class ChatController {
    * Get all market chats
    */
   @Get('market')
-  async getMarketChats() {
-    const conversations = await this.chatService.getMarketChats();
+  async getMarketChats(@Request() req: any) {
+    const conversations = await this.chatService.getMarketChats(req.user.userId);
     return { conversations };
   }
 

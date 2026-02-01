@@ -9,6 +9,7 @@ interface ProfileDropdownProps {
   onSettings: () => void;
   onLogout: () => void;
   anchorEl: HTMLElement | null;
+  onNavigateToChat?: (conversationId: string) => void;
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
@@ -18,6 +19,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onSettings,
   onLogout,
   anchorEl,
+  onNavigateToChat,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { notifications, markAsRead, markAllAsRead, removeNotification } = useNotificationStore();
@@ -48,16 +50,16 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   // Position dropdown below the anchor element
   const rect = anchorEl.getBoundingClientRect();
   
-  // Calculate max width to prevent overflow
-  const maxWidth = Math.min(600, window.innerWidth - 40); // 40px for margins
-  const rightPosition = window.innerWidth - rect.right;
+  // Calculate width as 95% of viewport width and center it
+  const dropdownWidth = window.innerWidth * 0.95;
+  const leftPosition = (window.innerWidth - dropdownWidth) / 2;
   
   const dropdownStyle: React.CSSProperties = {
     position: 'fixed',
     top: `${rect.bottom + 10}px`,
-    right: `${rightPosition}px`,
+    left: `${leftPosition}px`,
+    width: `${dropdownWidth}px`,
     zIndex: 1000,
-    maxWidth: `${maxWidth}px`,
   };
 
   const getNotificationIcon = (type: string) => {
@@ -113,9 +115,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           padding: '15px',
           display: 'flex',
           gap: '15px',
-          minWidth: '400px',
-          maxWidth: '100%',
-          width: 'fit-content',
+          width: '100%',
         }}
       >
         {/* LEFT COLUMN: Notifications */}
@@ -182,7 +182,14 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  onClick={() => markAsRead(notif.id)}
+                  onClick={() => {
+                    markAsRead(notif.id);
+                    // Navigate to chat if conversationId exists
+                    if (onNavigateToChat && (notif as any).conversationId) {
+                      onNavigateToChat((notif as any).conversationId);
+                      onClose();
+                    }
+                  }}
                   style={{
                     backgroundColor: notif.read ? '#1A1A1A' : '#1F2A1F',
                     padding: '10px',

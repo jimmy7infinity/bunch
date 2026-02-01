@@ -108,7 +108,7 @@ export const WalletConnect = () => {
           justifyContent: 'center',
         }}>
           <a
-            href="https://github.com/jimmy7infinity/poly_banter/blob/main/PRIVACY_POLICY.md"
+            href="https://bunch.up.railway.app/privacy"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -125,7 +125,7 @@ export const WalletConnect = () => {
           </a>
           <span style={{ color: '#444', fontSize: '10px' }}>•</span>
           <a
-            href="https://github.com/jimmy7infinity/poly_banter/blob/main/TERMS_OF_SERVICE.md"
+            href="https://bunch.up.railway.app/terms"
             target="_blank"
             rel="noopener noreferrer"
             style={{

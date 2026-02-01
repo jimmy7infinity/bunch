@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { websocketService } from '../../services/websocket';
-import { messageService, mediaService, roomService, marketPositionService, polymarketService, marketStatusService } from '../../services/api';
+import { messageService, mediaService, roomService, marketPositionService, polymarketService, marketStatusService, userService } from '../../services/api';
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
@@ -745,6 +745,21 @@ export const ChatRoom = ({
     }
   };
 
+  // Handle message deletion
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await websocketService.deleteMessage(messageId);
+      // The websocket event will handle updating the store via onMessageDeleted
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      addNotification({
+        type: 'system',
+        title: 'Error',
+        message: 'Failed to delete message. Please try again.',
+      });
+    }
+  };
+
   // REMOVED mockMembers - Now using real participants from API in GroupMembersModal
 
   const getChatTypeIcon = () => {
@@ -781,19 +796,21 @@ export const ChatRoom = ({
       display: 'flex', 
       flexDirection: 'column', 
       height: '100vh', 
+      width: '100%',
       backgroundColor: '#19191A' 
     }}>
       {/* TOP BAR / NAV */}
       <div 
         className="chatroom-topbar"
         style={{
+          width: '100%',
           height: '75px',
           backgroundColor: '#19191A',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          padding: '0 20px',
+          padding: '0',
         }}
       >
         {/* Left: Back + Search Buttons */}
@@ -1070,7 +1087,7 @@ export const ChatRoom = ({
           style={{
             width: '100%',
             backgroundColor: '#19191A',
-            padding: '6px 20px 0 20px',
+            padding: '6px 16px 0 16px',
           }}
         >
           <button
@@ -1477,7 +1494,7 @@ export const ChatRoom = ({
                               padding: isImageMessage ? '0' : '8px 12px', // No padding for images
                               minWidth: isImageMessage ? 'auto' : '90px',
                               maxWidth: 'calc(100% - 65px)',
-                              overflow: isImageMessage ? 'hidden' : 'visible', // Only hide overflow for images
+                              overflow: 'visible', // Changed from 'hidden' to 'visible' to prevent reaction clipping
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
                               boxShadow: highlightedMessageId === msg._id 
@@ -1580,34 +1597,35 @@ export const ChatRoom = ({
                             const isImageMessage = msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com');
                             
                             return isImageMessage ? (
-                              // Image/GIF - flush with bubble edges, sharp top corners
-                              <img
-                                src={msg.text}
-                                alt="Shared media"
-                                style={{
-                                  width: '100%',
-                                  maxHeight: '300px',
-                                  objectFit: 'cover',
-                                  borderRadius: isOwnMessage ? '10px 10px 0 10px' : (isAI ? '10px' : '10px 10px 10px 0'), // Sharp top corners
-                                  display: 'block',
-                                  margin: '0',
-                                  padding: '0',
-                                }}
-                                onError={(e) => {
-                                  // If image fails to load, show as text instead
-                                  e.currentTarget.style.display = 'none';
-                                  const textNode = document.createElement('p');
-                                  textNode.textContent = msg.text;
-                                  textNode.style.cssText = `
-                                    font-family: Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif;
-                                    font-size: 12px;
-                                    color: ${isAI ? '#60F6AB' : '#D3D3D3'};
-                                    margin: 0 0 4px 0;
-                                    padding: 8px 12px;
-                                  `;
-                                  e.currentTarget.parentElement?.appendChild(textNode);
-                                }}
-                              />
+                              // Image/GIF wrapper with border radius matching the message bubble
+                              <div style={{ overflow: 'hidden', borderRadius: isOwnMessage ? '32.5px 32.5px 0 32.5px' : (isAI ? '20px' : '32.5px 32.5px 32.5px 0') }}>
+                                <img
+                                  src={msg.text}
+                                  alt="Shared media"
+                                  style={{
+                                    width: '100%',
+                                    maxHeight: '300px',
+                                    objectFit: 'cover',
+                                    display: 'block',
+                                    margin: '0',
+                                    padding: '0',
+                                  }}
+                                  onError={(e) => {
+                                    // If image fails to load, show as text instead
+                                    e.currentTarget.style.display = 'none';
+                                    const textNode = document.createElement('p');
+                                    textNode.textContent = msg.text;
+                                    textNode.style.cssText = `
+                                      font-family: Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif;
+                                      font-size: 12px;
+                                      color: ${isAI ? '#60F6AB' : '#D3D3D3'};
+                                      margin: 0 0 4px 0;
+                                      padding: 8px 12px;
+                                    `;
+                                    e.currentTarget.parentElement?.appendChild(textNode);
+                                  }}
+                                />
+                              </div>
                             ) : (
                               <p style={{
                                 fontFamily: 'Be Vietnam Pro, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1902,7 +1920,7 @@ export const ChatRoom = ({
                                 {(user && (
                                   msg.sender_id._id === user._id || 
                                   msg.sender_id._id === user.id ||
-                                  ['admin', 'moderator', 'creator'].includes(user.role)
+                                  ['admin', 'moderator', 'creator'].includes(user.rank)
                                 )) && (
                                   <button
                                     onClick={() => {
@@ -1928,7 +1946,7 @@ export const ChatRoom = ({
                                 )}
 
                                 {/* Ban user button - for mods/admins only, not on own messages */}
-                                {user && ['admin', 'moderator', 'creator'].includes(user.role) && 
+                                {user && ['admin', 'moderator', 'creator'].includes(user.rank) && 
                                  msg.sender_id._id !== user._id && 
                                  msg.sender_id._id !== user.id && (
                                   <button
@@ -2027,17 +2045,20 @@ export const ChatRoom = ({
                     // Only show reactions container if there are active reactions
                     if (activeReactions.length === 0) return null;
                     
+                    // Check if this is an image message
+                    const isImageMessage = msg.text.match(/\.(gif|jpe?g|png|webp)(\?|$)/i) || msg.text.startsWith('https://media.tenor.com') || msg.text.startsWith('https://res.cloudinary.com');
+                    
                     return (
                       <div style={{ 
                         backgroundColor: '#19191A',
-                        marginLeft: '-12px',
-                        marginRight: '-12px',
-                        marginTop: '4px',
-                        marginBottom: '-8px',
-                        padding: '8px 12px',
-                        borderBottomLeftRadius: isOwnMessage ? '0' : (isAI ? '20px' : '32.5px'),
-                        borderBottomRightRadius: isOwnMessage ? '32.5px' : (isAI ? '20px' : '32.5px'),
-                        display: 'flex', 
+                        marginLeft: isImageMessage ? '0' : '-12px',
+                        marginRight: isImageMessage ? '0' : '-12px',
+                        marginTop: isImageMessage ? '6px' : '4px',
+                        marginBottom: isImageMessage ? '0' : '-8px',
+                        padding: isImageMessage ? '6px 8px' : '8px 12px',
+                        borderRadius: isImageMessage ? '12px' : (isOwnMessage ? '0 0 32.5px 0' : (isAI ? '0 0 20px 20px' : '0 0 32.5px 32.5px')),
+                        display: 'flex',
+                        width: '100%',
                         gap: '4px', 
                         flexWrap: 'wrap',
                       }}>

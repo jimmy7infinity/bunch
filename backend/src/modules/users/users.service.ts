@@ -213,7 +213,28 @@ export class UsersService {
       status: 'pending',
     });
 
-    return request.save();
+    const savedRequest = await request.save();
+
+    // Send notification via WebSocket
+    try {
+      const socketServer = (global as any).socketServer;
+      if (socketServer) {
+        const sender = await this.findById(senderId);
+        socketServer.to(`user:${receiverId}`).emit('notification', {
+          type: 'friend_request',
+          message: `${sender.display_name || sender.username} sent you a friend request`,
+          senderId,
+          senderName: sender.display_name || sender.username,
+          senderAvatar: sender.avatar_url,
+          requestId: savedRequest._id,
+          timestamp: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send friend request notification:', error);
+    }
+
+    return savedRequest;
   }
 
   async acceptFriendRequest(requestId: string, userId: string): Promise<void> {
@@ -242,6 +263,24 @@ export class UsersService {
       user1_id: user1,
       user2_id: user2,
     });
+
+    // Send notification to the original sender
+    try {
+      const socketServer = (global as any).socketServer;
+      if (socketServer) {
+        const accepter = await this.findById(userId);
+        socketServer.to(`user:${request.from_user_id.toString()}`).emit('notification', {
+          type: 'friend_request_accepted',
+          message: `${accepter.display_name || accepter.username} accepted your friend request`,
+          userId: userId,
+          userName: accepter.display_name || accepter.username,
+          userAvatar: accepter.avatar_url,
+          timestamp: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send friend request accepted notification:', error);
+    }
   }
 
   async rejectFriendRequest(requestId: string, userId: string): Promise<void> {

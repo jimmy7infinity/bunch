@@ -36,6 +36,22 @@ export const MessageItem = ({ message, onReact, isOwnMessage }: MessageItemProps
               : 'bg-card text-card-foreground'
           }`}
         >
+          {/* Reply indicator */}
+          {message.reply_to && (
+            <div className="mb-2 pb-2 border-b border-border/50">
+              <div className="text-xs opacity-70 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 14 4 9 9 4"/>
+                  <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                </svg>
+                <span>Replying to {message.reply_to.sender_id?.display_name || message.reply_to.sender_id?.username || 'Unknown'}</span>
+              </div>
+              <div className="text-xs opacity-60 mt-1 truncate">
+                {message.reply_to.text || message.reply_to.preview || '...'}
+              </div>
+            </div>
+          )}
+
           <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
 
           {/* React button */}

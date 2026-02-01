@@ -80,7 +80,7 @@ export class ChatService {
         type: 'dm',
         dm_hash: dmHash,
         is_private: true,
-        participant_count: 2,
+        participant_count: 0, // Start at 0, joinConversation will increment
       });
       await conversation.save();
 
@@ -177,21 +177,55 @@ export class ChatService {
       .sort({ last_read_at: -1 })
       .exec();
 
-    return participants.map(p => ({
-      conversation: p.conversation_id,
-      role: p.role,
-      last_read_at: p.last_read_at,
-      muted: p.muted,
-      has_notifications: p.has_notifications,
-      is_favorite: p.is_favorite,
-    }));
+    // For DM conversations, populate the other user's info
+    const enrichedParticipants = await Promise.all(
+      participants.map(async (p) => {
+        const conv: any = p.conversation_id;
+        
+        // If it's a DM, fetch the other participant's info
+        if (conv && conv.type === 'dm') {
+          const otherParticipant = await this.participantModel
+            .findOne({
+              conversation_id: conv._id,
+              user_id: { $ne: new Types.ObjectId(userId) },
+            })
+            .populate('user_id', 'username display_name avatar_url rank')
+            .exec();
+
+          if (otherParticipant) {
+            const otherUser: any = otherParticipant.user_id;
+            // Set the title to the other user's display name or username
+            conv.title = otherUser.display_name || otherUser.username;
+            // Store the other user's info in metadata for easy access
+            conv.dm_user = {
+              _id: otherUser._id,
+              username: otherUser.username,
+              display_name: otherUser.display_name,
+              avatar_url: otherUser.avatar_url,
+              rank: otherUser.rank,
+            };
+          }
+        }
+
+        return {
+          conversation: conv,
+          role: p.role,
+          last_read_at: p.last_read_at,
+          muted: p.muted,
+          has_notifications: p.has_notifications,
+          is_favorite: p.is_favorite,
+        };
+      })
+    );
+
+    return enrichedParticipants;
   }
 
   /**
-   * Get all global chats
+   * Get all global chats (with user's participant data if provided)
    */
-  async getGlobalChats() {
-    return this.conversationModel
+  async getGlobalChats(userId?: string) {
+    const conversations = await this.conversationModel
       .find({ type: 'global' })
       .populate({
         path: 'last_message_id',
@@ -202,6 +236,38 @@ export class ChatService {
       })
       .sort({ last_message_at: -1 })
       .exec();
+
+    // If userId provided, attach participant data
+    if (userId) {
+      const conversationIds = conversations.map(c => c._id);
+      const participants = await this.participantModel
+        .find({
+          conversation_id: { $in: conversationIds },
+          user_id: new Types.ObjectId(userId),
+        })
+        .exec();
+
+      const participantMap = new Map();
+      participants.forEach(p => {
+        participantMap.set(p.conversation_id.toString(), {
+          is_favorite: p.is_favorite,
+          has_notifications: p.has_notifications,
+          muted: p.muted,
+        });
+      });
+
+      return conversations.map(c => {
+        const participantData = participantMap.get(c._id.toString());
+        return {
+          ...c.toObject(),
+          is_favorite: participantData?.is_favorite || false,
+          has_notifications: participantData?.has_notifications || true,
+          muted: participantData?.muted || false,
+        };
+      });
+    }
+
+    return conversations;
   }
 
   /**
@@ -231,10 +297,10 @@ export class ChatService {
   }
 
   /**
-   * Get all market chats
+   * Get all market chats (with user's participant data if provided)
    */
-  async getMarketChats() {
-    return this.conversationModel
+  async getMarketChats(userId?: string) {
+    const conversations = await this.conversationModel
       .find({ type: 'market' })
       .populate({
         path: 'last_message_id',
@@ -245,6 +311,38 @@ export class ChatService {
       })
       .sort({ last_message_at: -1 })
       .exec();
+
+    // If userId provided, attach participant data
+    if (userId) {
+      const conversationIds = conversations.map(c => c._id);
+      const participants = await this.participantModel
+        .find({
+          conversation_id: { $in: conversationIds },
+          user_id: new Types.ObjectId(userId),
+        })
+        .exec();
+
+      const participantMap = new Map();
+      participants.forEach(p => {
+        participantMap.set(p.conversation_id.toString(), {
+          is_favorite: p.is_favorite,
+          has_notifications: p.has_notifications,
+          muted: p.muted,
+        });
+      });
+
+      return conversations.map(c => {
+        const participantData = participantMap.get(c._id.toString());
+        return {
+          ...c.toObject(),
+          is_favorite: participantData?.is_favorite || false,
+          has_notifications: participantData?.has_notifications || true,
+          muted: participantData?.muted || false,
+        };
+      });
+    }
+
+    return conversations;
   }
 
   /**

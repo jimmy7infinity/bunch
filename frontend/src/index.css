@@ -3,11 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fixed width for extension side panel */
+/* Responsive width for extension side panel */
 body, html, #root {
-  width: 420px;
+  width: 100%;
   min-width: 420px;
-  max-width: 420px;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 /* Custom scrollbar styling */

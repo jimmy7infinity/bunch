@@ -227,6 +227,37 @@ export const ChatsList = () => {
     }
   };
   
+  // Format last message for display - show indicators for images/gifs instead of URLs
+  const formatLastMessage = (text: string): string => {
+    if (!text) return '';
+    
+    // Check if it's a GIF URL (tenor.com)
+    if (text.includes('tenor.com') || text.includes('.gif')) {
+      return '🎬 GIF';
+    }
+    
+    // Check if it's an image URL (common image hosting services)
+    if (text.match(/\.(jpg|jpeg|png|webp|gif)$/i) || text.includes('cloudinary.com') || text.includes('res.cloudinary')) {
+      return '📷 Image';
+    }
+    
+    // Check if message contains URLs but also text
+    if (text.includes('http://') || text.includes('https://')) {
+      const urlPattern = /(https?:\/\/[^\s]+)/g;
+      const urls = text.match(urlPattern);
+      if (urls && urls.length > 0) {
+        // If the entire message is just a URL, check what type it is
+        if (text.trim() === urls[0]) {
+          return '🔗 Link';
+        }
+        // Otherwise return the text without the URL
+        return text.replace(urlPattern, '🔗').trim();
+      }
+    }
+    
+    return text;
+  };
+  
   const toggleAiFeed = async (chatId: string) => {
     try {
       const result = await roomService.toggleNotifications(chatId);
@@ -374,8 +405,10 @@ export const ChatsList = () => {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      height: '100vh', 
-      backgroundColor: '#19191A' 
+      height: '100vh',
+      width: '100%',
+      backgroundColor: '#19191A',
+      padding: '0 20px', // Add padding here instead
     }}>
       {/* TOP BAR / NAV - Large Variant */}
       <div 
@@ -458,9 +491,9 @@ export const ChatsList = () => {
               fontWeight: '400',
             }}
           >
-            {activeChatCategory === 'global' && 'Global Banter'}
-            {activeChatCategory === 'market' && 'Prediction Banter'}
-            {activeChatCategory === 'private' && 'Private Banter'}
+            {activeChatCategory === 'global' && 'General Chats'}
+            {activeChatCategory === 'market' && 'Prediction Chats'}
+            {activeChatCategory === 'private' && 'Private Chats'}
             {activeChatCategory === 'favorites' && 'Favorites'}
           </span>
           {/* Dynamic Icon based on active category */}
@@ -574,6 +607,14 @@ export const ChatsList = () => {
             setViewMode('chats');
           }}
           anchorEl={pfpRef.current}
+          onNavigateToChat={(conversationId) => {
+            // Find the chat and open it
+            const chat = chats.find(c => c._id === conversationId);
+            if (chat) {
+              setSelectedChat(chat);
+              setViewMode('chat');
+            }
+          }}
         />
         </div>
 
@@ -581,7 +622,7 @@ export const ChatsList = () => {
         <div 
           className="button-container"
           style={{
-            width: '95%',
+            width: '100%',
             height: '60px',
             backgroundColor: '#19191A',
             borderRadius: '30px',
@@ -734,11 +775,10 @@ export const ChatsList = () => {
         {/* Search Input + New Chat Button Container */}
         <div 
           style={{
-            width: '95%',
+            width: '100%',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            padding: '0 15px',
           }}
         >
           {/* Search Input Container */}
@@ -862,11 +902,10 @@ export const ChatsList = () => {
         }}
       >
         <div style={{
-          width: '95%',
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px',
-          padding: '0 15px',
         }}>
         {/* Insights Announcement - Hidden for now */}
 
@@ -1107,7 +1146,7 @@ export const ChatsList = () => {
                 flex: 1,
               }}>
                 {(chat.last_message_id && !chat.last_message_id.deleted) 
-                  ? chat.last_message_id.text 
+                  ? formatLastMessage(chat.last_message_id.text)
                   : (chat.metadata?.description || 'No messages yet')}
               </p>
               {chat.last_message_id?.created_at && !chat.last_message_id.deleted && (
@@ -1138,7 +1177,7 @@ export const ChatsList = () => {
             left: '0',
             right: '0',
             zIndex: 1000,
-            padding: '16px 20px',
+            padding: '16px',
             backgroundColor: '#19191A',
             borderTop: '1px solid #333333',
             boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.3)',

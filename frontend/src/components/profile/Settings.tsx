@@ -825,7 +825,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               alignItems: 'center',
             }}>
               <a
-                href="https://github.com/jimmy7infinity/poly_banter/blob/main/PRIVACY_POLICY.md"
+                href="https://bunch.up.railway.app/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -842,7 +842,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               </a>
               <span style={{ color: '#404040', fontSize: '11px' }}>•</span>
               <a
-                href="https://github.com/jimmy7infinity/poly_banter/blob/main/TERMS_OF_SERVICE.md"
+                href="https://bunch.up.railway.app/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

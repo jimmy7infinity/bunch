@@ -101,10 +101,15 @@ function App() {
     const handleNotification = (event: CustomEvent) => {
       const notification = event.detail;
       addNotification({
-        type: notification.type,
-        title: notification.title,
+        type: notification.type || 'system',
+        title: notification.type === 'reply' ? 'New Reply' : (notification.title || 'Notification'),
         message: notification.message,
-        data: notification.data,
+        data: {
+          ...notification.data,
+          conversationId: notification.conversationId,
+          messageId: notification.messageId,
+          senderId: notification.senderId,
+        },
       });
     };
 

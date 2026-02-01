@@ -114,27 +114,54 @@ export const messageService = {
 
 export const roomService = {
   async getRooms(type?: 'global' | 'market' | 'private' | 'favorites') {
+    console.log(`[getRooms] Fetching rooms for type: ${type}`);
+    
     if (type === 'global') {
       const response = await api.get<{ conversations: ChatRoom[] }>('/conversations/global');
+      console.log(`[getRooms] Global chats:`, response.data.conversations.length);
       return response.data.conversations;
     }
     if (type === 'market') {
       // Use the new market endpoint that returns all market chats
       const response = await api.get<{ conversations: ChatRoom[] }>('/conversations/market');
+      console.log(`[getRooms] Market chats:`, response.data.conversations.length);
       return response.data.conversations;
     }
     if (type === 'favorites' || type === 'private') {
       const response = await api.get<{ conversations: any[] }>('/conversations/my');
-      return response.data.conversations
-        .map((c: any) => c.conversation)
+      console.log(`[getRooms] My conversations raw:`, response.data.conversations.length);
+      
+      const mappedConversations = response.data.conversations
+        .map((c: any) => {
+          console.log(`[getRooms] Conversation structure:`, { 
+            hasConversation: !!c.conversation, 
+            type: c.conversation?.type,
+            title: c.conversation?.title || c.conversation?.name 
+          });
+          return c.conversation;
+        })
         .filter((c: ChatRoom) => {
-          if (type === 'favorites') return c.is_favorite;
-          if (type === 'private') return c.type === 'dm' || c.type === 'group';
+          if (!c) {
+            console.warn(`[getRooms] Null conversation found, skipping`);
+            return false;
+          }
+          if (type === 'favorites') {
+            console.log(`[getRooms] Checking favorite:`, { title: c.title || c.name, is_favorite: c.is_favorite });
+            return c.is_favorite;
+          }
+          if (type === 'private') {
+            console.log(`[getRooms] Checking private:`, { title: c.title || c.name, type: c.type });
+            return c.type === 'dm' || c.type === 'group';
+          }
           return true;
         });
+      
+      console.log(`[getRooms] Filtered ${type} chats:`, mappedConversations.length);
+      return mappedConversations;
     }
     // Get all user's conversations
     const response = await api.get<{ conversations: any[] }>('/conversations/my');
+    console.log(`[getRooms] All conversations:`, response.data.conversations.length);
     return response.data.conversations.map((c: any) => c.conversation);
   },
 

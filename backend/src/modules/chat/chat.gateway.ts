@@ -266,8 +266,89 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Populate sender info
       const populatedMessage = await (message as any).populate([
         { path: 'sender_id', select: 'username display_name avatar_url rank' },
-        { path: 'reply_to', select: 'text sender_id', populate: { path: 'sender_id', select: 'username' } },
+        { path: 'reply_to', select: 'text sender_id', populate: { path: 'sender_id', select: 'username display_name avatar_url rank _id' } },
       ]);
+
+      // Send notification if this is a reply
+      if (replyTo && populatedMessage.reply_to) {
+        try {
+          const repliedToUser = (populatedMessage.reply_to as any).sender_id;
+          // Don't notify if replying to yourself
+          if (repliedToUser && repliedToUser._id.toString() !== userId) {
+            const sender = populatedMessage.sender_id as any;
+            this.server.to(`user:${repliedToUser._id.toString()}`).emit('notification', {
+              type: 'reply',
+              message: `${sender.display_name || sender.username} replied to your message`,
+              senderId: userId,
+              senderName: sender.display_name || sender.username,
+              senderAvatar: sender.avatar_url,
+              conversationId: conversationId,
+              messageId: (message as any)._id,
+              timestamp: new Date(),
+            });
+          }
+        } catch (error) {
+          console.error('Failed to send reply notification:', error);
+        }
+      }
+
+      // Send notifications for mentions
+      if (mentions && mentions.length > 0) {
+        try {
+          const sender = populatedMessage.sender_id as any;
+          for (const mentionedUserId of mentions) {
+            // Don't notify if mentioning yourself
+            if (mentionedUserId !== userId) {
+              this.server.to(`user:${mentionedUserId}`).emit('notification', {
+                type: 'mention',
+                message: `${sender.display_name || sender.username} mentioned you`,
+                senderId: userId,
+                senderName: sender.display_name || sender.username,
+                senderAvatar: sender.avatar_url,
+                conversationId: conversationId,
+                messageId: (message as any)._id,
+                timestamp: new Date(),
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to send mention notifications:', error);
+        }
+      }
+
+      // Send notification for DMs (if not a reply or mention, to avoid duplicate notifications)
+      if (!replyTo && (!mentions || mentions.length === 0)) {
+        try {
+          // Get conversation details
+          const conversation = await this.chatService.getConversation(conversationId);
+          
+          // Only send notifications for DM conversations
+          if (conversation && conversation.type === 'dm') {
+            // Get all participants except the sender
+            const participants = await this.chatService.getParticipants(conversationId);
+            const sender = populatedMessage.sender_id as any;
+            
+            for (const participant of participants) {
+              const participantUserId = participant.user_id._id?.toString() || participant.user_id.toString();
+              // Don't notify the sender
+              if (participantUserId !== userId) {
+                this.server.to(`user:${participantUserId}`).emit('notification', {
+                  type: 'message',
+                  message: `${sender.display_name || sender.username}: ${text.length > 50 ? text.substring(0, 50) + '...' : text}`,
+                  senderId: userId,
+                  senderName: sender.display_name || sender.username,
+                  senderAvatar: sender.avatar_url,
+                  conversationId: conversationId,
+                  messageId: (message as any)._id,
+                  timestamp: new Date(),
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to send DM notification:', error);
+        }
+      }
 
       // Broadcast to all clients in conversation
       this.server.to(`conversation:${conversationId}`).emit('message:new', populatedMessage);
