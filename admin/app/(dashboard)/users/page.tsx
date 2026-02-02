@@ -1,19 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { adminApi } from '@/lib/api';
 import { User, Message } from '@/types';
-import { Search, Ban, Volume2, Trash2 } from 'lucide-react';
+import { Search, Ban, Volume2, Trash2, X } from 'lucide-react';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    if (showAll) {
+      loadAllUsers();
+    }
+  }, [showAll]);
+
+  const loadAllUsers = async () => {
+    // For now, we'll search with empty query to get some users
+    // In production, you'd want a dedicated endpoint for listing all users
+    try {
+      setLoading(true);
+      const data = await adminApi.searchUsers('', 100);
+      setAllUsers(data.users.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ));
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -21,7 +44,10 @@ export default function UsersPage() {
     try {
       setLoading(true);
       const data = await adminApi.searchUsers(searchQuery);
-      setUsers(data.users);
+      setUsers(data.users.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ));
+      setShowAll(false);
     } catch (error) {
       console.error('Failed to search users:', error);
     } finally {
@@ -45,7 +71,9 @@ export default function UsersPage() {
     try {
       await adminApi.banUser(userId, reason, true);
       alert('User banned successfully');
-      setUsers(users.map((u) => (u._id === userId ? { ...u, status: 'banned' as const } : u)));
+      const updateUserStatus = (u: User) => u._id === userId ? { ...u, status: 'banned' as const } : u;
+      setUsers(users.map(updateUserStatus));
+      setAllUsers(allUsers.map(updateUserStatus));
       if (selectedUser?.user._id === userId) {
         setSelectedUser({ ...selectedUser, user: { ...selectedUser.user, status: 'banned' } });
       }
@@ -66,9 +94,7 @@ export default function UsersPage() {
   };
 
   const handleDeleteAllMessages = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete ALL messages from this user? This cannot be undone.')) {
-      return;
-    }
+    if (!confirm('Delete ALL messages from this user? This cannot be undone.')) return;
 
     try {
       const result = await adminApi.deleteAllUserMessages(userId);
@@ -82,96 +108,111 @@ export default function UsersPage() {
     }
   };
 
+  const displayUsers = showAll ? allUsers : users;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Search and manage user accounts</p>
+        <h1 className="text-4xl font-bold tracking-tight">Users</h1>
+        <p className="text-muted-foreground text-lg mt-1">Search and manage users</p>
       </div>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader>
           <CardTitle>Search Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Input
               placeholder="Search by username, display name, or Twitter username"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="flex-1"
             />
             <Button onClick={handleSearch} disabled={loading}>
               <Search className="h-4 w-4 mr-2" />
               Search
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAll(!showAll)}
+              disabled={loading}
+            >
+              {showAll ? 'Hide All' : 'Show All'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="border-border/50 bg-card/50">
           <CardHeader>
-            <CardTitle>Search Results</CardTitle>
+            <CardTitle>
+              {showAll ? `All Users (${displayUsers.length})` : `Search Results (${displayUsers.length})`}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {users.length === 0 ? (
-              <div className="text-center text-muted-foreground">
-                Search for users to see results
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : displayUsers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {showAll ? 'No users found' : 'Search for users to see results'}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user._id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.display_name || user.username}</div>
-                          <div className="text-xs text-muted-foreground">@{user.username}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs">{user.rank}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            user.status === 'banned'
-                              ? 'bg-red-100 text-red-800'
-                              : user.status === 'suspended'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                        >
-                          {user.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewUser(user._id)}
-                        >
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                {displayUsers.map((user) => (
+                  <div
+                    key={user._id}
+                    className="flex items-center gap-3 p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => handleViewUser(user._id)}
+                  >
+                    {user.avatar_url && (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.username}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        {user.display_name || user.username}
+                      </div>
+                      <div className="text-xs text-muted-foreground">@{user.username}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground">{user.rank}</span>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          user.status === 'banned'
+                            ? 'bg-red-500/20 text-red-400'
+                            : user.status === 'suspended'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-green-500/20 text-green-400'
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="border-border/50 bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>User Details</CardTitle>
+            {selectedUser && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedUser(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {selectedUser ? (
@@ -181,7 +222,7 @@ export default function UsersPage() {
                     <img
                       src={selectedUser.user.avatar_url}
                       alt={selectedUser.user.username}
-                      className="h-16 w-16 rounded-full"
+                      className="w-16 h-16 rounded-full"
                     />
                   )}
                   <div className="flex-1">
@@ -189,12 +230,13 @@ export default function UsersPage() {
                       {selectedUser.user.display_name || selectedUser.user.username}
                     </h3>
                     <p className="text-sm text-muted-foreground">@{selectedUser.user.username}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Rank: {selectedUser.user.rank} | Role: {selectedUser.user.role}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Messages: {selectedUser.messageCount}
-                    </p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      <span>Rank: {selectedUser.user.rank}</span>
+                      <span>•</span>
+                      <span>Role: {selectedUser.user.role}</span>
+                      <span>•</span>
+                      <span>Messages: {selectedUser.messageCount}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -206,7 +248,7 @@ export default function UsersPage() {
                     disabled={selectedUser.user.status === 'banned'}
                   >
                     <Ban className="h-4 w-4 mr-1" />
-                    Ban User
+                    Ban
                   </Button>
                   <Button
                     size="sm"
@@ -214,7 +256,7 @@ export default function UsersPage() {
                     onClick={() => handleMuteUser(selectedUser.user._id, 24)}
                   >
                     <Volume2 className="h-4 w-4 mr-1" />
-                    Mute 24h
+                    24h
                   </Button>
                   <Button
                     size="sm"
@@ -222,7 +264,7 @@ export default function UsersPage() {
                     onClick={() => handleMuteUser(selectedUser.user._id, 168)}
                   >
                     <Volume2 className="h-4 w-4 mr-1" />
-                    Mute 7d
+                    7d
                   </Button>
                   <Button
                     size="sm"
@@ -230,15 +272,15 @@ export default function UsersPage() {
                     onClick={() => handleDeleteAllMessages(selectedUser.user._id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete All Messages
+                    Delete All
                   </Button>
                 </div>
 
                 <div>
-                  <h4 className="mb-2 text-sm font-medium">Recent Messages</h4>
-                  <div className="space-y-2">
+                  <h4 className="text-sm font-medium mb-3">Recent Messages</h4>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {selectedUser.recentMessages.slice(0, 10).map((msg: Message) => (
-                      <div key={msg._id} className="rounded-lg border p-2 text-sm">
+                      <div key={msg._id} className="rounded-lg border border-border/50 bg-background/50 p-2 text-sm">
                         {msg.text}
                       </div>
                     ))}
@@ -246,7 +288,7 @@ export default function UsersPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground">
                 Select a user to view details
               </div>
             )}

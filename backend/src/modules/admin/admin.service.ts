@@ -78,19 +78,32 @@ export class AdminService {
       return null;
     }
 
-    // Get surrounding messages for context
-    const contextMessages = await this.messageModel
+    // Get surrounding messages for context (5 before and 5 after)
+    const messagesBefore = await this.messageModel
       .find({
         conversation_id: message.conversation_id,
-        created_at: {
-          $gte: new Date(message.created_at.getTime() - 5 * 60 * 1000), // 5 min before
-          $lte: new Date(message.created_at.getTime() + 5 * 60 * 1000), // 5 min after
-        },
+        created_at: { $lt: message.created_at },
+      })
+      .sort({ created_at: -1 })
+      .limit(5)
+      .populate('sender_id', 'username display_name avatar_url rank role')
+      .exec();
+
+    const messagesAfter = await this.messageModel
+      .find({
+        conversation_id: message.conversation_id,
+        created_at: { $gt: message.created_at },
       })
       .sort({ created_at: 1 })
+      .limit(5)
       .populate('sender_id', 'username display_name avatar_url rank role')
-      .limit(20)
       .exec();
+
+    const contextMessages = [
+      ...messagesBefore.reverse(),
+      message,
+      ...messagesAfter,
+    ];
 
     return {
       message,

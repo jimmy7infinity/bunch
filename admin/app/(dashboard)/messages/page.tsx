@@ -4,16 +4,16 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { adminApi } from '@/lib/api';
 import { Message, User, Conversation } from '@/types';
-import { Trash2, Eye } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [userFilter, setUserFilter] = useState('');
-  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [contextMessages, setContextMessages] = useState<Record<string, Message[]>>({});
 
   useEffect(() => {
     loadMessages();
@@ -35,23 +35,32 @@ export default function MessagesPage() {
     loadMessages(userFilter || undefined);
   };
 
-  const handleViewContext = async (messageId: string) => {
-    try {
-      const data = await adminApi.getMessageById(messageId);
-      setSelectedMessage(data);
-    } catch (error) {
-      console.error('Failed to load message context:', error);
+  const toggleContext = async (messageId: string) => {
+    if (expandedMessage === messageId) {
+      setExpandedMessage(null);
+      return;
     }
+
+    if (!contextMessages[messageId]) {
+      try {
+        const data = await adminApi.getMessageById(messageId);
+        setContextMessages(prev => ({ ...prev, [messageId]: data.context }));
+      } catch (error) {
+        console.error('Failed to load context:', error);
+      }
+    }
+    
+    setExpandedMessage(messageId);
   };
 
   const handleDelete = async (messageId: string) => {
-    if (!confirm('Are you sure you want to delete this message?')) return;
+    if (!confirm('Delete this message?')) return;
 
     try {
       await adminApi.deleteMessage(messageId);
       setMessages(messages.filter((m) => m._id !== messageId));
-      if (selectedMessage?.message._id === messageId) {
-        setSelectedMessage(null);
+      if (expandedMessage === messageId) {
+        setExpandedMessage(null);
       }
     } catch (error) {
       console.error('Failed to delete message:', error);
@@ -69,25 +78,41 @@ export default function MessagesPage() {
     return conv.title || conv.slug || conv.type;
   };
 
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleDateString();
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Messages</h1>
-        <p className="text-muted-foreground">View and moderate recent messages</p>
+        <h1 className="text-4xl font-bold tracking-tight">Messages</h1>
+        <p className="text-muted-foreground text-lg mt-1">View and moderate messages</p>
       </div>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Input
-              placeholder="User ID (optional)"
+              placeholder="Filter by User ID"
               value={userFilter}
               onChange={(e) => setUserFilter(e.target.value)}
+              className="max-w-md"
             />
-            <Button onClick={handleFilter}>Filter</Button>
+            <Button onClick={handleFilter}>Apply</Button>
             <Button variant="outline" onClick={() => { setUserFilter(''); loadMessages(); }}>
               Clear
             </Button>
@@ -95,109 +120,89 @@ export default function MessagesPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div>Loading...</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Message</TableHead>
-                    <TableHead>Room</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {messages.map((message) => (
-                    <TableRow key={message._id}>
-                      <TableCell className="font-medium">
-                        {getSenderName(message.sender_id)}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {message.text}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {getConversationTitle(message.conversation_id)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewContext(message._id)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(message._id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Message Context</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedMessage ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border p-4">
-                  <div className="mb-2 text-sm font-medium">
-                    {getSenderName(selectedMessage.message.sender_id)}
-                  </div>
-                  <div className="text-sm">{selectedMessage.message.text}</div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {new Date(selectedMessage.message.created_at).toLocaleString()}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="mb-2 text-sm font-medium">Surrounding Messages</h3>
-                  <div className="space-y-2">
-                    {selectedMessage.context.map((msg: Message) => (
-                      <div
-                        key={msg._id}
-                        className={`rounded-lg border p-3 ${
-                          msg._id === selectedMessage.message._id ? 'bg-accent' : ''
-                        }`}
-                      >
-                        <div className="text-xs font-medium">
-                          {getSenderName(msg.sender_id)}
-                        </div>
-                        <div className="text-sm">{msg.text}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {new Date(msg.created_at).toLocaleString()}
-                        </div>
+      <Card className="border-border/50 bg-card/50">
+        <CardHeader>
+          <CardTitle>Recent Messages ({messages.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : (
+            <div className="space-y-2">
+              {messages.map((message) => (
+                <div key={message._id} className="border border-border/50 rounded-lg overflow-hidden">
+                  <div className="flex items-start gap-4 p-4 hover:bg-muted/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-semibold text-sm">
+                          {getSenderName(message.sender_id)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {getConversationTitle(message.conversation_id)}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {formatTime(message.created_at)}
+                        </span>
                       </div>
-                    ))}
+                      <p className="text-sm break-words">{message.text}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleContext(message._id)}
+                      >
+                        {expandedMessage === message._id ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(message._id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
+
+                  {expandedMessage === message._id && contextMessages[message._id] && (
+                    <div className="border-t border-border/50 bg-muted/20 p-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-3">
+                        CONTEXT (5 messages before and after)
+                      </p>
+                      <div className="space-y-2">
+                        {contextMessages[message._id].map((msg: Message) => (
+                          <div
+                            key={msg._id}
+                            className={`rounded-lg p-3 text-sm ${
+                              msg._id === message._id
+                                ? 'bg-primary/10 border border-primary/30'
+                                : 'bg-background/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-xs">
+                                {getSenderName(msg.sender_id)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatTime(msg.created_at)}
+                              </span>
+                            </div>
+                            <p className="break-words">{msg.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground">
-                Click on a message to view context
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

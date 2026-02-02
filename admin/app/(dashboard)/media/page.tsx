@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { adminApi } from '@/lib/api';
 import { Message, User } from '@/types';
-import { Trash2, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink, Eye } from 'lucide-react';
 
 export default function MediaPage() {
   const [media, setMedia] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
   useEffect(() => {
     loadMedia();
@@ -27,12 +28,24 @@ export default function MediaPage() {
     }
   };
 
+  const handleViewContext = async (messageId: string) => {
+    try {
+      const data = await adminApi.getMessageById(messageId);
+      setSelectedMessage(data);
+    } catch (error) {
+      console.error('Failed to load context:', error);
+    }
+  };
+
   const handleDelete = async (messageId: string) => {
-    if (!confirm('Are you sure you want to delete this media?')) return;
+    if (!confirm('Delete this media?')) return;
 
     try {
       await adminApi.deleteMessage(messageId);
       setMedia(media.filter((m) => m._id !== messageId));
+      if (selectedMessage?.message._id === messageId) {
+        setSelectedMessage(null);
+      }
     } catch (error) {
       console.error('Failed to delete media:', error);
       alert('Failed to delete media');
@@ -57,69 +70,140 @@ export default function MediaPage() {
     return sender.display_name || sender.username;
   };
 
+  const formatTime = (date: string) => {
+    return new Date(date).toLocaleString();
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Media</h1>
-        <p className="text-muted-foreground">Recent images and GIFs</p>
+        <h1 className="text-4xl font-bold tracking-tight">Media</h1>
+        <p className="text-muted-foreground text-lg mt-1">Recent images and GIFs</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Media ({media.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {media.map((message) => {
-                const mediaUrl = extractMediaUrl(message.text);
-                return (
-                  <div key={message._id} className="group relative overflow-hidden rounded-lg border">
-                    <div className="aspect-square bg-muted">
-                      {mediaUrl && (
-                        <img
-                          src={mediaUrl}
-                          alt="Media"
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => window.open(mediaUrl || message.text, '_blank')}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(message._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-xs font-medium">
-                        {getSenderName(message.sender_id)}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-border/50 bg-card/50">
+          <CardHeader>
+            <CardTitle>Recent Media ({media.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : (
+              <div className="space-y-2">
+                {media.map((message) => {
+                  const mediaUrl = extractMediaUrl(message.text);
+                  return (
+                    <div
+                      key={message._id}
+                      className="flex items-center gap-4 p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="w-16 h-16 rounded bg-muted flex-shrink-0 overflow-hidden">
+                        {mediaUrl && (
+                          <img
+                            src={mediaUrl}
+                            alt="Media"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        )}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(message.created_at).toLocaleDateString()}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">
+                          {getSenderName(message.sender_id)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatTime(message.created_at)}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewContext(message._id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(mediaUrl || message.text, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(message._id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50">
+          <CardHeader>
+            <CardTitle>Context</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedMessage ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold text-sm">
+                      {getSenderName(selectedMessage.message.sender_id)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTime(selectedMessage.message.created_at)}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="text-sm break-words">{selectedMessage.message.text}</div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-3">
+                    SURROUNDING MESSAGES
+                  </p>
+                  <div className="space-y-2">
+                    {selectedMessage.context.map((msg: Message) => (
+                      <div
+                        key={msg._id}
+                        className={`rounded-lg p-3 text-sm ${
+                          msg._id === selectedMessage.message._id
+                            ? 'bg-primary/10 border border-primary/30'
+                            : 'bg-background/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-xs">
+                            {getSenderName(msg.sender_id)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime(msg.created_at)}
+                          </span>
+                        </div>
+                        <p className="break-words">{msg.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Click on a media item to view context
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
