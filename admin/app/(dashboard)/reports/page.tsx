@@ -158,10 +158,10 @@ export default function ReportsPage() {
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                           report.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-[#FFD655]/20 text-[#FFD655]'
                             : report.status === 'actioned'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]'
+                            : 'bg-[var(--color-muted)] text-[var(--color-muted-foreground)]'
                         }`}
                       >
                         {report.status}

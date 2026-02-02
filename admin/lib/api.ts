@@ -78,8 +78,10 @@ export const adminApi = {
     return response.data;
   },
 
-  async getUserDetails(id: string) {
-    const response = await api.get(`/admin/users/${id}`);
+  async getUserDetails(id: string, limit: number = 100) {
+    const response = await api.get(`/admin/users/${id}`, {
+      params: { limit }
+    });
     return response.data;
   },
 

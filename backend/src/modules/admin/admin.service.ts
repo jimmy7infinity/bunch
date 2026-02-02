@@ -154,7 +154,7 @@ export class AdminService {
   /**
    * Get user details with message count
    */
-  async getUserDetails(userId: string) {
+  async getUserDetails(userId: string, limit: number = 100) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
       return null;
@@ -168,7 +168,7 @@ export class AdminService {
     const recentMessages = await this.messageModel
       .find({ sender_id: new Types.ObjectId(userId), deleted: false })
       .sort({ created_at: -1 })
-      .limit(50)
+      .limit(limit)
       .populate('conversation_id', 'type title slug')
       .exec();
 

@@ -119,8 +119,14 @@ export class AdminController {
    * Get user details with messages
    */
   @Get('users/:id')
-  async getUserDetails(@Param('id') id: string) {
-    const result = await this.adminService.getUserDetails(id);
+  async getUserDetails(
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.adminService.getUserDetails(
+      id,
+      limit ? parseInt(limit) : 100
+    );
     if (!result) {
       return { error: 'User not found' };
     }

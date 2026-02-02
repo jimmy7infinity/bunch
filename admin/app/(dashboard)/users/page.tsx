@@ -15,6 +15,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [messageLimit, setMessageLimit] = useState(100);
 
   useEffect(() => {
     if (showAll) {
@@ -54,13 +55,21 @@ export default function UsersPage() {
     }
   };
 
-  const handleViewUser = async (userId: string) => {
+  const handleViewUser = async (userId: string, limit: number = 100) => {
     try {
-      const data = await adminApi.getUserDetails(userId);
+      const data = await adminApi.getUserDetails(userId, limit);
       setSelectedUser(data);
+      setMessageLimit(limit);
     } catch (error) {
       console.error('Failed to load user details:', error);
     }
+  };
+
+  const handleLoadMoreMessages = async () => {
+    if (!selectedUser) return;
+    const newLimit = messageLimit + 100;
+    setMessageLimit(newLimit);
+    await handleViewUser(selectedUser.user._id, newLimit);
   };
 
   const handleBanUser = async (userId: string) => {
@@ -186,8 +195,8 @@ export default function UsersPage() {
                           user.status === 'banned'
                             ? 'bg-red-500/20 text-red-400'
                             : user.status === 'suspended'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-green-500/20 text-green-400'
+                            ? 'bg-[#FFD655]/20 text-[#FFD655]'
+                            : 'bg-[#FFD655]/20 text-[#FFD655]'
                         }`}
                       >
                         {user.status}
@@ -276,13 +285,54 @@ export default function UsersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Recent Messages</h4>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {selectedUser.recentMessages.slice(0, 10).map((msg: Message) => (
-                      <div key={msg._id} className="rounded-lg border border-border/50 bg-background/50 p-2 text-sm">
-                        {msg.text}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium">
+                      Messages ({selectedUser.recentMessages.length} of {selectedUser.messageCount})
+                    </h4>
+                    {selectedUser.recentMessages.length < selectedUser.messageCount && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleLoadMoreMessages}
+                        className="text-xs"
+                      >
+                        Load More
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {selectedUser.recentMessages.length === 0 ? (
+                      <div className="text-center py-4 text-muted-foreground text-xs">
+                        No messages found
                       </div>
-                    ))}
+                    ) : (
+                      selectedUser.recentMessages.map((msg: Message) => (
+                        <div key={msg._id} className="rounded-lg border border-border/50 bg-background/50 p-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(msg.created_at).toLocaleString()}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Delete this message?')) {
+                                  adminApi.deleteMessage(msg._id).then(() => {
+                                    alert('Message deleted');
+                                    handleViewUser(selectedUser.user._id, messageLimit);
+                                  }).catch(() => alert('Failed to delete message'));
+                                }
+                              }}
+                              className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-sm break-words">{msg.text}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
