@@ -136,8 +136,15 @@ export const roomService = {
           console.log(`[getRooms] Conversation structure:`, { 
             hasConversation: !!c.conversation, 
             type: c.conversation?.type,
-            title: c.conversation?.title || c.conversation?.name 
+            title: c.conversation?.title || c.conversation?.name,
+            is_favorite: c.is_favorite
           });
+          // Copy participant-level fields to the conversation object
+          if (c.conversation) {
+            c.conversation.is_favorite = c.is_favorite;
+            c.conversation.has_notifications = c.has_notifications;
+            c.conversation.muted = c.muted;
+          }
           return c.conversation;
         })
         .filter((c: ChatRoom) => {
@@ -147,7 +154,7 @@ export const roomService = {
           }
           if (type === 'favorites') {
             console.log(`[getRooms] Checking favorite:`, { title: c.title || c.name, is_favorite: c.is_favorite });
-            return c.is_favorite;
+            return !!c.is_favorite;
           }
           if (type === 'private') {
             console.log(`[getRooms] Checking private:`, { title: c.title || c.name, type: c.type });
@@ -162,7 +169,15 @@ export const roomService = {
     // Get all user's conversations
     const response = await api.get<{ conversations: any[] }>('/conversations/my');
     console.log(`[getRooms] All conversations:`, response.data.conversations.length);
-    return response.data.conversations.map((c: any) => c.conversation);
+    return response.data.conversations.map((c: any) => {
+      // Copy participant-level fields to the conversation object
+      if (c.conversation) {
+        c.conversation.is_favorite = c.is_favorite;
+        c.conversation.has_notifications = c.has_notifications;
+        c.conversation.muted = c.muted;
+      }
+      return c.conversation;
+    });
   },
 
   async getRoom(roomId: string) {

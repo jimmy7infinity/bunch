@@ -825,7 +825,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               alignItems: 'center',
             }}>
               <a
-                href="https://bunch.up.railway.app/privacy"
+                href="https://bunch-extension.vercel.app/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -842,7 +842,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               </a>
               <span style={{ color: '#404040', fontSize: '11px' }}>•</span>
               <a
-                href="https://bunch.up.railway.app/terms"
+                href="https://bunch-extension.vercel.app/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

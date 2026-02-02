@@ -108,7 +108,7 @@ export const WalletConnect = () => {
           justifyContent: 'center',
         }}>
           <a
-            href="https://bunch.up.railway.app/privacy"
+            href="https://bunch-extension.vercel.app/privacy"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -125,7 +125,7 @@ export const WalletConnect = () => {
           </a>
           <span style={{ color: '#444', fontSize: '10px' }}>•</span>
           <a
-            href="https://bunch.up.railway.app/terms"
+            href="https://bunch-extension.vercel.app/terms"
             target="_blank"
             rel="noopener noreferrer"
             style={{
