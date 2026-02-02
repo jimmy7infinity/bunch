@@ -23,11 +23,10 @@ export default function UsersPage() {
   }, [showAll]);
 
   const loadAllUsers = async () => {
-    // For now, we'll search with empty query to get some users
-    // In production, you'd want a dedicated endpoint for listing all users
     try {
       setLoading(true);
-      const data = await adminApi.searchUsers('', 100);
+      // Search with a common character to get many users
+      const data = await adminApi.searchUsers('a', 100);
       setAllUsers(data.users.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ));

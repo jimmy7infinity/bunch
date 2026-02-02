@@ -170,16 +170,16 @@ export default function MediaPage() {
 
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">
-                    SURROUNDING MESSAGES
+                    SURROUNDING MESSAGES ({selectedMessage.context.length})
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
                     {selectedMessage.context.map((msg: Message) => (
                       <div
                         key={msg._id}
                         className={`rounded-lg p-3 text-sm ${
                           msg._id === selectedMessage.message._id
-                            ? 'bg-primary/10 border border-primary/30'
-                            : 'bg-background/50'
+                            ? 'bg-[var(--color-primary)]/20 border-2 border-[var(--color-primary)]'
+                            : 'bg-background/50 border border-border/30'
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
@@ -190,7 +190,7 @@ export default function MediaPage() {
                             {formatTime(msg.created_at)}
                           </span>
                         </div>
-                        <p className="break-words">{msg.text}</p>
+                        <p className="break-words whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     ))}
                   </div>

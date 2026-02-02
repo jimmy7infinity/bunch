@@ -171,7 +171,7 @@ export default function MessagesPage() {
                   {expandedMessage === message._id && contextMessages[message._id] && (
                     <div className="border-t border-border/50 bg-muted/20 p-4">
                       <p className="text-xs font-medium text-muted-foreground mb-3">
-                        CONTEXT (5 messages before and after)
+                        CONTEXT ({contextMessages[message._id].length} messages)
                       </p>
                       <div className="space-y-2">
                         {contextMessages[message._id].map((msg: Message) => (
@@ -179,8 +179,8 @@ export default function MessagesPage() {
                             key={msg._id}
                             className={`rounded-lg p-3 text-sm ${
                               msg._id === message._id
-                                ? 'bg-primary/10 border border-primary/30'
-                                : 'bg-background/50'
+                                ? 'bg-[var(--color-primary)]/20 border-2 border-[var(--color-primary)]'
+                                : 'bg-background/50 border border-border/30'
                             }`}
                           >
                             <div className="flex items-center gap-2 mb-1">
