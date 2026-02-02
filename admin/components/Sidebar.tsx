@@ -9,6 +9,8 @@ import {
   Users, 
   AlertTriangle, 
   Megaphone,
+  MessagesSquare,
+  UserCircle,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,7 +21,9 @@ const navigation = [
   { name: 'Media', href: '/media', icon: Image },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Reports', href: '/reports', icon: AlertTriangle },
+  { name: 'Chatrooms', href: '/chatrooms', icon: MessagesSquare },
   { name: 'Actions', href: '/actions', icon: Megaphone },
+  { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
 export function Sidebar() {
