@@ -171,7 +171,7 @@ export class AdminController {
     // Notify user
     try {
       const socketServer = (global as any).socketServer as Server;
-      if (socketServer) {
+      if (socketServer && user) {
         socketServer.to(`user:${id}`).emit('muted', {
           until: user.suspended_until,
           duration: body.duration,

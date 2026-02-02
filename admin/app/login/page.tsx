@@ -54,30 +54,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Bunch Admin Panel</CardTitle>
-          <CardDescription>Sign in with Twitter to access the admin dashboard</CardDescription>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <Card className="w-full max-w-md border-border/50 shadow-2xl">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+            Bunch Admin
+          </CardTitle>
+          <CardDescription className="text-base">
+            Sign in with Twitter to access the admin dashboard
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
           
           <Button 
             onClick={handleTwitterLogin} 
-            className="w-full" 
+            className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200" 
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign in with Twitter'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              'Sign in with Twitter'
+            )}
           </Button>
 
-          <div className="rounded-lg bg-muted p-4 text-sm">
-            <p className="font-medium mb-2">Admin Access Required</p>
-            <p className="text-muted-foreground">
+          <div className="rounded-lg bg-muted/50 border border-border/50 p-4 text-sm space-y-2">
+            <p className="font-medium text-foreground">🔒 Admin Access Required</p>
+            <p className="text-muted-foreground leading-relaxed">
               Only users with admin, moderator, or creator roles can access this panel.
             </p>
           </div>
