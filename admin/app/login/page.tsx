@@ -56,10 +56,13 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <Card className="w-full max-w-md border-border/50 shadow-2xl">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-            Bunch Admin
-          </CardTitle>
+        <CardHeader className="space-y-4 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <img src="/logo.png" alt="Bunch" className="w-12 h-12" />
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#FFD655] to-[#FFB200] bg-clip-text text-transparent">
+              Bunch Admin
+            </CardTitle>
+          </div>
           <CardDescription className="text-base">
             Sign in with Twitter to access the admin dashboard
           </CardDescription>

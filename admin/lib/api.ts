@@ -61,6 +61,11 @@ export const adminApi = {
     return response.data;
   },
 
+  async reactToMessage(messageId: string, emoji: string) {
+    const response = await api.post(`/conversations/messages/${messageId}/react`, { emoji });
+    return response.data;
+  },
+
   // Media
   async getMedia(limit?: number) {
     const response = await api.get('/admin/media', { params: { limit } });

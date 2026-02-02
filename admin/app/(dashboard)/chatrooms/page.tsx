@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Image as ImageIcon, Smile } from 'lucide-react';
+import { EmojiPicker } from '@/components/EmojiPicker';
+import { adminApi } from '@/lib/api';
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bunch.up.railway.app/api';
@@ -24,6 +26,7 @@ interface Message {
   text: string;
   sender_id: any;
   created_at: string;
+  reactions?: Record<string, string[]>;
 }
 
 export default function ChatroomsPage() {
@@ -34,6 +37,7 @@ export default function ChatroomsPage() {
   const [loading, setLoading] = useState(true);
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -108,6 +112,18 @@ export default function ChatroomsPage() {
     }
   };
 
+  const handleReact = async (messageId: string, emoji: string) => {
+    try {
+      await adminApi.reactToMessage(messageId, emoji);
+      // Reload messages to show updated reactions
+      if (selectedConv) {
+        loadMessages(selectedConv._id);
+      }
+    } catch (error) {
+      console.error('Failed to react:', error);
+    }
+  };
+
   const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -141,7 +157,7 @@ export default function ChatroomsPage() {
             {loading ? (
               <div className="text-center py-8 text-[var(--color-muted-foreground)]">Loading...</div>
             ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {conversations.map((conv) => (
                   <div
                     key={conv._id}
@@ -165,32 +181,67 @@ export default function ChatroomsPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-[var(--color-border)] bg-[var(--color-card)] flex flex-col">
+        <Card className="lg:col-span-2 border-[var(--color-border)] bg-[var(--color-card)]">
           <CardHeader>
             <CardTitle>
               {selectedConv ? (selectedConv.title || selectedConv.slug || 'Chat') : 'Select a chatroom'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col min-h-0">
+          <CardContent className="h-[calc(100vh-200px)] flex flex-col">
             {selectedConv ? (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 overflow-y-auto space-y-2 p-4 rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-background)] mb-4">
+              <>
+                <div className="flex-1 overflow-y-auto space-y-3 p-4 rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-background)] mb-4">
                   {messages.map((msg) => {
                     const mediaUrl = extractMediaUrl(msg.text);
                     return (
-                      <div key={msg._id} className="p-2 rounded-lg bg-[var(--color-muted)]/30">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-xs">
-                            {msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown'}
-                          </span>
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            {formatTime(msg.created_at)}
-                          </span>
+                      <div key={msg._id} className="group">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 p-3 rounded-lg bg-[var(--color-muted)]/30 border border-[var(--color-border)]">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-xs">
+                                {msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown'}
+                              </span>
+                              <span className="text-xs text-[var(--color-muted-foreground)]">
+                                {formatTime(msg.created_at)}
+                              </span>
+                            </div>
+                            {mediaUrl ? (
+                              <img src={mediaUrl} alt="Media" className="max-w-xs rounded mt-1" />
+                            ) : (
+                              <p className="text-sm break-words whitespace-pre-wrap">{msg.text}</p>
+                            )}
+                          </div>
+                          <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setShowEmojiPicker(showEmojiPicker === msg._id ? null : msg._id)}
+                            >
+                              <Smile className="h-4 w-4" />
+                            </Button>
+                            {showEmojiPicker === msg._id && (
+                              <EmojiPicker
+                                onSelect={(emoji) => handleReact(msg._id, emoji)}
+                                onClose={() => setShowEmojiPicker(null)}
+                              />
+                            )}
+                          </div>
                         </div>
-                        {mediaUrl ? (
-                          <img src={mediaUrl} alt="Media" className="max-w-xs rounded mt-1" />
-                        ) : (
-                          <p className="text-sm break-words">{msg.text}</p>
+                        
+                        {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                          <div className="flex gap-1 mt-1 ml-2">
+                            {Object.entries(msg.reactions)
+                              .filter(([emoji, userIds]) => userIds.length > 0)
+                              .map(([emoji, userIds]) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => handleReact(msg._id, emoji)}
+                                  className="text-xs bg-[var(--color-secondary)] px-2 py-1 rounded-full hover:bg-[var(--color-accent)] transition-colors"
+                                >
+                                  {emoji} {userIds.length}
+                                </button>
+                              ))}
+                          </div>
                         )}
                       </div>
                     );
@@ -225,9 +276,9 @@ export default function ChatroomsPage() {
                     <Button onClick={handleSendMessage}>Send</Button>
                   </div>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="text-center py-12 text-[var(--color-muted-foreground)]">
+              <div className="flex-1 flex items-center justify-center text-[var(--color-muted-foreground)]">
                 Select a chatroom to view and send messages
               </div>
             )}

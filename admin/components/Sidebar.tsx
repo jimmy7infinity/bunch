@@ -36,8 +36,9 @@ export function Sidebar() {
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card/50 backdrop-blur-sm">
-      <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+      <div className="flex h-16 items-center gap-3 border-b px-6">
+        <img src="/logo.png" alt="Bunch" className="w-8 h-8" />
+        <h1 className="text-xl font-bold bg-gradient-to-r from-[#FFD655] to-[#FFB200] bg-clip-text text-transparent">
           Bunch Admin
         </h1>
       </div>
