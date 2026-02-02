@@ -36,10 +36,17 @@ async function bootstrap() {
   const allowedOrigins: (string | RegExp)[] = [
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:3000',  // Admin panel
+    'http://localhost:3001',  // Admin panel (alt port)
   ];
 
   if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
+  }
+
+  // Add admin panel URL if set
+  if (process.env.ADMIN_URL) {
+    allowedOrigins.push(process.env.ADMIN_URL);
   }
 
   // In production, add specific extension ID
