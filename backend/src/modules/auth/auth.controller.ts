@@ -82,6 +82,10 @@ export class AuthController {
         // Extension OAuth flow - redirect back to extension
         console.log('📦 Extension OAuth detected, redirecting to:', redirectUri);
         res.redirect(`${redirectUri}?token=${authResult.access_token}`);
+      } else if (redirectUri && (redirectUri.includes('/login') || redirectUri.includes('admin'))) {
+        // Admin panel OAuth flow - redirect back to admin panel login with token
+        console.log('🔐 Admin panel OAuth detected, redirecting to:', redirectUri);
+        res.redirect(`${redirectUri}?token=${authResult.access_token}`);
       } else {
         // Web app flow - redirect to auth success page
         console.log('🌐 Web OAuth (no extension redirect_uri), redirecting to auth-success');

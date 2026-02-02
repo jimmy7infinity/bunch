@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TwitterOAuthService } from './twitter-oauth.service';
 import { BannedUserGuard } from './guards/banned-user.guard';
+import { AdminGuard } from './guards/admin.guard';
 import { UsersModule } from '../users/users.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 
@@ -35,12 +36,13 @@ import { User, UserSchema } from '../users/schemas/user.schema';
     AuthService,
     JwtStrategy,
     TwitterOAuthService,
+    AdminGuard,
     {
       provide: APP_GUARD,
       useClass: BannedUserGuard,
     },
   ],
-  exports: [AuthService],
+  exports: [AuthService, AdminGuard],
 })
 export class AuthModule {}
 

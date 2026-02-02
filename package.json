@@ -4,12 +4,16 @@
   "private": true,
   "workspaces": [
     "frontend",
-    "backend"
+    "backend",
+    "admin"
   ],
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:all": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\" \"pnpm --filter admin dev\"",
     "build": "pnpm --filter backend build && pnpm --filter frontend build",
     "build:extension": "pnpm --filter frontend build:extension",
+    "build:admin": "pnpm --filter admin build",
     "test": "pnpm --filter backend test && pnpm --filter frontend test",
     "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

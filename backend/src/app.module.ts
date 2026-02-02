@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { MediaModule } from './modules/media/media.module';
 import { PolymarketModule } from './modules/polymarket/polymarket.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { Conversation, ConversationSchema } from './modules/chat/schemas/conversation.schema';
 
 @Module({
@@ -49,6 +50,7 @@ import { Conversation, ConversationSchema } from './modules/chat/schemas/convers
     ChatModule,
     MediaModule,
     PolymarketModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
