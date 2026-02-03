@@ -82,47 +82,37 @@ async function connectWallet() {
         console.log('✅ Got signature:', signature.slice(0, 20) + '...');
         setStatus('Verifying signature...', 'info');
         
-        // Verify signature with backend
-        let verifyUrl = `${API_URL}/auth/siwe/verify`;
-        if (redirectUri) {
-            verifyUrl += `?redirect_uri=${encodeURIComponent(redirectUri)}`;
-            console.log('🔗 Using redirect_uri:', redirectUri);
-        }
-        console.log('📡 Verifying signature at:', verifyUrl);
+        setStatus('Verifying signature...', 'info');
         
-        const verifyResponse = await fetch(verifyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                address: userAddress,
-                signature: signature,
-                message: message,
-                nonce: nonce
-            })
-        });
+        // Create a form to POST to the verify endpoint
+        // This allows the backend to do a proper server-side redirect
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${API_URL}/auth/siwe/verify${redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
         
-        console.log('📥 Verify response status:', verifyResponse.status);
-        console.log('📥 Response redirected:', verifyResponse.redirected);
-        console.log('📥 Response URL:', verifyResponse.url);
+        // Add form fields
+        const fields = {
+            address: userAddress,
+            signature: signature,
+            message: message,
+            nonce: nonce
+        };
         
-        if (!verifyResponse.ok) {
-            const errorText = await verifyResponse.text();
-            console.error('❌ Verify error:', errorText);
-            throw new Error('Signature verification failed: ' + errorText);
+        for (const [key, value] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
         }
         
+        console.log('📡 Submitting form to:', form.action);
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Note: The page will navigate away after form submission
         setStatus('✅ Authentication successful! Redirecting...', 'info');
         setButtonState(true, 'Success!');
-        
-        // Backend redirects to extension
-        if (verifyResponse.redirected) {
-            console.log('🔀 Following redirect to:', verifyResponse.url);
-            window.location.href = verifyResponse.url;
-        } else {
-            console.log('⚠️ No redirect detected, checking response...');
-            const result = await verifyResponse.json();
-            console.log('📥 Response data:', result);
-        }
         
     } catch (error) {
         console.error('❌ Wallet auth error:', error);
