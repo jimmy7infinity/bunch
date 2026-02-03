@@ -4,18 +4,23 @@
   justify-content: center;
   min-height: 100vh;
   padding: 1rem;
-  background: var(--color-background);
+  background: #19191A;
 }
 
 .beta-activation-card {
-  background: var(--color-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  background: #242424;
+  border: 1px solid transparent;
+  background-image: linear-gradient(#242424, #242424), linear-gradient(135deg, #707070, #333333);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-radius: 20px;
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
   max-width: 28rem;
   width: 100%;
   padding: 2.5rem;
   animation: slideUp 0.4s ease-out;
-  border: 1px solid var(--color-border);
 }
 
 @keyframes slideUp {
@@ -50,15 +55,20 @@
 }
 
 .beta-title {
+  font-family: 'SF Compact Text', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-foreground);
+  background: linear-gradient(135deg, #C0C0C0, #CBCBCB);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: 0.5rem;
 }
 
 .beta-subtitle {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.95rem;
-  color: var(--color-muted-foreground);
+  color: #707070;
   line-height: 1.5;
 }
 
@@ -72,9 +82,10 @@
 
 .form-label {
   display: block;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-foreground);
+  color: #C0C0C0;
   margin-bottom: 0.5rem;
 }
 
@@ -86,18 +97,26 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-align: center;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: #19191A;
+  border: 1px solid transparent;
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-radius: 10px;
+  box-shadow: 
+    inset -10px -10px 20px rgba(255, 255, 255, 0.04),
+    inset 10px 10px 20px rgba(0, 0, 0, 0.25);
   transition: all 0.2s;
-  background: var(--color-background);
-  color: var(--color-foreground);
+  color: #D3D3D3;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  background: var(--color-card);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(135deg, #FFD655, #FF8C00);
+  box-shadow: 
+    inset -10px -10px 20px rgba(255, 255, 255, 0.06),
+    inset 10px 10px 20px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(255, 214, 85, 0.2);
 }
 
 .form-input:disabled {
@@ -106,14 +125,15 @@
 }
 
 .form-input::placeholder {
-  color: var(--color-muted-foreground);
+  color: #323232;
   font-weight: 400;
 }
 
 .error-message {
   margin-top: 0.5rem;
   font-size: 0.875rem;
-  color: var(--color-destructive);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #FF6B6B;
   text-align: center;
 }
 
@@ -122,11 +142,15 @@
   padding: 0.875rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-primary-foreground);
-  background: var(--color-primary);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #19191A;
+  background: linear-gradient(135deg, #FFD655, #FF8C00);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   cursor: pointer;
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -136,12 +160,17 @@
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.06),
+    12px 12px 24px 0px rgba(0, 0, 0, 0.35);
   filter: brightness(1.1);
 }
 
 .submit-button:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
 }
 
 .submit-button:disabled {
@@ -153,8 +182,8 @@
 .spinner {
   width: 1rem;
   height: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(25, 25, 26, 0.3);
+  border-top-color: #19191A;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -168,17 +197,18 @@
 .beta-footer {
   text-align: center;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #333333;
 }
 
 .footer-text {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.875rem;
-  color: var(--color-muted-foreground);
+  color: #707070;
   margin-bottom: 1rem;
 }
 
 .footer-link {
-  color: var(--color-primary);
+  color: #FFD655;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.2s;
@@ -193,16 +223,25 @@
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-muted-foreground);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #707070;
+  background: #19191A;
+  border: 1px solid transparent;
+  background-image: linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-radius: 8px;
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.04),
+    10px 10px 20px 0px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .logout-button:hover {
-  color: var(--color-foreground);
-  border-color: var(--color-border);
-  background: var(--color-muted);
+  color: #C0C0C0;
+  transform: translateY(-1px);
+  box-shadow: 
+    -2.5px -2.5px 5px 0px rgba(255, 255, 255, 0.06),
+    12px 12px 24px 0px rgba(0, 0, 0, 0.35);
 }
