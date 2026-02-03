@@ -88,6 +88,8 @@ export default function ChatroomsPage() {
   }, [hasMore, loading, loadingMore, messages.length, selectedConv]);
 
   const loadConversations = async () => {
+    if (typeof window === 'undefined') return; // Skip during SSR
+    
     try {
       setLoading(true);
       const token = localStorage.getItem('admin_token');
@@ -103,6 +105,8 @@ export default function ChatroomsPage() {
   };
 
   const loadMessages = async (convId: string, reset: boolean = false) => {
+    if (typeof window === 'undefined') return; // Skip during SSR
+    
     try {
       if (reset) {
         setLoading(true);
@@ -152,6 +156,8 @@ export default function ChatroomsPage() {
   };
 
   const handleSendMessage = async () => {
+    if (typeof window === 'undefined') return; // Skip during SSR
+    
     const textToSend = showImageInput && imageUrl ? imageUrl : newMessage;
     if (!textToSend.trim() || !selectedConv) return;
 
