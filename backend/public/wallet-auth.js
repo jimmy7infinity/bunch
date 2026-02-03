@@ -35,14 +35,28 @@ async function connectWallet() {
         setButtonState(true, 'Connecting...');
         setStatus('Requesting wallet connection...', 'info');
         
-        // Request account access
+        // Request account access and allow user to switch accounts
         console.log('📡 Requesting accounts...');
+        
+        // First, try to prompt user to select account
+        try {
+            // This will open MetaMask's account selector
+            await window.ethereum.request({
+                method: 'wallet_requestPermissions',
+                params: [{ eth_accounts: {} }]
+            });
+        } catch (error) {
+            console.log('⚠️ Permission request rejected or not supported, continuing...');
+        }
+        
+        // Now get the selected account
         const accounts = await window.ethereum.request({ 
             method: 'eth_requestAccounts' 
         });
         
         userAddress = accounts[0];
-        console.log('✅ Connected:', userAddress);
+        console.log('✅ Connected with account:', userAddress);
+        console.log('🔍 This is the account that will sign the message');
         document.getElementById('walletAddress').textContent = `Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
         document.getElementById('walletAddress').style.display = 'block';
         
