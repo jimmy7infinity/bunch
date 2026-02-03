@@ -46,16 +46,14 @@ export class AuthController {
       console.log('✅ SIWE verification successful');
       
       // Check if redirect_uri is provided (for extension flow)
-      if (redirectUri && redirectUri.includes('.chromiumapp.org')) {
+      // chrome.identity.getRedirectURL() returns: https://[extension-id].chromiumapp.org/[path]
+      if (redirectUri && (redirectUri.includes('.chromiumapp.org') || redirectUri.startsWith('https://') && redirectUri.includes('/auth'))) {
         const redirectUrl = `${redirectUri}?token=${authResult.access_token}`;
-        console.log('📦 Extension flow, returning redirect URL');
+        console.log('📦 Extension flow, redirecting to:', redirectUrl);
         
-        // Return JSON with redirect URL so frontend can handle navigation
-        res.json({
-          success: true,
-          redirect: redirectUrl,
-          token: authResult.access_token
-        });
+        // Use server-side redirect for chrome.identity.launchWebAuthFlow
+        // This is what allows the service worker to capture the callback
+        res.redirect(redirectUrl);
       } else {
         // Fallback: use auth-success.html page
         const backendUrl = process.env.NODE_ENV === 'production' 

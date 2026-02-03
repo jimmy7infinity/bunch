@@ -94,6 +94,67 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     return true; // Keep message channel open for async response
   }
+  
+  // Handle wallet OAuth start request from side panel
+  if (message.type === 'START_WALLET_AUTH') {
+    console.log('🔐 Starting Wallet OAuth flow via chrome.identity');
+    
+    // Get the extension's redirect URL
+    const redirectUri = chrome.identity.getRedirectURL('auth');
+    console.log('🔗 Extension redirect URI:', redirectUri);
+    
+    // Build auth URL with redirect_uri parameter
+    const backendUrl = 'https://bunch.up.railway.app';
+    const authUrl = `${backendUrl}/api/auth/wallet?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    
+    console.log('🚀 Launching wallet auth flow to:', authUrl);
+    
+    // Launch OAuth flow in Chrome-managed window
+    chrome.identity.launchWebAuthFlow(
+      {
+        url: authUrl,
+        interactive: true,
+      },
+      (responseUrl) => {
+        if (chrome.runtime.lastError) {
+          console.error('❌ Wallet auth failed:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+          return;
+        }
+        
+        console.log('✅ Wallet auth callback received:', responseUrl);
+        
+        // Extract token from response URL
+        try {
+          const url = new URL(responseUrl);
+          const token = url.searchParams.get('token');
+          
+          if (token) {
+            console.log('🔑 Token extracted, storing in chrome.storage');
+            
+            // Store token (source of truth for auth state)
+            chrome.storage.local.set({ 
+              authToken: token,
+              authUpdatedAt: Date.now()
+            }, () => {
+              console.log('✅ Token stored successfully');
+              console.log('💡 Side panel will read token on next mount/refresh');
+              
+              sendResponse({ success: true });
+            });
+          } else {
+            console.error('❌ No token found in response URL');
+            sendResponse({ success: false, error: 'No token in response' });
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse response URL:', error);
+          sendResponse({ success: false, error: error.message });
+        }
+      }
+    );
+    
+    return true; // Keep message channel open for async response
+  }
 });
 
 // Allow side panel to query current market context
