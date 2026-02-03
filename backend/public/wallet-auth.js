@@ -74,10 +74,17 @@ async function connectWallet() {
         
         // Request signature
         console.log('✍️ Requesting signature...');
+        console.log('📝 Message being signed (raw):', message);
+        console.log('📝 Message hex:', '0x' + Array.from(new TextEncoder().encode(message))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join(''));
+        
         const signature = await window.ethereum.request({
             method: 'personal_sign',
             params: [message, userAddress]
         });
+        
+        console.log('✅ Signature returned from MetaMask:', signature);
         
         console.log('✅ Got signature:', signature.slice(0, 20) + '...');
         setStatus('Verifying signature...', 'info');

@@ -32,6 +32,14 @@ export class AuthController {
     @Res() res: Response
   ) {
     try {
+      console.log('📥 Received body from form:');
+      console.log('  Address:', body.address);
+      console.log('  Signature length:', body.signature?.length);
+      console.log('  Message:', body.message);
+      console.log('  Message length:', body.message?.length);
+      console.log('  Message bytes:', Buffer.from(body.message || '').length);
+      console.log('  Nonce:', body.nonce);
+      
       const user = await this.authService.verifySIWE(body.address, body.signature, body.message, body.nonce);
       const authResult = await this.authService.login(user);
       
