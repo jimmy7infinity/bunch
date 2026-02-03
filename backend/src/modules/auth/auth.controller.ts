@@ -26,17 +26,31 @@ export class AuthController {
 
   // SIWE signature verification
   @Post('siwe/verify')
-  async verifySIWE(@Body() body: { address: string; signature: string; message: string; nonce: string }, @Res() res: Response) {
+  async verifySIWE(
+    @Body() body: { address: string; signature: string; message: string; nonce: string },
+    @Query('redirect_uri') redirectUri: string,
+    @Res() res: Response
+  ) {
     try {
       const user = await this.authService.verifySIWE(body.address, body.signature, body.message, body.nonce);
       const authResult = await this.authService.login(user);
       
-      // Get extension ID from environment or request
-      const extensionId = process.env.EXTENSION_ID || 'your-extension-id';
-      const redirectUrl = `https://${extensionId}.chromiumapp.org/auth?token=${authResult.access_token}`;
+      console.log('✅ SIWE verification successful');
       
-      console.log('✅ SIWE verification successful, redirecting to:', redirectUrl);
-      res.redirect(redirectUrl);
+      // Check if redirect_uri is provided (for extension flow)
+      if (redirectUri && redirectUri.includes('.chromiumapp.org')) {
+        const redirectUrl = `${redirectUri}?token=${authResult.access_token}`;
+        console.log('📦 Extension flow, redirecting to:', redirectUrl);
+        res.redirect(redirectUrl);
+      } else {
+        // Fallback: use auth-success.html page with postMessage
+        const backendUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://bunch.up.railway.app'
+          : 'http://localhost:3000';
+        
+        console.log('🌐 Web flow, redirecting to auth-success page');
+        res.redirect(`${backendUrl}/auth-success.html?token=${authResult.access_token}`);
+      }
     } catch (error) {
       console.error('❌ SIWE verification failed:', error);
       res.status(401).json({ error: 'Verification failed', message: error.message });

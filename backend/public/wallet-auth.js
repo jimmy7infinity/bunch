@@ -1,6 +1,10 @@
 const API_URL = window.location.origin + '/api';
 let userAddress = null;
 
+// Get redirect_uri from URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const redirectUri = urlParams.get('redirect_uri');
+
 function setStatus(message, type = 'info') {
     const statusEl = document.getElementById('status');
     statusEl.textContent = message;
@@ -79,8 +83,14 @@ async function connectWallet() {
         setStatus('Verifying signature...', 'info');
         
         // Verify signature with backend
-        console.log('📡 Verifying signature at:', `${API_URL}/auth/siwe/verify`);
-        const verifyResponse = await fetch(`${API_URL}/auth/siwe/verify`, {
+        let verifyUrl = `${API_URL}/auth/siwe/verify`;
+        if (redirectUri) {
+            verifyUrl += `?redirect_uri=${encodeURIComponent(redirectUri)}`;
+            console.log('🔗 Using redirect_uri:', redirectUri);
+        }
+        console.log('📡 Verifying signature at:', verifyUrl);
+        
+        const verifyResponse = await fetch(verifyUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -137,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🔵 Wallet auth page loaded');
     console.log('🌐 Origin:', window.location.origin);
     console.log('🌐 API_URL:', API_URL);
+    console.log('🔗 Redirect URI:', redirectUri || 'none (will use auth-success page)');
     
     // Attach button click handler
     const connectBtn = document.getElementById('connectBtn');

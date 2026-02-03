@@ -40,16 +40,32 @@ export const WalletConnect = () => {
     console.log('🔵 Wallet login button clicked!');
     setLoading(true);
     
-    // Open wallet auth page in new window (same pattern as Twitter OAuth)
-    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
-    const authUrl = `${apiUrl}/api/auth/wallet`;
-    
-    console.log('🌐 Opening wallet auth window:', authUrl);
-    window.open(
-      authUrl,
-      '_blank',
-      'width=420,height=700,popup=yes'
-    );
+    // Check if running as Chrome extension
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+      console.log('📦 Extension detected, using chrome.identity flow for wallet');
+      
+      const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
+      const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/auth`;
+      const authUrl = `${apiUrl}/api/auth/wallet?redirect_uri=${encodeURIComponent(redirectUri)}`;
+      
+      console.log('🌐 Opening wallet auth with redirect_uri:', redirectUri);
+      
+      // Open in popup window - the backend will redirect to extension after auth
+      window.open(
+        authUrl,
+        '_blank',
+        'width=420,height=700,popup=yes'
+      );
+    } else {
+      // Regular web app flow
+      console.log('🌐 Running as web app, using direct window flow');
+      const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
+      window.open(
+        `${apiUrl}/api/auth/wallet`,
+        '_blank',
+        'width=420,height=700,popup=yes'
+      );
+    }
     
     // Reset loading after window opens
     setTimeout(() => setLoading(false), 1000);
