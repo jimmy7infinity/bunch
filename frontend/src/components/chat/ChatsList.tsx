@@ -410,7 +410,8 @@ export const ChatsList = () => {
       height: '100vh',
       width: '100%',
       backgroundColor: '#19191A',
-      padding: '0 20px',
+      padding: '0 16px',
+      boxSizing: 'border-box',
     }}>
       {/* TOP BAR / NAV - Large Variant */}
       <div 

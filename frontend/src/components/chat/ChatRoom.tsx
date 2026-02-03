@@ -872,7 +872,9 @@ export const ChatRoom = ({
       flexDirection: 'column', 
       height: '100vh', 
       width: '100%',
-      backgroundColor: '#19191A' 
+      backgroundColor: '#19191A',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
     }}>
       {/* TOP BAR / NAV */}
       <div 
