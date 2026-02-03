@@ -341,30 +341,49 @@ export class PolymarketService {
     try {
       console.log('🔍 Fetching Polymarket profile for wallet:', walletAddress);
       
-      // Try to fetch user data from Polymarket CLOB API
-      // This endpoint returns user profile info including username
-      const response = await fetch(`https://clob.polymarket.com/profile/${walletAddress.toLowerCase()}`, {
+      // Use Polymarket Gamma API to fetch user profile
+      // Endpoint: GET https://gamma-api.polymarket.com/public-profile?address=<wallet>
+      const url = `https://gamma-api.polymarket.com/public-profile?address=${walletAddress.toLowerCase()}`;
+      console.log('📡 Fetching from Gamma API:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Bunch/1.0)',
         },
       });
       
+      console.log('📊 Response status:', response.status);
+      
       if (!response.ok) {
-        console.log('❌ CLOB API profile not found for wallet:', walletAddress);
+        console.log('❌ Gamma API profile not found for wallet:', walletAddress, 'Status:', response.status);
         return null;
       }
       
       const data = await response.json();
-      console.log('✅ Found Polymarket profile:', {
-        username: data.username,
-        hasAvatar: !!data.profilePicture,
+      console.log('✅ Found Polymarket profile data:', JSON.stringify(data, null, 2));
+      
+      // Gamma API returns:
+      // - name: user-chosen display name
+      // - pseudonym: auto-generated pseudonym
+      // - profileImage: URL to profile image
+      // - bio: profile bio
+      // - xUsername: Twitter username
+      const username = data.name || data.pseudonym;
+      
+      console.log('Profile summary:', {
+        name: data.name,
+        pseudonym: data.pseudonym,
+        username: username,
+        hasAvatar: !!data.profileImage,
         hasBio: !!data.bio,
+        avatarUrl: data.profileImage,
+        bio: data.bio,
       });
       
       return {
-        username: data.username || undefined,
+        username: username || undefined,
         bio: data.bio || undefined,
-        avatarUrl: data.profilePicture || undefined,
+        avatarUrl: data.profileImage || undefined,
         walletAddress: walletAddress.toLowerCase(),
       };
     } catch (error) {

@@ -905,9 +905,20 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               if (window.confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')) {
                 try {
                   await userService.deleteAccount();
-                  // Logout and redirect
+                  console.log('✅ Account deleted, logging out...');
+                  
+                  // Clear auth state
                   logout();
-                  window.location.href = '/';
+                  
+                  // For Chrome extension, close the panel
+                  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+                    console.log('📦 Extension detected, closing window');
+                    window.close();
+                  } else {
+                    // For web app, force reload to login screen
+                    console.log('🌐 Web app, reloading to root');
+                    window.location.replace('/');
+                  }
                 } catch (error) {
                   console.error('Failed to delete account:', error);
                   alert('Failed to delete account. Please try again.');
