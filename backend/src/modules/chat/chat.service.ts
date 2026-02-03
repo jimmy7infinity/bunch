@@ -101,7 +101,7 @@ export class ChatService {
       title,
       is_private: true,
       created_by: new Types.ObjectId(creatorId),
-      participant_count: memberIds.length + 1,
+      participant_count: 0, // Start at 0, joinConversation will increment
     });
     await conversation.save();
 
