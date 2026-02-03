@@ -55,6 +55,26 @@ export class UsersService {
   async findOrCreateFromTwitter(twitterProfile: any): Promise<User> {
     let user = await this.findByTwitterId(twitterProfile.id);
     
+    // If user exists and is deleted, restore their account
+    if (user && user.status === 'deleted') {
+      console.log('🔄 Restoring deleted Twitter account:', (user as any)._id);
+      const highQualityAvatar = twitterProfile.profile_image_url?.replace('_normal', '_400x400');
+      
+      await this.userModel.findByIdAndUpdate((user as any)._id, {
+        status: 'active',
+        deleted_at: null,
+        display_name: twitterProfile.name || user.username,
+        twitter_avatar: highQualityAvatar,
+        avatar_url: highQualityAvatar,
+        is_online: true,
+        last_seen_at: new Date(),
+      }).exec();
+      
+      console.log('✅ Account restored successfully');
+      // Refetch to get updated data
+      user = await this.findByTwitterId(twitterProfile.id);
+    }
+    
     if (!user) {
       // Check if user with same Polymarket account exists
       // This would happen if they logged in with wallet first, verified Polymarket, then logged in with Twitter
@@ -180,10 +200,28 @@ export class UsersService {
   async findOrCreateByWallet(wallet_address: string): Promise<User> {
     const walletLower = wallet_address.toLowerCase();
     
-    // First check if wallet is already linked to an existing account
+    // First check if wallet is already linked to an existing account (including deleted)
     let user = await this.userModel.findOne({ 
       wallet_address: walletLower 
     }).exec();
+    
+    // If user exists and is deleted, restore their account
+    if (user && user.status === 'deleted') {
+      console.log('🔄 Restoring deleted wallet account:', (user as any)._id);
+      
+      await this.userModel.findByIdAndUpdate((user as any)._id, {
+        status: 'active',
+        deleted_at: null,
+        is_online: true,
+        last_seen_at: new Date(),
+        // Don't restore display_name/avatar/bio - let Polymarket auto-verification handle it
+      }).exec();
+      
+      console.log('✅ Account restored successfully');
+      // Refetch to get updated data
+      user = await this.userModel.findOne({ wallet_address: walletLower }).exec();
+      return user!;
+    }
     
     if (user) {
       return user;
