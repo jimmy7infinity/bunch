@@ -30,6 +30,18 @@ export class AdminController {
   }
 
   /**
+   * GET /admin/conversations
+   * Get all conversations for admin view
+   */
+  @Get('conversations')
+  async getAllConversations(@Query('limit') limit?: string) {
+    const conversations = await this.adminService.getAllConversations(
+      limit ? parseInt(limit) : 100
+    );
+    return { conversations };
+  }
+
+  /**
    * GET /admin/messages
    * Get recent messages with optional filters
    */

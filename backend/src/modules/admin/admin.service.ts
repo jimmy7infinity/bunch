@@ -38,6 +38,19 @@ export class AdminService {
   }
 
   /**
+   * Get all conversations for admin view
+   */
+  async getAllConversations(limit: number = 100) {
+    const conversations = await this.conversationModel
+      .find({})
+      .sort({ last_message_at: -1, created_at: -1 })
+      .limit(limit)
+      .exec();
+
+    return conversations;
+  }
+
+  /**
    * Get recent messages with filters
    */
   async getMessages(filters: {
