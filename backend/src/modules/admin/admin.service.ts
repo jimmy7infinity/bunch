@@ -45,9 +45,30 @@ export class AdminService {
       .find({})
       .sort({ last_message_at: -1, created_at: -1 })
       .limit(limit)
+      .lean()
       .exec();
 
-    return conversations;
+    // Enhance conversations with proper display titles
+    return conversations.map(conv => {
+      let displayTitle = conv.title;
+      
+      // For market chats, use question from metadata if title is missing
+      if (conv.type === 'market' && !displayTitle && conv.metadata?.question) {
+        displayTitle = conv.metadata.question;
+      }
+      
+      // For global chats without title, use a formatted slug
+      if (conv.type === 'global' && !displayTitle && conv.slug) {
+        displayTitle = conv.slug.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+      
+      return {
+        ...conv,
+        displayTitle: displayTitle || conv.slug || `${conv.type} chat`
+      };
+    });
   }
 
   /**

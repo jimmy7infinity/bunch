@@ -20,6 +20,7 @@ interface Conversation {
   market_id?: string;
   participant_count: number;
   last_message_at?: string;
+  displayTitle?: string;
 }
 
 interface Message {
@@ -331,7 +332,7 @@ export default function ChatroomsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm truncate">
-                        {conv.title || conv.slug || `${conv.type} chat`}
+                        {conv.displayTitle || conv.title || conv.slug || `${conv.type} chat`}
                       </span>
                       <span className="text-xs text-[var(--color-muted-foreground)] ml-2">
                         {conv.participant_count} members
@@ -350,7 +351,7 @@ export default function ChatroomsPage() {
         <Card className="lg:col-span-2 border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle>
-              {selectedConv ? (selectedConv.title || selectedConv.slug || 'Chat') : 'Messages'}
+              {selectedConv ? (selectedConv.displayTitle || selectedConv.title || selectedConv.slug || 'Chat') : 'Messages'}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col h-[70vh]">
