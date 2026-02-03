@@ -463,8 +463,8 @@ export const ChatsList = () => {
             }}
           />
 
-          {/* Leaderboard Button (Trophy Icon) */}
-          <button
+          {/* Leaderboard Button (Trophy Icon) - Hidden for now */}
+          {/* <button
             onClick={() => setViewMode('leaderboard')}
             style={{
               background: 'none',
@@ -481,7 +481,7 @@ export const ChatsList = () => {
               <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
             </svg>
-          </button>
+          </button> */}
         </div>
 
         {/* PAGE NAME - Center with Icon */}
