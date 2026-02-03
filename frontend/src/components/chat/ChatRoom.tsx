@@ -11,6 +11,7 @@ import { getRankColors } from '../../utils/ranks';
 import { ChatRoomHeader } from './ChatRoomHeader';
 import { ChatBoxHeader } from './ChatBoxHeader';
 import type { ChatRoom as ChatRoomType } from '../../types';
+import { messageSendLimiter, formatTimeRemaining } from '../../utils/rateLimiting';
 import './ChatRoom.css';
 
 interface ChatRoomProps {
@@ -524,6 +525,13 @@ export const ChatRoom = ({
     const isConnected = websocketService.isConnected();
     
     if (!message.trim()) {
+      return;
+    }
+    
+    // Rate limiting check
+    if (!messageSendLimiter.canProceed()) {
+      const timeUntil = messageSendLimiter.getTimeUntilReset();
+      addNotification(`Slow down! You can send another message in ${formatTimeRemaining(timeUntil)}.`, 'warning');
       return;
     }
     

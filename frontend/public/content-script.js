@@ -3,6 +3,7 @@ console.log('🎯 Bunch content script loaded');
 
 let currentMarketId = null;
 let currentMarketTitle = null;
+let marketContextDebounceTimer = null;
 
 /**
  * Category page mapping - maps Polymarket category URLs to global chat slugs
@@ -164,17 +165,24 @@ function initializeDetection() {
   // Watch for URL changes (SPA navigation)
   let lastUrl = window.location.href;
   
+  // Debounced market context update (prevents spam from rapid navigation)
+  const debouncedUpdateMarketContext = () => {
+    if (marketContextDebounceTimer) {
+      clearTimeout(marketContextDebounceTimer);
+    }
+    
+    marketContextDebounceTimer = setTimeout(() => {
+      const marketInfo = extractMarketInfo();
+      sendMarketContext(marketInfo);
+    }, 1000); // 1 second debounce
+  };
+  
   const observer = new MutationObserver(() => {
     const currentUrl = window.location.href;
     if (currentUrl !== lastUrl) {
       lastUrl = currentUrl;
       console.log('🔄 URL changed, re-detecting market...');
-      
-      // Wait a bit for DOM to update
-      setTimeout(() => {
-        const marketInfo = extractMarketInfo();
-        sendMarketContext(marketInfo);
-      }, 500);
+      debouncedUpdateMarketContext();
     }
   });
 
@@ -186,10 +194,7 @@ function initializeDetection() {
 
   // Also watch for popstate events (back/forward navigation)
   window.addEventListener('popstate', () => {
-    setTimeout(() => {
-      const marketInfo = extractMarketInfo();
-      sendMarketContext(marketInfo);
-    }, 500);
+    debouncedUpdateMarketContext();
   });
 
   // Watch for pushState/replaceState (SPA navigation)
@@ -198,18 +203,12 @@ function initializeDetection() {
 
   history.pushState = function(...args) {
     originalPushState.apply(this, args);
-    setTimeout(() => {
-      const marketInfo = extractMarketInfo();
-      sendMarketContext(marketInfo);
-    }, 500);
+    debouncedUpdateMarketContext();
   };
 
   history.replaceState = function(...args) {
     originalReplaceState.apply(this, args);
-    setTimeout(() => {
-      const marketInfo = extractMarketInfo();
-      sendMarketContext(marketInfo);
-    }, 500);
+    debouncedUpdateMarketContext();
   };
 }
 

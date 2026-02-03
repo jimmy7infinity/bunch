@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import type { Message, User } from '../types';
+import { debounce, throttle, calculateExponentialBackoff } from '../utils/rateLimiting';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
 
@@ -16,6 +17,10 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private currentRoomId: string | null = null;
   private statusListeners: ((status: ConnectionStatus) => void)[] = [];
+  
+  // Debounced typing indicators (1 second delay)
+  private debouncedStartTyping: Map<string, ReturnType<typeof debounce>> = new Map();
+  private debouncedStopTyping: Map<string, ReturnType<typeof debounce>> = new Map();
 
   connect(token: string) {
     // Disconnect existing socket if any
@@ -30,7 +35,7 @@ class WebSocketService {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelayMax: 30000, // Increased from 5s to 30s
       reconnectionAttempts: this.maxReconnectAttempts,
     });
 
@@ -137,17 +142,43 @@ class WebSocketService {
     }
   }
 
-  // Typing indicators
+  // Typing indicators (debounced to prevent spam)
   startTyping(conversationId: string) {
-    if (this.socket) {
-      this.socket.emit('typing:start', { conversationId });
+    if (!this.socket) return;
+    
+    // Create debounced function for this conversation if it doesn't exist
+    if (!this.debouncedStartTyping.has(conversationId)) {
+      this.debouncedStartTyping.set(
+        conversationId,
+        debounce(() => {
+          if (this.socket) {
+            this.socket.emit('typing:start', { conversationId });
+          }
+        }, 1000)
+      );
     }
+    
+    // Call the debounced function
+    this.debouncedStartTyping.get(conversationId)!();
   }
 
   stopTyping(conversationId: string) {
-    if (this.socket) {
-      this.socket.emit('typing:stop', { conversationId });
+    if (!this.socket) return;
+    
+    // Create debounced function for this conversation if it doesn't exist
+    if (!this.debouncedStopTyping.has(conversationId)) {
+      this.debouncedStopTyping.set(
+        conversationId,
+        debounce(() => {
+          if (this.socket) {
+            this.socket.emit('typing:stop', { conversationId });
+          }
+        }, 500)
+      );
     }
+    
+    // Call the debounced function
+    this.debouncedStopTyping.get(conversationId)!();
   }
 
   // Event listeners
