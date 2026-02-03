@@ -136,14 +136,41 @@ export class AuthService {
   }
 
   async login(user: any) {
+    console.log('🔐 login() called with user:', {
+      _id: (user as any)._id,
+      wallet_address: user.wallet_address,
+      username: user.username,
+      twitter_id: user.twitter_id,
+    });
+    
     const payload = {
       wallet_address: user.wallet_address,
       sub: (user as any)._id.toString(),
       username: user.username,
     };
+    
+    console.log('📦 JWT payload:', payload);
+    
+    let access_token;
+    try {
+      access_token = this.jwtService.sign(payload);
+      console.log('✅ JWT generated successfully:', {
+        length: access_token.length,
+        preview: access_token.substring(0, 50) + '...',
+        type: typeof access_token,
+      });
+    } catch (error) {
+      console.error('❌ JWT generation failed:', error);
+      throw new Error(`Failed to generate JWT: ${error.message}`);
+    }
+    
+    if (!access_token || typeof access_token !== 'string' || access_token.length < 10) {
+      console.error('❌ Invalid JWT generated:', { access_token, type: typeof access_token });
+      throw new Error('Invalid JWT token generated');
+    }
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
       user: {
         _id: (user as any)._id.toString(),
         id: (user as any)._id.toString(),

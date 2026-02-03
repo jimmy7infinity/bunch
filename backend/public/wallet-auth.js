@@ -106,36 +106,43 @@ async function connectWallet() {
         const verifyUrl = `${API_URL}/auth/siwe/verify${redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
         console.log('📡 Verifying at:', verifyUrl);
         
-        // Create form to POST verification
-        // Backend will handle redirect, chrome.identity will capture it
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = verifyUrl;
+        // Use fetch to POST verification
+        const response = await fetch(verifyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                address: userAddress,
+                signature: signature,
+                message: message,
+                nonce: nonce
+            })
+        });
         
-        const fields = {
-            address: userAddress,
-            signature: signature,
-            message: message,
-            nonce: nonce
-        };
+        console.log('📡 Verification response status:', response.status);
         
-        for (const [key, value] of Object.entries(fields)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            form.appendChild(input);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || errorData.message || 'Verification failed');
         }
         
-        console.log('📡 Submitting verification form...');
-        setStatus('✅ Signature verified! Redirecting...', 'info');
-        setButtonState(true, 'Success!');
+        // Backend returns JSON with token for extension flow
+        const data = await response.json();
+        console.log('📦 Got response:', { success: data.success, hasToken: !!data.access_token });
         
-        document.body.appendChild(form);
-        form.submit();
-        
-        // The page will redirect to extension URL
-        // chrome.identity.launchWebAuthFlow will capture it automatically
+        if (data.success && data.access_token && data.redirect_uri) {
+            // Build redirect URL and navigate
+            const redirectUrl = `${data.redirect_uri}?token=${encodeURIComponent(data.access_token)}`;
+            console.log('🚀 Navigating to:', redirectUrl);
+            setStatus('✅ Signature verified! Redirecting...', 'info');
+            setButtonState(true, 'Success!');
+            
+            // Navigate to extension URL - chrome.identity will capture this
+            window.location.href = redirectUrl;
+        } else {
+            throw new Error('Invalid response from server');
+        }
         
     } catch (error) {
         console.error('❌ Wallet auth error:', error);

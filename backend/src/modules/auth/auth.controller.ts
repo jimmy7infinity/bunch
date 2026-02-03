@@ -32,30 +32,45 @@ export class AuthController {
     @Res() res: Response
   ) {
     try {
-      console.log('📥 Received body from form:');
+      console.log('📥 Received body:');
       console.log('  Address:', body.address);
       console.log('  Signature length:', body.signature?.length);
-      console.log('  Message:', body.message);
       console.log('  Message length:', body.message?.length);
-      console.log('  Message bytes:', Buffer.from(body.message || '').length);
       console.log('  Nonce:', body.nonce);
+      console.log('  Redirect URI:', redirectUri);
       
       const user = await this.authService.verifySIWE(body.address, body.signature, body.message, body.nonce);
       const authResult = await this.authService.login(user);
       
       console.log('✅ SIWE verification successful');
+      console.log('🔑 User object:', {
+        _id: (user as any)._id,
+        wallet_address: user.wallet_address,
+        username: user.username,
+      });
+      console.log('🔑 Auth result:', {
+        access_token_length: authResult.access_token?.length,
+        access_token_preview: authResult.access_token?.substring(0, 50) + '...',
+        user_id: authResult.user?.id,
+      });
       
       // Check if redirect_uri is provided (for extension flow)
       // chrome.identity.getRedirectURL() returns: https://[extension-id].chromiumapp.org/[path]
-      if (redirectUri && (redirectUri.includes('.chromiumapp.org') || redirectUri.startsWith('https://') && redirectUri.includes('/auth'))) {
-        const redirectUrl = `${redirectUri}?token=${authResult.access_token}`;
-        console.log('📦 Extension flow, redirecting to:', redirectUrl);
+      if (redirectUri && redirectUri.includes('.chromiumapp.org')) {
+        // Extension flow: Return JSON (fetch can't handle chrome-extension:// redirects)
+        const token = authResult.access_token;
+        console.log('📦 Extension flow, returning JSON with token');
+        console.log('🔐 Token being sent (length):', token.length);
+        console.log('🔐 Token preview:', token.substring(0, 30) + '...');
         
-        // Use server-side redirect for chrome.identity.launchWebAuthFlow
-        // This is what allows the service worker to capture the callback
-        res.redirect(redirectUrl);
+        res.json({
+          success: true,
+          access_token: token,
+          redirect_uri: redirectUri,
+          user: authResult.user,
+        });
       } else {
-        // Fallback: use auth-success.html page
+        // Web flow: Use server-side redirect
         const backendUrl = process.env.NODE_ENV === 'production' 
           ? 'https://bunch.up.railway.app'
           : 'http://localhost:3000';
@@ -66,6 +81,36 @@ export class AuthController {
     } catch (error) {
       console.error('❌ SIWE verification failed:', error);
       res.status(401).json({ error: 'Verification failed', message: error.message });
+    }
+  }
+
+  // Debug endpoint to test JWT generation
+  @Get('debug/test-jwt')
+  async testJWT() {
+    if (process.env.NODE_ENV === 'production') {
+      return { error: 'Debug endpoint disabled in production' };
+    }
+    
+    const testPayload = {
+      wallet_address: '0x1234567890123456789012345678901234567890',
+      sub: '507f1f77bcf86cd799439011',
+      username: 'test_user',
+    };
+    
+    try {
+      const token = this.authService['jwtService'].sign(testPayload);
+      return {
+        success: true,
+        token_length: token.length,
+        token_preview: token.substring(0, 50) + '...',
+        jwt_secret_set: !!process.env.JWT_SECRET,
+        jwt_secret_length: process.env.JWT_SECRET?.length || 0,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
   }
 
