@@ -73,17 +73,17 @@ async function connectWallet() {
         setStatus('Please sign the message in your wallet...', 'info');
         
         // Request signature using personal_sign
-        // personal_sign automatically adds the Ethereum message prefix
-        // and can accept either string or hex
+        // CRITICAL: message must be byte-for-byte identical to what backend verifies
+        // No hex encoding, no transformation - just the raw string
         console.log('✍️ Requesting signature...');
-        console.log('📝 Message being signed:', message);
+        console.log('📝 Message being signed (exact bytes):', message);
         
         const signature = await window.ethereum.request({
             method: 'personal_sign',
             params: [message, userAddress]
         });
         
-        console.log('✅ Signature returned from MetaMask:', signature);
+        console.log('✅ Got signature:', signature);
         
         console.log('✅ Got signature:', signature.slice(0, 20) + '...');
         setStatus('Verifying signature...', 'info');
