@@ -118,11 +118,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (responseUrl) => {
         if (chrome.runtime.lastError) {
           console.error('❌ Wallet auth failed:', chrome.runtime.lastError);
+          console.error('❌ Error details:', chrome.runtime.lastError);
           sendResponse({ success: false, error: chrome.runtime.lastError.message });
           return;
         }
         
-        console.log('✅ Wallet auth callback received:', responseUrl);
+        console.log('✅ Wallet auth callback received!');
+        console.log('📋 Response URL:', responseUrl);
         
         // Extract token from response URL
         try {
