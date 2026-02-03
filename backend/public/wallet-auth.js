@@ -106,57 +106,36 @@ async function connectWallet() {
         const verifyUrl = `${API_URL}/auth/siwe/verify${redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
         console.log('📡 Verifying at:', verifyUrl);
         
-        const verifyResponse = await fetch(verifyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                address: userAddress,
-                signature: signature,
-                message: message,
-                nonce: nonce
-            }),
-            redirect: 'manual' // Don't follow redirects automatically
-        });
+        // Create form to POST verification
+        // Backend will handle redirect, chrome.identity will capture it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = verifyUrl;
         
-        console.log('📥 Verify response status:', verifyResponse.status);
-        console.log('📥 Response type:', verifyResponse.type);
+        const fields = {
+            address: userAddress,
+            signature: signature,
+            message: message,
+            nonce: nonce
+        };
         
-        if (verifyResponse.type === 'opaqueredirect' || verifyResponse.status === 0) {
-            // Redirect was initiated - manually follow it
-            const location = verifyResponse.headers.get('Location') || redirectUri + '?token=' + 'check';
-            console.log('🔀 Redirect detected, navigating to extension...');
-            setStatus('✅ Authentication successful! Redirecting...', 'info');
-            setButtonState(true, 'Success!');
-            
-            // Give user feedback before redirect
-            setTimeout(() => {
-                window.location.href = location;
-            }, 500);
-        } else if (verifyResponse.ok) {
-            // Success response with redirect URL
-            const result = await verifyResponse.json();
-            console.log('✅ Verification result:', result);
-            
-            if (result.redirect) {
-                // Backend provided redirect URL
-                console.log('🔀 Redirecting to:', result.redirect);
-                setStatus('✅ Authentication successful! Redirecting...', 'info');
-                setButtonState(true, 'Success!');
-                
-                // Navigate to extension auth page
-                setTimeout(() => {
-                    window.location.href = result.redirect;
-                }, 500);
-            } else {
-                // No redirect, just close
-                setStatus('✅ Authentication successful!', 'info');
-                setButtonState(true, 'Success!');
-                setTimeout(() => window.close(), 1500);
-            }
-        } else {
-            const error = await verifyResponse.text();
-            throw new Error('Verification failed: ' + error);
+        for (const [key, value] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
         }
+        
+        console.log('📡 Submitting verification form...');
+        setStatus('✅ Signature verified! Redirecting...', 'info');
+        setButtonState(true, 'Success!');
+        
+        document.body.appendChild(form);
+        form.submit();
+        
+        // The page will redirect to extension URL
+        // chrome.identity.launchWebAuthFlow will capture it automatically
         
     } catch (error) {
         console.error('❌ Wallet auth error:', error);

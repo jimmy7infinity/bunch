@@ -60,9 +60,13 @@ function App() {
       if (isExtension) {
         console.log('📦 Extension startup - checking for stored token');
         chrome.storage.local.get(['authToken'], (result) => {
+          console.log('📥 chrome.storage.local result:', result);
           if (result.authToken) {
-            console.log('🔑 Found stored token, fetching user data');
+            console.log('🔑 Found stored token:', result.authToken.substring(0, 20) + '...');
+            console.log('🔑 Token length:', result.authToken.length);
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            console.log('📡 Fetching user from:', `${apiUrl}/auth/me`);
+            console.log('📡 With Authorization header:', `Bearer ${result.authToken.substring(0, 20)}...`);
             
             fetch(`${apiUrl}/auth/me`, {
               headers: {
