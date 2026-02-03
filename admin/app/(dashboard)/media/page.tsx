@@ -1,30 +1,68 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { adminApi } from '@/lib/api';
 import { Message, User } from '@/types';
-import { Trash2, ExternalLink, Eye } from 'lucide-react';
+import { Trash2, ExternalLink, Eye, Loader2, UserCircle } from 'lucide-react';
 
 export default function MediaPage() {
+  const router = useRouter();
   const [media, setMedia] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
-    loadMedia();
+    loadMedia(true);
   }, []);
 
-  const loadMedia = async () => {
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!observerTarget.current || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMedia(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, media.length]);
+
+  const loadMedia = async (reset: boolean = false) => {
     try {
-      setLoading(true);
-      const data = await adminApi.getMedia(100);
-      setMedia(data.media);
+      if (reset) {
+        setLoading(true);
+        setMedia([]);
+      } else {
+        setLoadingMore(true);
+      }
+
+      // For now, just load with limit - backend doesn't support pagination for media yet
+      const data = await adminApi.getMedia(PAGE_SIZE);
+      
+      if (reset) {
+        setMedia(data.media);
+      } else {
+        // Simple pagination: just fetch more if available
+        setHasMore(data.media.length === PAGE_SIZE);
+      }
     } catch (error) {
       console.error('Failed to load media:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -70,6 +108,18 @@ export default function MediaPage() {
     return sender.display_name || sender.username;
   };
 
+  const getSenderId = (sender: string | User): string | null => {
+    if (typeof sender === 'string') return sender;
+    return sender._id || null;
+  };
+
+  const navigateToUser = (sender: string | User) => {
+    const userId = getSenderId(sender);
+    if (userId) {
+      router.push(`/users?id=${userId}`);
+    }
+  };
+
   const formatTime = (date: string) => {
     return new Date(date).toLocaleString();
   };
@@ -88,63 +138,83 @@ export default function MediaPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : (
-              <div className="space-y-2">
-                {media.map((message) => {
-                  const mediaUrl = extractMediaUrl(message.text);
-                  return (
-                    <div
-                      key={message._id}
-                      className="flex items-center gap-4 p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="w-16 h-16 rounded bg-muted flex-shrink-0 overflow-hidden">
-                        {mediaUrl && (
-                          <img
-                            src={mediaUrl}
-                            alt="Media"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">
-                          {getSenderName(message.sender_id)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatTime(message.created_at)}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewContext(message._id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(mediaUrl || message.text, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(message._id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
+            ) : (
+              <>
+                <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+                  {media.map((message) => {
+                    const mediaUrl = extractMediaUrl(message.text);
+                    return (
+                      <div
+                        key={message._id}
+                        className="flex items-center gap-4 p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="w-16 h-16 rounded bg-muted flex-shrink-0 overflow-hidden">
+                          {mediaUrl && (
+                            <img
+                              src={mediaUrl}
+                              alt="Media"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <button
+                            onClick={() => navigateToUser(message.sender_id)}
+                            className="font-medium text-sm hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <UserCircle className="h-4 w-4" />
+                            {getSenderName(message.sender_id)}
+                          </button>
+                          <div className="text-xs text-muted-foreground">
+                            {formatTime(message.created_at)}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewContext(message._id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(mediaUrl || message.text, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(message._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Load more trigger */}
+                {hasMore && (
+                  <div ref={observerTarget} className="flex justify-center py-4">
+                    {loadingMore && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="text-sm">Loading more media...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -156,13 +226,20 @@ export default function MediaPage() {
           <CardContent>
             {selectedMessage ? (
               <div className="space-y-4">
-                <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-sm">
+                <div className="rounded-lg border-2 border-primary/50 bg-primary/10 p-4">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <button
+                      onClick={() => navigateToUser(selectedMessage.message.sender_id)}
+                      className="font-semibold text-sm hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <UserCircle className="h-4 w-4" />
                       {getSenderName(selectedMessage.message.sender_id)}
-                    </span>
+                    </button>
                     <span className="text-xs text-muted-foreground">
                       {formatTime(selectedMessage.message.created_at)}
+                    </span>
+                    <span className="text-xs font-semibold text-primary">
+                      ← This Media
                     </span>
                   </div>
                   <div className="text-sm break-words">{selectedMessage.message.text}</div>
@@ -170,9 +247,9 @@ export default function MediaPage() {
 
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">
-                    SURROUNDING MESSAGES ({selectedMessage.context.length})
+                    CONTEXT ({selectedMessage.context.length} messages - 5 before, current, 5 after)
                   </p>
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
                     {selectedMessage.context.map((msg: Message) => (
                       <div
                         key={msg._id}
@@ -182,13 +259,22 @@ export default function MediaPage() {
                             : 'bg-background/50 border border-border/30'
                         }`}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-xs">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <button
+                            onClick={() => navigateToUser(msg.sender_id)}
+                            className="font-medium text-xs hover:text-primary transition-colors inline-flex items-center gap-1"
+                          >
+                            <UserCircle className="h-3 w-3" />
                             {getSenderName(msg.sender_id)}
-                          </span>
+                          </button>
                           <span className="text-xs text-muted-foreground">
                             {formatTime(msg.created_at)}
                           </span>
+                          {msg._id === selectedMessage.message._id && (
+                            <span className="text-xs font-semibold text-primary">
+                              ← This Message
+                            </span>
+                          )}
                         </div>
                         <p className="break-words whitespace-pre-wrap">{msg.text}</p>
                       </div>

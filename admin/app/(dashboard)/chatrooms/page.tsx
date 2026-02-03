@@ -81,6 +81,13 @@ export default function ChatroomsPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(res.data.messages);
+      
+      // Scroll to bottom after messages load (without visible scrolling animation)
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+        }
+      }, 0);
     } catch (error) {
       console.error('Failed to load messages:', error);
     }
@@ -229,17 +236,17 @@ export default function ChatroomsPage() {
                         </div>
                         
                         {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2 ml-2">
+                          <div className="flex flex-wrap gap-2 mt-2 ml-0 max-w-full">
                             {Object.entries(msg.reactions)
                               .filter(([emoji, userIds]) => userIds.length > 0)
                               .map(([emoji, userIds]) => (
                                 <button
                                   key={emoji}
                                   onClick={() => handleReact(msg._id, emoji)}
-                                  className="inline-flex items-center gap-1 text-xs bg-[var(--color-secondary)] px-2 py-1 rounded-full hover:bg-[var(--color-accent)] transition-colors border border-[var(--color-border)]"
+                                  className="inline-flex items-center gap-1.5 text-xs bg-[var(--color-secondary)] px-2.5 py-1.5 rounded-full hover:bg-[var(--color-accent)] transition-colors border border-[var(--color-border)] whitespace-nowrap"
                                 >
-                                  <span className="text-sm">{emoji}</span>
-                                  <span className="font-medium">{userIds.length}</span>
+                                  <span className="text-base leading-none">{emoji}</span>
+                                  <span className="font-semibold text-xs">{userIds.length}</span>
                                 </button>
                               ))}
                           </div>
