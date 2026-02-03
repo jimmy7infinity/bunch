@@ -56,6 +56,10 @@ export class UsersService {
     let user = await this.findByTwitterId(twitterProfile.id);
     
     if (!user) {
+      // Check if user with same Polymarket account exists
+      // This would happen if they logged in with wallet first, verified Polymarket, then logged in with Twitter
+      // In this case, we should link the accounts rather than create a new one
+      // For now, create new user - account linking will be handled via explicit link action
       user = await this.createFromTwitter(twitterProfile);
     }
 
@@ -174,23 +178,168 @@ export class UsersService {
   }
 
   async findOrCreateByWallet(wallet_address: string): Promise<User> {
+    const walletLower = wallet_address.toLowerCase();
+    
+    // First check if wallet is already linked to an existing account
     let user = await this.userModel.findOne({ 
-      wallet_address: wallet_address.toLowerCase() 
+      wallet_address: walletLower 
     }).exec();
     
+    if (user) {
+      return user;
+    }
+    
+    // Wallet not found - check if this wallet matches a verified Polymarket account
+    // This handles the case where user:
+    // 1. Logged in with Twitter
+    // 2. Verified Polymarket account (which has this wallet)
+    // 3. Now trying to log in with wallet
+    const polymarketUser = await this.userModel.findOne({
+      'polymarket.verified': true,
+      'polymarket.wallet_address': walletLower
+    }).exec();
+    
+    if (polymarketUser) {
+      // Link the wallet to the existing account
+      console.log(`🔗 Linking wallet ${walletLower} to existing account with Polymarket verification`);
+      polymarketUser.wallet_address = walletLower;
+      polymarketUser.wallet_verified = true;
+      await polymarketUser.save();
+      return polymarketUser;
+    }
+    
+    // No existing account found - create new wallet-only account
+    const username = `user_${wallet_address.slice(0, 8)}`;
+    user = new this.userModel({
+      wallet_address: walletLower,
+      username,
+      display_name: username,
+      wallet_verified: true,
+      is_online: true,
+    });
+    await user.save();
+    
+    return user;
+  }
+
+  async linkWalletToAccount(userId: string, walletAddress: string): Promise<User> {
+    const walletLower = walletAddress.toLowerCase();
+    
+    // Check if wallet is already linked to another account
+    const existingWalletUser = await this.userModel.findOne({
+      wallet_address: walletLower,
+      _id: { $ne: userId }
+    }).exec();
+    
+    if (existingWalletUser) {
+      throw new ConflictException('This wallet is already linked to another account');
+    }
+    
+    // Link wallet to current account
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        wallet_address: walletLower,
+        wallet_verified: true
+      },
+      { new: true }
+    ).exec();
+    
     if (!user) {
-      const username = `user_${wallet_address.slice(0, 8)}`;
-      user = new this.userModel({
-        wallet_address: wallet_address.toLowerCase(),
-        username,
-        display_name: username,
-        wallet_verified: true,
-        is_online: true,
-      });
-      await user.save();
+      throw new NotFoundException('User not found');
     }
     
     return user;
+  }
+
+  async linkTwitterToAccount(userId: string, twitterId: string, twitterUsername: string, twitterAvatar: string): Promise<User> {
+    // Check if Twitter account is already linked to another user
+    const existingTwitterUser = await this.userModel.findOne({
+      twitter_id: twitterId,
+      _id: { $ne: userId }
+    }).exec();
+    
+    if (existingTwitterUser) {
+      throw new ConflictException('This Twitter account is already linked to another account');
+    }
+    
+    // Link Twitter to current account
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        twitter_id: twitterId,
+        twitter_username: twitterUsername,
+        twitter_avatar: twitterAvatar,
+        // Only update avatar if user doesn't have one
+        $setOnInsert: { avatar_url: twitterAvatar }
+      },
+      { new: true }
+    ).exec();
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    return user;
+  }
+
+  async unlinkWalletFromAccount(userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId).exec();
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    // Don't allow unlinking if it's the only auth method
+    if (!user.twitter_id) {
+      throw new BadRequestException('Cannot unlink wallet - it is your only authentication method');
+    }
+    
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        $unset: { wallet_address: 1 },
+        wallet_verified: false
+      },
+      { new: true }
+    ).exec();
+    
+    if (!updatedUser) {
+      throw new NotFoundException('Failed to update user');
+    }
+    
+    return updatedUser;
+  }
+
+  async unlinkTwitterFromAccount(userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId).exec();
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    // Don't allow unlinking if it's the only auth method
+    if (!user.wallet_address) {
+      throw new BadRequestException('Cannot unlink Twitter - it is your only authentication method');
+    }
+    
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        $unset: {
+          twitter_id: 1,
+          twitter_username: 1,
+          twitter_avatar: 1
+        }
+      },
+      { new: true }
+    ).exec();
+    
+    if (!updatedUser) {
+      throw new NotFoundException('Failed to update user');
+    }
+    
+    return updatedUser;
   }
 
   async createDevUser(username: string, walletAddress: string): Promise<User> {

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Request, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Request, Inject, BadRequestException, ConflictException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Server } from 'socket.io';
+import { ethers } from 'ethers';
 
 @Controller('users')
 export class UsersController {
@@ -60,6 +61,41 @@ export class UsersController {
   async deleteAccount(@Request() req: any) {
     await this.usersService.deleteAccount(req.user.userId);
     return { success: true, message: 'Account deleted successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('link-wallet')
+  async linkWallet(@Request() req: any, @Body() body: { wallet_address: string; signature: string; message: string }) {
+    try {
+      // Verify wallet signature before linking
+      const recoveredAddress = ethers.verifyMessage(body.message, body.signature);
+      
+      if (recoveredAddress.toLowerCase() !== body.wallet_address.toLowerCase()) {
+        throw new BadRequestException('Invalid wallet signature');
+      }
+      
+      const user = await this.usersService.linkWalletToAccount(req.user.userId, body.wallet_address);
+      return { success: true, user };
+    } catch (error) {
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to link wallet: ' + error.message);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('unlink-wallet')
+  async unlinkWallet(@Request() req: any) {
+    const user = await this.usersService.unlinkWalletFromAccount(req.user.userId);
+    return { success: true, user };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('unlink-twitter')
+  async unlinkTwitter(@Request() req: any) {
+    const user = await this.usersService.unlinkTwitterFromAccount(req.user.userId);
+    return { success: true, user };
   }
 
   // Friend and block routes BEFORE :id route
