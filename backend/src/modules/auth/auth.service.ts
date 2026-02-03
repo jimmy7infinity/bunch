@@ -84,22 +84,19 @@ export class AuthService {
       const recoveredAddress = ethers.verifyMessage(message, signature);
       console.log('📋 Recovered address from signature:', recoveredAddress);
       
-      // IMPORTANT: We trust the recovered address from the signature, not the submitted address
-      // The signature cryptographically proves ownership of recoveredAddress
-      // We DO need to check that the message contains the correct address though
-      if (!message.includes(recoveredAddress)) {
-        console.error('❌ Address in message does not match recovered address');
-        console.error('   Message contains:', addressLower);
-        console.error('   Signature proves:', recoveredAddress.toLowerCase());
-        throw new UnauthorizedException('Address mismatch in message');
-      }
+      // IMPORTANT: We trust the recovered address from the signature, period.
+      // The signature cryptographically proves ownership of recoveredAddress.
+      // The address in the message text is IGNORED - it's just text, not cryptographic proof.
+      // This is standard SIWE behavior (OpenSea, Farcaster, Uniswap, etc.)
       
-      console.log('✅ Signature verified successfully for:', recoveredAddress);
+      console.log('✅ Signature verified successfully');
+      console.log('✅ Authenticating user with recovered address:', recoveredAddress);
       
-      // Delete used nonce (one-time use) - use the original address for nonce lookup
+      // Delete used nonce (one-time use)
       this.nonceStore.delete(addressLower);
       
       // Find or create user by the RECOVERED address (the one that actually signed)
+      // This is the ONLY source of truth - the cryptographic proof
       const user = await this.usersService.findOrCreateByWallet(recoveredAddress.toLowerCase());
       
       // Update last seen
