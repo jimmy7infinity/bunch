@@ -327,4 +327,109 @@ export class PolymarketService {
       has_pending_token: !!user.polymarket?.verification_token,
     };
   }
+
+  /**
+   * Fetch Polymarket profile data by wallet address
+   * Used for auto-verification during wallet login
+   */
+  async fetchProfileByWallet(walletAddress: string): Promise<{
+    username?: string;
+    bio?: string;
+    avatarUrl?: string;
+    walletAddress: string;
+  } | null> {
+    try {
+      console.log('🔍 Fetching Polymarket profile for wallet:', walletAddress);
+      
+      // Try to fetch user data from Polymarket CLOB API
+      // This endpoint returns user profile info including username
+      const response = await fetch(`https://clob.polymarket.com/profile/${walletAddress.toLowerCase()}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Bunch/1.0)',
+        },
+      });
+      
+      if (!response.ok) {
+        console.log('❌ CLOB API profile not found for wallet:', walletAddress);
+        return null;
+      }
+      
+      const data = await response.json();
+      console.log('✅ Found Polymarket profile:', {
+        username: data.username,
+        hasAvatar: !!data.profilePicture,
+        hasBio: !!data.bio,
+      });
+      
+      return {
+        username: data.username || undefined,
+        bio: data.bio || undefined,
+        avatarUrl: data.profilePicture || undefined,
+        walletAddress: walletAddress.toLowerCase(),
+      };
+    } catch (error) {
+      console.error('❌ Error fetching Polymarket profile:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Auto-verify and populate user profile from Polymarket
+   * Called during wallet login if user has a Polymarket account
+   */
+  async autoVerifyFromWallet(userId: string, walletAddress: string): Promise<boolean> {
+    try {
+      console.log('🔄 Auto-verifying Polymarket account for user:', userId);
+      
+      const profile = await this.fetchProfileByWallet(walletAddress);
+      
+      if (!profile || !profile.username) {
+        console.log('❌ No Polymarket profile found for wallet');
+        return false;
+      }
+      
+      console.log('✅ Found Polymarket profile, updating user:', profile.username);
+      
+      // Update user with Polymarket data
+      const updateData: any = {
+        'polymarket.verified': true,
+        'polymarket.username': profile.username,
+        'polymarket.wallet_address': walletAddress.toLowerCase(),
+        'polymarket.verified_at': new Date(),
+        'polymarket.verification_token': null,
+      };
+      
+      // Also update display info if user doesn't have it yet
+      const user = await this.userModel.findById(userId);
+      if (user) {
+        // Update display_name if it's just the default wallet username
+        if (!user.display_name || user.display_name.startsWith('user_0x')) {
+          updateData.display_name = profile.username;
+        }
+        
+        // Update username if it's just the default wallet username
+        if (!user.username || user.username.startsWith('user_0x')) {
+          updateData.username = profile.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        }
+        
+        // Update avatar if they don't have one and Polymarket has one
+        if (!user.avatar_url && profile.avatarUrl) {
+          updateData.avatar_url = profile.avatarUrl;
+        }
+        
+        // Update bio if they don't have one
+        if (!user.bio && profile.bio) {
+          updateData.bio = profile.bio;
+        }
+      }
+      
+      await this.userModel.findByIdAndUpdate(userId, updateData);
+      
+      console.log('✅ User auto-verified and updated with Polymarket data');
+      return true;
+    } catch (error) {
+      console.error('❌ Auto-verification failed:', error);
+      return false;
+    }
+  }
 }

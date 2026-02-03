@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { UsersService } from '../users/users.service';
 import { TwitterOAuthService } from './twitter-oauth.service';
+import { PolymarketService } from '../polymarket/polymarket.service';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,8 @@ export class AuthService {
     private jwtService: JwtService,
     private usersService: UsersService,
     private twitterOAuthService: TwitterOAuthService,
+    @Inject(forwardRef(() => PolymarketService))
+    private polymarketService: PolymarketService,
   ) {
     // Clean up expired nonces every 5 minutes
     setInterval(() => this.cleanupExpiredNonces(), 5 * 60 * 1000);
@@ -98,9 +101,32 @@ export class AuthService {
       // Find or create user by the RECOVERED address (the one that actually signed)
       // This is the ONLY source of truth - the cryptographic proof
       const user = await this.usersService.findOrCreateByWallet(recoveredAddress.toLowerCase());
+      const userId = (user as any)._id.toString();
       
       // Update last seen
-      await this.usersService.updateLastSeen((user as any)._id.toString());
+      await this.usersService.updateLastSeen(userId);
+      
+      // Auto-verify Polymarket account if they have one
+      // This fetches their Polymarket profile and populates username, avatar, bio
+      if (!user.polymarket?.verified) {
+        console.log('🔄 Attempting Polymarket auto-verification...');
+        try {
+          const verified = await this.polymarketService.autoVerifyFromWallet(
+            userId,
+            recoveredAddress.toLowerCase()
+          );
+          if (verified) {
+            console.log('✅ Polymarket account auto-verified');
+            // Refetch user to get updated data
+            return await this.usersService.findById(userId);
+          } else {
+            console.log('ℹ️ No Polymarket account found for wallet');
+          }
+        } catch (error) {
+          console.error('⚠️ Polymarket auto-verification failed:', error);
+          // Continue with login even if auto-verification fails
+        }
+      }
       
       return user;
     } catch (error) {

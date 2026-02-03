@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -11,11 +11,13 @@ import { TwitterOAuthService } from './twitter-oauth.service';
 import { BannedUserGuard } from './guards/banned-user.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { UsersModule } from '../users/users.module';
+import { PolymarketModule } from '../polymarket/polymarket.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 
 @Module({
   imports: [
     UsersModule,
+    forwardRef(() => PolymarketModule),
     PassportModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
