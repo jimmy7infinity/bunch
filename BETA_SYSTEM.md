@@ -183,14 +183,22 @@ POST /api/auth/activate-beta
 
 ---
 
-## Admin Roles
+## Admin Roles & Beta Exemption
 
-Who can manage invite codes:
-- **admin** - Full access
-- **moderator** - Full access  
-- **creator** - Full access
+### Who Can Manage Invite Codes:
+- **admin** (role) - Full access
+- **moderator** (role) - Full access  
+- **CREATOR** (rank) - Full access
 
 Regular users cannot access invite code management.
+
+### Who Is Exempt from Beta Gating:
+Even when `BETA_MODE=true`, these users always have access without needing an invite code:
+- **admin** (role) - Automatic access
+- **moderator** (role) - Automatic access
+- **CREATOR** (rank) - Automatic access
+
+Regular users must use an invite code to activate beta access.
 
 ---
 
@@ -256,6 +264,11 @@ async canActivate(context: ExecutionContext): Promise<boolean> {
 
   // If enabled, check user's betaAccess
   const user = await this.usersService.findById(req.user.userId);
+  
+  // Admins, moderators, and creators always have access
+  if (user.role === 'admin' || user.role === 'moderator' || user.rank === 'CREATOR') {
+    return true;
+  }
   
   if (!user.betaAccess) {
     throw new ForbiddenException({

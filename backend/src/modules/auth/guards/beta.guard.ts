@@ -26,11 +26,21 @@ export class BetaGuard implements CanActivate {
       throw new ForbiddenException('Authentication required');
     }
 
-    // Fetch fresh user data to check betaAccess
+    // Fetch fresh user data to check betaAccess and role
     const fullUser = await this.usersService.findById(user.userId);
 
     if (!fullUser) {
       throw new ForbiddenException('User not found');
+    }
+
+    // Admins, moderators, and creators always have access
+    if (fullUser.role === 'admin' || fullUser.role === 'moderator') {
+      return true;
+    }
+
+    // Also check rank for CREATOR
+    if (fullUser.rank === 'CREATOR') {
+      return true;
     }
 
     // Check if user has beta access

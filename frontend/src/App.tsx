@@ -113,6 +113,18 @@ function App() {
 
   const checkBetaStatus = async () => {
     try {
+      // Get current user from store
+      const currentUser = useAuthStore.getState().user;
+      
+      // Admins, mods, and creators always have access
+      if (currentUser?.role === 'admin' || 
+          currentUser?.role === 'moderator' || 
+          currentUser?.rank === 'CREATOR') {
+        setRequiresBetaActivation(false);
+        initializeMarketDetection();
+        return;
+      }
+
       const status = await authService.getBetaStatus();
       setRequiresBetaActivation(status.requiresActivation);
       
