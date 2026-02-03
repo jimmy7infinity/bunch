@@ -331,15 +331,15 @@ export default function ChatroomsPage() {
             ) : (
               <div className="space-y-2 max-h-[70vh] overflow-y-auto">
                 {conversations.map((conv) => (
-                  <div key={conv._id}>
-                    <button
-                      onClick={() => handleSelectConversation(conv)}
-                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                        selectedConv?._id === conv._id
-                          ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)]'
-                          : 'bg-[var(--color-muted)]/30 border-[var(--color-border)] hover:bg-[var(--color-muted)]/50'
-                      }`}
-                    >
+                  <button
+                    key={conv._id}
+                    onClick={() => handleSelectConversation(conv)}
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      selectedConv?._id === conv._id
+                        ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)]'
+                        : 'bg-[var(--color-muted)]/30 border-[var(--color-border)] hover:bg-[var(--color-muted)]/50'
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm truncate">
                         {conv.title || conv.slug || `${conv.type} chat`}
@@ -352,7 +352,6 @@ export default function ChatroomsPage() {
                       {conv.type}
                     </div>
                   </button>
-                  </div>
                 ))}
               </div>
             )}
