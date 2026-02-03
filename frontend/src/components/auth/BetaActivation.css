@@ -63,6 +63,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
 }
 
 .beta-subtitle {
@@ -70,6 +71,7 @@
   font-size: 0.95rem;
   color: #707070;
   line-height: 1.5;
+  white-space: nowrap;
 }
 
 .beta-form {
