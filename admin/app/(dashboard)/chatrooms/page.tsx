@@ -159,12 +159,6 @@ export default function ChatroomsPage() {
       
       if (reset) {
         setMessages(newMessages);
-        // Scroll to bottom on initial load
-        setTimeout(() => {
-          if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
-          }
-        }, 0);
       } else {
         // Prepend older messages
         setMessages(prev => [...newMessages, ...prev]);
@@ -176,6 +170,15 @@ export default function ChatroomsPage() {
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      
+      // Scroll to bottom after messages are set
+      if (reset) {
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+          }
+        }, 50);
+      }
     }
   };
 
