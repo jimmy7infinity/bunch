@@ -93,10 +93,28 @@ export default function ChatroomsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('admin_token');
-      const res = await axios.get(`${API_URL}/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setConversations(res.data.conversations || []);
+      
+      // Load both user conversations and global chats
+      const [myRes, globalRes] = await Promise.all([
+        axios.get(`${API_URL}/conversations/my`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/conversations/global`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      
+      const allConversations = [
+        ...(myRes.data.conversations || []),
+        ...(globalRes.data.conversations || [])
+      ];
+      
+      // Remove duplicates by ID
+      const uniqueConversations = allConversations.filter((conv, index, self) =>
+        index === self.findIndex((c) => c._id === conv._id)
+      );
+      
+      setConversations(uniqueConversations);
     } catch (error) {
       console.error('Failed to load conversations:', error);
     } finally {
