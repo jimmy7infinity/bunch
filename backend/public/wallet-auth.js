@@ -127,21 +127,25 @@ async function connectWallet() {
             throw new Error(errorData.error || errorData.message || 'Verification failed');
         }
         
-        // Backend returns JSON with token for extension flow
+        // Backend returns JSON with redirect URL (contains token)
         const data = await response.json();
-        console.log('📦 Got response:', { success: data.success, hasToken: !!data.access_token });
+        console.log('📦 Got response:', data);
         
-        if (data.success && data.access_token && data.redirect_uri) {
-            // Build redirect URL and navigate
-            const redirectUrl = `${data.redirect_uri}?token=${encodeURIComponent(data.access_token)}`;
-            console.log('🚀 Navigating to:', redirectUrl);
-            setStatus('✅ Signature verified! Redirecting...', 'info');
+        if (data.redirect) {
+            // Backend provided full redirect URL with token
+            console.log('🚀 Navigating to:', data.redirect);
+            setStatus('✅ Authentication successful! Redirecting...', 'info');
             setButtonState(true, 'Success!');
             
             // Navigate to extension URL - chrome.identity will capture this
+            window.location.href = data.redirect;
+        } else if (data.token) {
+            // Fallback: build redirect URL ourselves
+            const redirectUrl = `${redirectUri}?token=${data.token}`;
+            console.log('🚀 Building redirect URL:', redirectUrl);
             window.location.href = redirectUrl;
         } else {
-            throw new Error('Invalid response from server');
+            throw new Error('No redirect URL or token in response');
         }
         
     } catch (error) {
