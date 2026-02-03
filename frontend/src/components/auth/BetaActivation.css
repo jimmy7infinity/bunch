@@ -56,7 +56,7 @@
 
 .beta-title {
   font-family: 'SF Compact Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   background: linear-gradient(135deg, #C0C0C0, #CBCBCB);
   -webkit-background-clip: text;
@@ -64,6 +64,8 @@
   background-clip: text;
   margin-bottom: 0.5rem;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .beta-subtitle {
