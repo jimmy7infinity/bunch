@@ -159,6 +159,18 @@ export class PolymarketService {
       throw new BadRequestException('Verification failed - no profile data');
     }
     
+    // SECURITY CHECK: If user already has a wallet connected, ensure Polymarket wallet matches
+    if (user.wallet_address && user.wallet_address !== profileData.walletAddress?.toLowerCase()) {
+      console.log('⚠️ Wallet mismatch detected!');
+      console.log('User wallet:', user.wallet_address);
+      console.log('Polymarket wallet:', profileData.walletAddress);
+      
+      return {
+        success: false,
+        message: `This Polymarket account is linked to a different wallet address (${profileData.walletAddress?.slice(0, 6)}...${profileData.walletAddress?.slice(-4)}). Your connected wallet is ${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}. Please verify the Polymarket account that matches your connected wallet.`,
+      };
+    }
+    
     await this.userModel.findByIdAndUpdate(userId, {
       'polymarket.verified': true,
       'polymarket.username': polymarketUsername,

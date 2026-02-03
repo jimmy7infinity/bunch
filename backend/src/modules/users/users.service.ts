@@ -78,37 +78,9 @@ export class UsersService {
     }
     
     if (!user) {
-      // Check if user with same Twitter username exists in a Polymarket-verified account
-      // This would happen if they logged in with wallet first, verified Polymarket (which has their Twitter username), then logged in with Twitter
-      const twitterUsername = twitterProfile.username?.toLowerCase();
-      if (twitterUsername) {
-        const polymarketUser = await this.userModel.findOne({
-          'polymarket.verified': true,
-          username: twitterUsername,
-          twitter_id: { $exists: false } // Not already linked to Twitter
-        }).exec();
-        
-        if (polymarketUser) {
-          console.log('🔗 Found existing Polymarket account with matching Twitter username, linking accounts...');
-          
-          const highQualityAvatar = twitterProfile.profile_image_url?.replace('_normal', '_400x400');
-          
-          // Link Twitter to existing Polymarket account, preserving Polymarket data
-          await this.userModel.findByIdAndUpdate((polymarketUser as any)._id, {
-            twitter_id: twitterProfile.id,
-            twitter_username: twitterProfile.username,
-            twitter_avatar: highQualityAvatar,
-            // Keep existing display_name, username, avatar_url, bio from Polymarket
-            // Only update Twitter-specific fields
-          }).exec();
-          
-          console.log('✅ Twitter account linked to existing Polymarket account');
-          user = await this.findByTwitterId(twitterProfile.id);
-          return user!;
-        }
-      }
-      
-      // No existing account found - create new Twitter account
+      // No existing Twitter account found - create new Twitter account
+      // Note: We don't try to auto-link to Polymarket accounts here
+      // Users should manually verify Polymarket or use wallet connect
       user = await this.createFromTwitter(twitterProfile);
     }
 
