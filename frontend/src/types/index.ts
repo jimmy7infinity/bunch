@@ -1,7 +1,10 @@
 export interface User {
   _id?: string; // MongoDB ID
   id: string;
-  wallet_address: string;
+  wallet_address?: string;
+  twitter_id?: string;
+  twitter_username?: string;
+  twitter_avatar?: string;
   username: string;
   display_name?: string;
   avatar_url?: string;

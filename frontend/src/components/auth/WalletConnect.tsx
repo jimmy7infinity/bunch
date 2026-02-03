@@ -36,6 +36,25 @@ export const WalletConnect = () => {
     }
   };
 
+  const handleWalletLogin = () => {
+    console.log('🔵 Wallet login button clicked!');
+    setLoading(true);
+    
+    // Open wallet auth page in new window (same pattern as Twitter OAuth)
+    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
+    const authUrl = `${apiUrl}/api/auth/wallet`;
+    
+    console.log('🌐 Opening wallet auth window:', authUrl);
+    window.open(
+      authUrl,
+      '_blank',
+      'width=420,height=700,popup=yes'
+    );
+    
+    // Reset loading after window opens
+    setTimeout(() => setLoading(false), 1000);
+  };
+
   return (
     <div 
       className="flex flex-col items-center justify-center min-h-screen"
@@ -66,7 +85,7 @@ export const WalletConnect = () => {
           }}
         />
 
-        {/* LOGIN BUTTON */}
+        {/* Twitter LOGIN BUTTON */}
         <button
           onClick={handleTwitterLogin}
           disabled={loading}
@@ -96,6 +115,47 @@ export const WalletConnect = () => {
           />
           <span style={{ color: '#B9B7B7', fontSize: '10px', fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: '300' }}>
             {loading ? 'connecting...' : 'connect to X'}
+          </span>
+        </button>
+
+        {/* Wallet LOGIN BUTTON */}
+        <button
+          onClick={handleWalletLogin}
+          disabled={loading}
+          className="gradient-border-button"
+          style={{
+            width: '80%',
+            height: '50px',
+            borderRadius: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.5 : 1,
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{
+              position: 'absolute',
+              left: '24px',
+            }}
+          >
+            <path
+              d="M17 9V7C17 5.89543 16.1046 5 15 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H15C16.1046 19 17 18.1046 17 17V15M17 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17M17 9V15M17 15V17"
+              stroke="#B9B7B7"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="14" cy="12" r="1" fill="#B9B7B7" />
+          </svg>
+          <span style={{ color: '#B9B7B7', fontSize: '10px', fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: '300' }}>
+            connect wallet
           </span>
         </button>
 

@@ -13,7 +13,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const [privateProfile, setPrivateProfile] = useState(false);
   
   // Polymarket verification state
-  const { user, refreshUser } = useAuthStore();
+  const { user, refreshUser, logout } = useAuthStore();
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [polymarketUsername, setPolymarketUsername] = useState('');
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -720,6 +720,160 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           </div>
         </div>
 
+        {/* Connected Accounts Section */}
+        <div 
+          className="bio-section"
+          style={{
+            width: '90%',
+            maxWidth: '500px',
+            backgroundColor: '#19191A',
+            border: '1px solid transparent',
+            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            borderRadius: '20px',
+            padding: '20px',
+          }}
+        >
+          <span style={{
+            fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '14px',
+            color: '#B9B7B7',
+            marginBottom: '15px',
+            display: 'block',
+          }}>
+            Connected Accounts
+          </span>
+
+          {/* Twitter/X Connection */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px',
+            backgroundColor: '#242424',
+            borderRadius: '10px',
+            marginBottom: '12px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/x-logo.png" alt="X" style={{ width: '20px', height: '20px' }} />
+              <div>
+                <div style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '11px',
+                  color: '#E5E5E5',
+                }}>
+                  X (Twitter)
+                </div>
+                {user?.twitter_username && (
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '10px',
+                    color: '#707070',
+                  }}>
+                    @{user.twitter_username}
+                  </div>
+                )}
+              </div>
+            </div>
+            {user?.twitter_id ? (
+              <span style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '10px',
+                color: '#5BC854',
+              }}>
+                Connected
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
+                  window.open(`${apiUrl}/api/auth/twitter`, '_blank', 'width=420,height=700');
+                }}
+                style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '10px',
+                  color: '#5BC854',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Connect
+              </button>
+            )}
+          </div>
+
+          {/* Wallet Connection */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px',
+            backgroundColor: '#242424',
+            borderRadius: '10px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M17 9V7C17 5.89543 16.1046 5 15 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H15C16.1046 19 17 18.1046 17 17V15M17 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17M17 9V15M17 15V17"
+                  stroke="#B9B7B7"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="14" cy="12" r="1" fill="#B9B7B7" />
+              </svg>
+              <div>
+                <div style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '11px',
+                  color: '#E5E5E5',
+                }}>
+                  Crypto Wallet
+                </div>
+                {user?.wallet_address && (
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '10px',
+                    color: '#707070',
+                  }}>
+                    {user.wallet_address.slice(0, 6)}...{user.wallet_address.slice(-4)}
+                  </div>
+                )}
+              </div>
+            </div>
+            {user?.wallet_address ? (
+              <span style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '10px',
+                color: '#5BC854',
+              }}>
+                Connected
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
+                  window.open(`${apiUrl}/api/auth/wallet`, '_blank', 'width=420,height=700');
+                }}
+                style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '10px',
+                  color: '#5BC854',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Connect
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Account Section */}
         <div 
           className="bio-section"
@@ -745,28 +899,21 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             Account
           </span>
 
-          {/* Change Password */}
-          <button
-            className="settings-action-button"
-            style={{
-              width: '100%',
-              padding: '15px',
-              backgroundColor: '#19191A',
-              border: '1px solid #333333',
-              borderRadius: '10px',
-              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: '13px',
-              color: '#D3D3D3',
-              cursor: 'pointer',
-              textAlign: 'left',
-              marginBottom: '10px',
-            }}
-          >
-            Change Password
-          </button>
-
           {/* Delete Account */}
           <button
+            onClick={async () => {
+              if (window.confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')) {
+                try {
+                  await userService.deleteAccount();
+                  // Logout and redirect
+                  logout();
+                  window.location.href = '/';
+                } catch (error) {
+                  console.error('Failed to delete account:', error);
+                  alert('Failed to delete account. Please try again.');
+                }
+              }
+            }}
             className="settings-action-button-danger"
             style={{
               width: '100%',

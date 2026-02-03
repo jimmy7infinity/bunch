@@ -55,6 +55,13 @@ export class UsersController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Delete('me')
+  async deleteAccount(@Request() req: any) {
+    await this.usersService.deleteAccount(req.user.userId);
+    return { success: true, message: 'Account deleted successfully' };
+  }
+
   // Friend and block routes BEFORE :id route
   @UseGuards(JwtAuthGuard)
   @Get('friend-requests')

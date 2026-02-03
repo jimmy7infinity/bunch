@@ -11,11 +11,11 @@ interface UserProfileProps {
   isOwnProfile: boolean;
   onBack: () => void;
   onUserClick?: (userId: string) => void;
+  onNavigateToChat?: (conversation: any) => void;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack, onUserClick }) => {
+export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, onBack, onUserClick, onNavigateToChat }) => {
   const { user: currentUser, setAuth, token } = useAuthStore();
-  const { setSelectedChat, setViewMode } = useChatStore();
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [bio, setBio] = useState('');
@@ -118,8 +118,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const handleMessage = async () => {
     try {
       const conversation = await dmService.getOrCreateDM(userId);
-      setSelectedChat(conversation);
-      setViewMode('chats');
+      if (onNavigateToChat) {
+        onNavigateToChat(conversation);
+      }
       onBack(); // Close the profile view
     } catch (error) {
       console.error('Failed to open DM:', error);

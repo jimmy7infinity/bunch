@@ -280,6 +280,11 @@ export const userService = {
     const response = await api.post(`/users/${userId}/ban`, { reason, permanent });
     return response.data;
   },
+
+  async deleteAccount() {
+    const response = await api.delete('/users/me');
+    return response.data;
+  },
 };
 
 export const friendService = {

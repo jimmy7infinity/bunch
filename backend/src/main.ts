@@ -76,9 +76,9 @@ async function bootstrap() {
     }),
   );
 
-  // API prefix (exclude legal pages from prefix)
+  // API prefix (exclude legal pages and static HTML from prefix)
   app.setGlobalPrefix(process.env.API_PREFIX || 'api', {
-    exclude: ['privacy', 'terms', 'health', '/'],
+    exclude: ['privacy', 'terms', 'health', '/', 'wallet-auth.html', 'auth-success.html'],
   });
 
   const port = process.env.PORT || 3000;

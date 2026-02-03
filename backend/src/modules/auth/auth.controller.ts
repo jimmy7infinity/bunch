@@ -4,20 +4,43 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WalletLoginDto } from './dto/wallet-login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
+import { join } from 'path';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('wallet')
-  async walletLogin(@Body() loginDto: WalletLoginDto) {
-    const user = await this.authService.validateWalletSignature(
-      loginDto.wallet_address,
-      loginDto.signature,
-      loginDto.message,
-    );
+  // Wallet auth page (opens in browser window)
+  @Get('wallet')
+  async walletAuthPage(@Res() res: Response) {
+    // Serve the wallet auth HTML page
+    res.sendFile(join(process.cwd(), 'public', 'wallet-auth.html'));
+  }
 
-    return this.authService.login(user);
+  // SIWE nonce generation
+  @Post('siwe/nonce')
+  async getSIWENonce(@Body() body: { address: string }) {
+    const nonce = await this.authService.generateSIWENonce(body.address);
+    return { nonce };
+  }
+
+  // SIWE signature verification
+  @Post('siwe/verify')
+  async verifySIWE(@Body() body: { address: string; signature: string; message: string; nonce: string }, @Res() res: Response) {
+    try {
+      const user = await this.authService.verifySIWE(body.address, body.signature, body.message, body.nonce);
+      const authResult = await this.authService.login(user);
+      
+      // Get extension ID from environment or request
+      const extensionId = process.env.EXTENSION_ID || 'your-extension-id';
+      const redirectUrl = `https://${extensionId}.chromiumapp.org/auth?token=${authResult.access_token}`;
+      
+      console.log('✅ SIWE verification successful, redirecting to:', redirectUrl);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('❌ SIWE verification failed:', error);
+      res.status(401).json({ error: 'Verification failed', message: error.message });
+    }
   }
 
   @UseGuards(JwtAuthGuard)

@@ -51,6 +51,8 @@ export const ChatRoom = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
   const chatType = conversation.type;
   const onlineCount = conversation.participant_count || 0;
@@ -224,6 +226,7 @@ export const ChatRoom = ({
           messages: response.data,
         });
         setStoreMessages(response.data || []);
+        setHasMoreMessages(response.has_more || false);
         
         // Scroll to bottom after messages are loaded
         setTimeout(() => {
@@ -349,6 +352,43 @@ export const ChatRoom = ({
     setParticipants(Array.from(uniqueUsers.values()));
   }, [storeMessages, conversation._id]); // Depend on store messages and conversation ID, not the filtered array
   
+  // Load more messages (infinite scroll pagination)
+  const loadMoreMessages = async () => {
+    if (isLoadingMoreMessages || !hasMoreMessages) return;
+    
+    setIsLoadingMoreMessages(true);
+    try {
+      // Get the oldest message's timestamp as the "before" parameter
+      const oldestMessage = conversationMessages[conversationMessages.length - 1];
+      if (!oldestMessage) {
+        setHasMoreMessages(false);
+        return;
+      }
+      
+      const response = await messageService.getMessages(
+        conversation._id, 
+        50, 
+        oldestMessage.created_at
+      );
+      
+      console.log('[ChatRoom] Loaded more messages:', {
+        count: response.data?.length || 0,
+        hasMore: response.has_more,
+      });
+      
+      // Append older messages to the end of the array (they're older)
+      if (response.data && response.data.length > 0) {
+        setStoreMessages([...storeMessages, ...response.data]);
+      }
+      
+      setHasMoreMessages(response.has_more || false);
+    } catch (error) {
+      console.error('[ChatRoom] Failed to load more messages:', error);
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  };
+  
   // Auto-scroll to bottom only when appropriate (new messages, not reactions/deletes)
   useEffect(() => {
     if (!chatWindowRef.current || conversationMessages.length === 0) return;
@@ -362,6 +402,33 @@ export const ChatRoom = ({
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
   }, [conversationMessages.length]); // Only trigger on message count change, not on every update
+  
+  // Scroll handler for infinite scroll (load more when scrolling to top)
+  useEffect(() => {
+    const chatWindow = chatWindowRef.current;
+    if (!chatWindow) return;
+    
+    const handleScroll = () => {
+      // If user scrolls within 200px of the top, load more messages
+      if (chatWindow.scrollTop < 200 && hasMoreMessages && !isLoadingMoreMessages) {
+        const previousScrollHeight = chatWindow.scrollHeight;
+        const previousScrollTop = chatWindow.scrollTop;
+        
+        loadMoreMessages().then(() => {
+          // Maintain scroll position after loading older messages
+          setTimeout(() => {
+            if (chatWindow) {
+              const newScrollHeight = chatWindow.scrollHeight;
+              chatWindow.scrollTop = previousScrollTop + (newScrollHeight - previousScrollHeight);
+            }
+          }, 0);
+        });
+      }
+    };
+    
+    chatWindow.addEventListener('scroll', handleScroll);
+    return () => chatWindow.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMessages, isLoadingMoreMessages, conversationMessages.length]);
   
   // Close menus when clicking outside
   useEffect(() => {
@@ -1007,7 +1074,7 @@ export const ChatRoom = ({
         {/* Center: Chat Name */}
         <h1 
           style={{
-            fontSize: chatName.length > 20 ? '13px' : '15px',
+            fontSize: chatName.length > 40 ? '11px' : (chatName.length > 20 ? '13px' : '15px'),
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
             WebkitBackgroundClip: 'text',
@@ -1017,7 +1084,13 @@ export const ChatRoom = ({
             maxWidth: 'calc(100% - 300px)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            whiteSpace: 'normal',
+            textAlign: 'center',
+            lineHeight: '1.3',
+            maxHeight: '2.6em',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
             margin: 0,
           }}
         >
@@ -1295,6 +1368,25 @@ export const ChatRoom = ({
             minHeight: '100%',
             justifyContent: 'flex-end',
           }}>
+            {/* Loading More Indicator (at top when scrolling up) */}
+            {isLoadingMoreMessages && (
+              <div style={{
+                width: '100%',
+                padding: '10px 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#606060',
+                }}>
+                  Loading older messages...
+                </div>
+              </div>
+            )}
+            
             {isLoadingMessages ? (
               /* Loading State */
               <div style={{
@@ -1761,9 +1853,10 @@ export const ChatRoom = ({
                                   <div 
                                     ref={reactionPickerRef}
                                     style={{
-                                      position: 'absolute',
-                                      bottom: '25px',
-                                      right: '0',
+                                      position: 'fixed',
+                                      bottom: '80px',
+                                      right: isOwnMessage ? '120px' : 'auto',
+                                      left: isOwnMessage ? 'auto' : '120px',
                                       backgroundColor: '#19191A',
                                       border: '1px solid transparent',
                                       backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
@@ -1773,7 +1866,7 @@ export const ChatRoom = ({
                                       padding: '8px',
                                       display: 'flex',
                                       gap: '8px',
-                                      zIndex: 100,
+                                      zIndex: 1000,
                                       boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                     }}>
                                     {reactionEmojis.map(emoji => (
@@ -1832,9 +1925,10 @@ export const ChatRoom = ({
                                   <div 
                                     ref={reactionPickerRef}
                                     style={{
-                                      position: 'absolute',
-                                      bottom: '25px',
-                                      left: '0',
+                                      position: 'fixed',
+                                      bottom: '80px',
+                                      right: isOwnMessage ? 'auto' : '120px',
+                                      left: isOwnMessage ? '120px' : 'auto',
                                       backgroundColor: '#19191A',
                                       border: '1px solid transparent',
                                       backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
@@ -1844,7 +1938,7 @@ export const ChatRoom = ({
                                       padding: '8px',
                                       display: 'flex',
                                       gap: '8px',
-                                      zIndex: 100,
+                                      zIndex: 1000,
                                       boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.04), 10px 10px 20px rgba(0, 0, 0, 0.25)',
                                     }}>
                                     {reactionEmojis.map(emoji => (

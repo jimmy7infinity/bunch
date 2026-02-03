@@ -173,6 +173,26 @@ export class UsersService {
     return this.userModel.findOne({ username }).exec();
   }
 
+  async findOrCreateByWallet(wallet_address: string): Promise<User> {
+    let user = await this.userModel.findOne({ 
+      wallet_address: wallet_address.toLowerCase() 
+    }).exec();
+    
+    if (!user) {
+      const username = `user_${wallet_address.slice(0, 8)}`;
+      user = new this.userModel({
+        wallet_address: wallet_address.toLowerCase(),
+        username,
+        display_name: username,
+        wallet_verified: true,
+        is_online: true,
+      });
+      await user.save();
+    }
+    
+    return user;
+  }
+
   async createDevUser(username: string, walletAddress: string): Promise<User> {
     const user = new this.userModel({
       wallet_address: walletAddress.toLowerCase(),
@@ -323,6 +343,27 @@ export class UsersService {
   async removeFriend(userId: string, friendId: string): Promise<void> {
     const [user1, user2] = [userId, friendId].sort();
     await this.friendshipModel.deleteOne({ user1_id: user1, user2_id: user2 }).exec();
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    // Delete all related data
+    await Promise.all([
+      // Delete friendships where user is involved
+      this.friendshipModel.deleteMany({
+        $or: [{ user1_id: userId }, { user2_id: userId }]
+      }).exec(),
+      // Delete friend requests
+      this.friendRequestModel.deleteMany({
+        $or: [{ sender_id: userId }, { receiver_id: userId }]
+      }).exec(),
+      // Delete blocks
+      this.blockModel.deleteMany({
+        $or: [{ blocker_id: userId }, { blocked_id: userId }]
+      }).exec(),
+    ]);
+    
+    // Finally, delete the user
+    await this.userModel.findByIdAndDelete(userId).exec();
   }
 
   async areFriends(user1Id: string, user2Id: string): Promise<boolean> {

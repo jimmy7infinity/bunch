@@ -6,11 +6,89 @@ import { TwitterOAuthService } from './twitter-oauth.service';
 
 @Injectable()
 export class AuthService {
+  private nonceStore: Map<string, { nonce: string; timestamp: number }> = new Map();
+  
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
     private twitterOAuthService: TwitterOAuthService,
-  ) {}
+  ) {
+    // Clean up expired nonces every 5 minutes
+    setInterval(() => this.cleanupExpiredNonces(), 5 * 60 * 1000);
+  }
+
+  private cleanupExpiredNonces() {
+    const now = Date.now();
+    const expiryTime = 10 * 60 * 1000; // 10 minutes
+    
+    for (const [address, data] of this.nonceStore.entries()) {
+      if (now - data.timestamp > expiryTime) {
+        this.nonceStore.delete(address);
+      }
+    }
+  }
+
+  async generateSIWENonce(address: string): Promise<string> {
+    // Generate cryptographically secure random nonce
+    const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Store nonce with timestamp
+    this.nonceStore.set(address.toLowerCase(), {
+      nonce,
+      timestamp: Date.now(),
+    });
+    
+    return nonce;
+  }
+
+  async verifySIWE(
+    address: string,
+    signature: string,
+    message: string,
+    nonce: string,
+  ): Promise<any> {
+    try {
+      const addressLower = address.toLowerCase();
+      
+      // Verify nonce exists and is valid
+      const storedData = this.nonceStore.get(addressLower);
+      if (!storedData) {
+        throw new UnauthorizedException('Invalid or expired nonce');
+      }
+      
+      if (storedData.nonce !== nonce) {
+        throw new UnauthorizedException('Nonce mismatch');
+      }
+      
+      // Check nonce expiry (10 minutes)
+      const now = Date.now();
+      if (now - storedData.timestamp > 10 * 60 * 1000) {
+        this.nonceStore.delete(addressLower);
+        throw new UnauthorizedException('Nonce expired');
+      }
+      
+      // Verify the signature
+      const recoveredAddress = ethers.verifyMessage(message, signature);
+      
+      if (recoveredAddress.toLowerCase() !== addressLower) {
+        throw new UnauthorizedException('Invalid signature');
+      }
+      
+      // Delete used nonce (one-time use)
+      this.nonceStore.delete(addressLower);
+      
+      // Find or create user by wallet address
+      const user = await this.usersService.findOrCreateByWallet(addressLower);
+      
+      // Update last seen
+      await this.usersService.updateLastSeen((user as any)._id.toString());
+      
+      return user;
+    } catch (error) {
+      console.error('SIWE verification error:', error);
+      throw new UnauthorizedException(error.message || 'Signature verification failed');
+    }
+  }
 
   async validateWalletSignature(
     wallet_address: string,
