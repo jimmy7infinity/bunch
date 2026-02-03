@@ -68,10 +68,11 @@
 
 .beta-subtitle {
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   color: #707070;
   line-height: 1.5;
   white-space: nowrap;
+  text-align: center;
 }
 
 .beta-form {
