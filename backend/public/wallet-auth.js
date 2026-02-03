@@ -133,14 +133,26 @@ async function connectWallet() {
                 window.location.href = location;
             }, 500);
         } else if (verifyResponse.ok) {
-            // Success response
+            // Success response with redirect URL
             const result = await verifyResponse.json();
             console.log('✅ Verification result:', result);
-            setStatus('✅ Authentication successful!', 'info');
-            setButtonState(true, 'Success!');
             
-            // Close window after success
-            setTimeout(() => window.close(), 1500);
+            if (result.redirect) {
+                // Backend provided redirect URL
+                console.log('🔀 Redirecting to:', result.redirect);
+                setStatus('✅ Authentication successful! Redirecting...', 'info');
+                setButtonState(true, 'Success!');
+                
+                // Navigate to extension auth page
+                setTimeout(() => {
+                    window.location.href = result.redirect;
+                }, 500);
+            } else {
+                // No redirect, just close
+                setStatus('✅ Authentication successful!', 'info');
+                setButtonState(true, 'Success!');
+                setTimeout(() => window.close(), 1500);
+            }
         } else {
             const error = await verifyResponse.text();
             throw new Error('Verification failed: ' + error);
