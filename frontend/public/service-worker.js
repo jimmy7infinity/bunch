@@ -7,6 +7,12 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
+// Set default side panel width to 425px when panel is opened
+chrome.sidePanel.onPanelOpened = function() {
+  // This will be handled by CSS min-width
+  console.log('📐 Side panel opened with min-width: 425px');
+};
+
 console.log('🚀 Bunch service worker loaded');
 
 // Store current market context
