@@ -421,24 +421,29 @@ export class PolymarketService {
       // Also update display info if user doesn't have it yet
       const user = await this.userModel.findById(userId);
       if (user) {
-        // Update display_name if it's just the default wallet username
-        if (!user.display_name || user.display_name.startsWith('user_0x')) {
+        // Update display_name if it's just the default wallet username (user_<hexchars>)
+        if (!user.display_name || user.display_name.startsWith('user_')) {
           updateData.display_name = profile.username;
+          console.log('Updating display_name to:', profile.username);
         }
         
-        // Update username if it's just the default wallet username
-        if (!user.username || user.username.startsWith('user_0x')) {
-          updateData.username = profile.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        // Update username if it's just the default wallet username (user_<hexchars>)
+        if (!user.username || user.username.startsWith('user_')) {
+          const sanitizedUsername = profile.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          updateData.username = sanitizedUsername;
+          console.log('Updating username to:', sanitizedUsername);
         }
         
         // Update avatar if they don't have one and Polymarket has one
         if (!user.avatar_url && profile.avatarUrl) {
           updateData.avatar_url = profile.avatarUrl;
+          console.log('Updating avatar_url to:', profile.avatarUrl);
         }
         
         // Update bio if they don't have one
         if (!user.bio && profile.bio) {
           updateData.bio = profile.bio;
+          console.log('Updating bio to:', profile.bio);
         }
       }
       
