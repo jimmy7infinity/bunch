@@ -90,6 +90,11 @@ export const adminApi = {
     return response.data;
   },
 
+  async unbanUser(id: string) {
+    const response = await api.post(`/admin/users/${id}/unban`);
+    return response.data;
+  },
+
   async muteUser(id: string, duration: number) {
     const response = await api.post(`/admin/users/${id}/mute`, { duration });
     return response.data;
@@ -117,5 +122,8 @@ export const adminApi = {
     return response.data;
   },
 };
+
+// Export named 'api' for compatibility
+export { adminApi as api };
 
 export default api;
