@@ -50,29 +50,44 @@ export class AuthService {
     try {
       const addressLower = address.toLowerCase();
       
+      console.log('🔍 Verifying SIWE for address:', addressLower);
+      console.log('📋 Message to verify:', message);
+      console.log('✍️ Signature:', signature.slice(0, 20) + '...');
+      console.log('🔢 Nonce:', nonce);
+      
       // Verify nonce exists and is valid
       const storedData = this.nonceStore.get(addressLower);
       if (!storedData) {
+        console.error('❌ Nonce not found for address:', addressLower);
         throw new UnauthorizedException('Invalid or expired nonce');
       }
       
       if (storedData.nonce !== nonce) {
+        console.error('❌ Nonce mismatch. Expected:', storedData.nonce, 'Got:', nonce);
         throw new UnauthorizedException('Nonce mismatch');
       }
       
       // Check nonce expiry (10 minutes)
       const now = Date.now();
       if (now - storedData.timestamp > 10 * 60 * 1000) {
+        console.error('❌ Nonce expired');
         this.nonceStore.delete(addressLower);
         throw new UnauthorizedException('Nonce expired');
       }
       
+      console.log('✅ Nonce validated');
+      
       // Verify the signature
+      console.log('🔐 Verifying signature with ethers.verifyMessage...');
       const recoveredAddress = ethers.verifyMessage(message, signature);
+      console.log('📋 Recovered address:', recoveredAddress);
       
       if (recoveredAddress.toLowerCase() !== addressLower) {
+        console.error('❌ Address mismatch. Expected:', addressLower, 'Got:', recoveredAddress.toLowerCase());
         throw new UnauthorizedException('Invalid signature');
       }
+      
+      console.log('✅ Signature verified successfully');
       
       // Delete used nonce (one-time use)
       this.nonceStore.delete(addressLower);
@@ -85,7 +100,7 @@ export class AuthService {
       
       return user;
     } catch (error) {
-      console.error('SIWE verification error:', error);
+      console.error('❌ SIWE verification error:', error);
       throw new UnauthorizedException(error.message || 'Signature verification failed');
     }
   }

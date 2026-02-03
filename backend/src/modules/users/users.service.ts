@@ -222,7 +222,7 @@ export class UsersService {
     return user;
   }
 
-  async linkWalletToAccount(userId: string, walletAddress: string): Promise<User> {
+  async linkWalletToAccount(userId: string, walletAddress: string, autoMerge: boolean = false): Promise<User> {
     const walletLower = walletAddress.toLowerCase();
     
     // Check if wallet is already linked to another account
@@ -232,7 +232,35 @@ export class UsersService {
     }).exec();
     
     if (existingWalletUser) {
-      throw new ConflictException('This wallet is already linked to another account');
+      if (autoMerge) {
+        // Merge accounts: Keep current account, add wallet from other account
+        console.log(`🔀 Auto-merging wallet account ${existingWalletUser._id} into ${userId}`);
+        
+        const currentUser = await this.userModel.findById(userId).exec();
+        if (!currentUser) {
+          throw new NotFoundException('Current user not found');
+        }
+        
+        // Transfer wallet to current account
+        currentUser.wallet_address = walletLower;
+        currentUser.wallet_verified = true;
+        
+        // If current account doesn't have Polymarket but wallet account does, transfer it
+        if (existingWalletUser.polymarket?.verified && !currentUser.polymarket?.verified) {
+          currentUser.polymarket = existingWalletUser.polymarket;
+        }
+        
+        await currentUser.save();
+        
+        // TODO: Transfer other data (messages, friends, etc.) from old account to new one
+        // For now, just delete the old account
+        await this.userModel.findByIdAndDelete(existingWalletUser._id).exec();
+        
+        console.log('✅ Accounts merged successfully');
+        return currentUser;
+      } else {
+        throw new ConflictException('This wallet is already linked to another account. Set autoMerge=true to merge accounts.');
+      }
     }
     
     // Link wallet to current account

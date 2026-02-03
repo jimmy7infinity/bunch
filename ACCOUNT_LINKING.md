@@ -254,11 +254,13 @@ Clicking "Connect" opens OAuth/Wallet flow in popup window.
 4. Sign message in MetaMask
 5. ✅ Wallet should show as connected
 
-### Test 3: Prevent Duplicate Linking
-1. User A logs in with wallet 0x123
-2. User B logs in with Twitter
-3. User B tries to link wallet 0x123
-4. ✅ Should show error: "Wallet already linked to another account"
+### Test 3: Smart Account Merging
+1. User creates account with wallet 0x123
+2. User logs out, logs in with Twitter (creates new account)
+3. User tries to link wallet 0x123
+4. ✅ System detects wallet belongs to another account
+5. ✅ Offers to merge accounts (keeping Twitter as primary)
+6. ✅ After merge: One account with both Twitter + Wallet
 
 ### Test 4: Prevent Lockout
 1. User logs in with Twitter only
