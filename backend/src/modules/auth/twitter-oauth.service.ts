@@ -117,7 +117,7 @@ export class TwitterOAuthService {
         'Authorization': `Bearer ${access_token}`,
       },
       params: {
-        'user.fields': 'id,name,username,profile_image_url',
+        'user.fields': 'id,name,username,profile_image_url,description',
       },
     });
 

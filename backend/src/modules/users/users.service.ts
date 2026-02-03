@@ -29,6 +29,7 @@ export class UsersService {
       username,
       display_name: twitterProfile.name || username,
       avatar_url: highQualityAvatar,
+      bio: twitterProfile.description || undefined,
       is_online: true,
       last_seen_at: new Date(),
     });
@@ -66,6 +67,7 @@ export class UsersService {
         display_name: twitterProfile.name || user.username,
         twitter_avatar: highQualityAvatar,
         avatar_url: highQualityAvatar,
+        bio: twitterProfile.description || user.bio,
         is_online: true,
         last_seen_at: new Date(),
       }).exec();
