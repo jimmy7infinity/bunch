@@ -76,6 +76,18 @@ export const authService = {
     const response = await api.get('/auth/me');
     return response.data;
   },
+
+  async getBetaStatus() {
+    const response = await api.get<{ betaAccess: boolean; requiresActivation: boolean }>('/auth/beta-status');
+    return response.data;
+  },
+};
+
+export const activateBeta = async (code: string) => {
+  const response = await api.post<{ success: boolean; message: string; betaAccess: boolean }>('/auth/activate-beta', {
+    code,
+  });
+  return response.data;
 };
 
 export const messageService = {

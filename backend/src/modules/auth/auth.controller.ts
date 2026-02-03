@@ -1,14 +1,22 @@
 import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException, Req, Res, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WalletLoginDto } from './dto/wallet-login.dto';
+import { ActivateBetaDto } from '../invite-codes/dto/activate-beta.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { join } from 'path';
+import { InviteCodesService } from '../invite-codes/invite-codes.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private inviteCodesService: InviteCodesService,
+    private usersService: UsersService,
+  ) {}
 
   // Wallet auth page (opens in browser window)
   @Get('wallet')
@@ -193,6 +201,43 @@ export class AuthController {
       console.error('❌ Twitter callback error:', error);
       res.status(500).json({ error: 'Authentication failed', details: error.message });
     }
+  }
+
+  // Beta activation endpoint
+  @Post('activate-beta')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 attempts per hour
+  async activateBeta(@Body() dto: ActivateBetaDto, @Request() req: any) {
+    try {
+      // Validate and use the invite code
+      const inviteCode = await this.inviteCodesService.validateAndUse(
+        dto.code,
+        req.user.userId,
+      );
+
+      // Grant beta access to the user
+      await this.usersService.grantBetaAccess(req.user.userId);
+
+      return {
+        success: true,
+        message: 'Beta access activated! Welcome to Bunch 🚀',
+        betaAccess: true,
+      };
+    } catch (error) {
+      throw new UnauthorizedException(error.message || 'Invalid invite code');
+    }
+  }
+
+  // Check beta status
+  @Get('beta-status')
+  @UseGuards(JwtAuthGuard)
+  async getBetaStatus(@Request() req: any) {
+    const user = await this.usersService.findById(req.user.userId);
+    
+    return {
+      betaAccess: user.betaAccess || false,
+      requiresActivation: !user.betaAccess,
+    };
   }
 }
 

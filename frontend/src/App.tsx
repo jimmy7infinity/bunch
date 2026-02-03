@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from './stores/authStore';
 import { useNotificationStore } from './stores/notificationStore';
 import { WalletConnect } from './components/auth/WalletConnect';
+import { BetaActivation } from './components/auth/BetaActivation';
 import { ChatsList } from './components/chat/ChatsList';
 import { NotificationBanner } from './components/common/NotificationBanner';
 import { initializeMarketDetection } from './services/marketDetection';
+import { authService } from './services/api';
 
 function App() {
-  const { isAuthenticated, setAuth } = useAuthStore();
+  const { isAuthenticated, setAuth, logout } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [requiresBetaActivation, setRequiresBetaActivation] = useState(false);
 
   useEffect(() => {
     // Check if we're returning from OAuth callback
@@ -101,12 +104,36 @@ function App() {
     }
   }, [setAuth]);
 
-  // Initialize market detection when authenticated
+  // Check beta status when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      initializeMarketDetection();
+      checkBetaStatus();
     }
   }, [isAuthenticated]);
+
+  const checkBetaStatus = async () => {
+    try {
+      const status = await authService.getBetaStatus();
+      setRequiresBetaActivation(status.requiresActivation);
+      
+      // Only initialize market detection if beta access is granted
+      if (status.betaAccess) {
+        initializeMarketDetection();
+      }
+    } catch (error) {
+      console.error('Failed to check beta status:', error);
+    }
+  };
+
+  const handleBetaActivationSuccess = () => {
+    setRequiresBetaActivation(false);
+    initializeMarketDetection();
+    addNotification({
+      type: 'success',
+      title: 'Welcome!',
+      message: 'Beta access activated successfully 🚀',
+    });
+  };
 
   // Listen for WebSocket notifications
   useEffect(() => {
@@ -184,7 +211,16 @@ function App() {
   return (
     <>
       {isAuthenticated && <NotificationBanner />}
-      {isAuthenticated ? <ChatsList /> : <WalletConnect />}
+      {!isAuthenticated ? (
+        <WalletConnect />
+      ) : requiresBetaActivation ? (
+        <BetaActivation 
+          onSuccess={handleBetaActivationSuccess}
+          onLogout={logout}
+        />
+      ) : (
+        <ChatsList />
+      )}
     </>
   );
 }

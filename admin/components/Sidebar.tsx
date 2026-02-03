@@ -11,7 +11,8 @@ import {
   Megaphone,
   MessagesSquare,
   UserCircle,
-  LogOut
+  LogOut,
+  Ticket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Reports', href: '/reports', icon: AlertTriangle },
   { name: 'Chatrooms', href: '/chatrooms', icon: MessagesSquare },
+  { name: 'Invite Codes', href: '/invite-codes', icon: Ticket },
   { name: 'Actions', href: '/actions', icon: Megaphone },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];

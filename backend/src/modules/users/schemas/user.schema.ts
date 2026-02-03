@@ -78,6 +78,9 @@ export class User {
 
   @Prop({ default: true })
   is_online: boolean;
+
+  @Prop({ default: false })
+  betaAccess: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

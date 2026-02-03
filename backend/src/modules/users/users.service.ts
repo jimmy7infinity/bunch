@@ -710,6 +710,23 @@ export class UsersService {
       banned_until: null,
     }).exec();
   }
+
+  /**
+   * Grant beta access to a user
+   */
+  async grantBetaAccess(userId: string): Promise<User> {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { betaAccess: true },
+      { new: true }
+    ).exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
 }
 
 

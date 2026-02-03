@@ -12,12 +12,14 @@ import { BannedUserGuard } from './guards/banned-user.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { UsersModule } from '../users/users.module';
 import { PolymarketModule } from '../polymarket/polymarket.module';
+import { InviteCodesModule } from '../invite-codes/invite-codes.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 
 @Module({
   imports: [
     UsersModule,
     forwardRef(() => PolymarketModule),
+    InviteCodesModule,
     PassportModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },

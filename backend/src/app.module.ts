@@ -11,6 +11,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { MediaModule } from './modules/media/media.module';
 import { PolymarketModule } from './modules/polymarket/polymarket.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { InviteCodesModule } from './modules/invite-codes/invite-codes.module';
 import { Conversation, ConversationSchema } from './modules/chat/schemas/conversation.schema';
 
 @Module({
@@ -51,6 +52,7 @@ import { Conversation, ConversationSchema } from './modules/chat/schemas/convers
     MediaModule,
     PolymarketModule,
     AdminModule,
+    InviteCodesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
