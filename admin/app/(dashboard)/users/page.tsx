@@ -1,53 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { adminApi } from '@/lib/api';
 import { User, Message } from '@/types';
-import { Search, Ban, Volume2, Trash2, X } from 'lucide-react';
+import { Search, Ban, Volume2, Trash2, X, Loader2 } from 'lucide-react';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const [messageLimit, setMessageLimit] = useState(100);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
+  const PAGE_SIZE = 50;
+
+  // Infinite scroll observer
   useEffect(() => {
-    if (showAll) {
-      loadAllUsers();
-    }
-  }, [showAll]);
+    if (!observerTarget.current || !hasMore || loading || searchQuery) return;
 
-  const loadAllUsers = async () => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreUsers();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, users.length, searchQuery]);
+
+  const loadMoreUsers = async () => {
+    if (!hasMore || loadingMore) return;
+
     try {
-      setLoading(true);
-      // Search with a common character to get many users
-      const data = await adminApi.searchUsers('a', 100);
-      setAllUsers(data.users.sort((a: any, b: any) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ));
+      setLoadingMore(true);
+      // Search with common character to get many users
+      const data = await adminApi.searchUsers('', PAGE_SIZE + (page * PAGE_SIZE));
+      const newUsers = data.users
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(page * PAGE_SIZE);
+      
+      setUsers(prev => [...prev, ...newUsers]);
+      setPage(p => p + 1);
+      setHasMore(newUsers.length === PAGE_SIZE);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('Failed to load more users:', error);
     } finally {
-      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      // Reset to show all with pagination
+      setUsers([]);
+      setPage(0);
+      setHasMore(true);
+      loadMoreUsers();
+      return;
+    }
 
     try {
       setLoading(true);
-      const data = await adminApi.searchUsers(searchQuery);
+      setPage(0);
+      setHasMore(false); // Disable infinite scroll for search results
+      const data = await adminApi.searchUsers(searchQuery, 200);
       setUsers(data.users.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ));
-      setShowAll(false);
     } catch (error) {
       console.error('Failed to search users:', error);
     } finally {
@@ -81,7 +110,6 @@ export default function UsersPage() {
       alert('User banned successfully');
       const updateUserStatus = (u: User) => u._id === userId ? { ...u, status: 'banned' as const } : u;
       setUsers(users.map(updateUserStatus));
-      setAllUsers(allUsers.map(updateUserStatus));
       if (selectedUser?.user._id === userId) {
         setSelectedUser({ ...selectedUser, user: { ...selectedUser.user, status: 'banned' } });
       }
@@ -116,7 +144,7 @@ export default function UsersPage() {
     }
   };
 
-  const displayUsers = showAll ? allUsers : users;
+  const displayUsers = users;
 
   return (
     <div className="space-y-6">
@@ -140,15 +168,21 @@ export default function UsersPage() {
             />
             <Button onClick={handleSearch} disabled={loading}>
               <Search className="h-4 w-4 mr-2" />
-              Search
+              {searchQuery ? 'Search' : 'Show All'}
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowAll(!showAll)}
-              disabled={loading}
-            >
-              {showAll ? 'Hide All' : 'Show All'}
-            </Button>
+            {searchQuery && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSearchQuery('');
+                  setUsers([]);
+                  setPage(0);
+                  setHasMore(true);
+                }}
+              >
+                Clear
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -157,15 +191,17 @@ export default function UsersPage() {
         <Card className="border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle>
-              {showAll ? `All Users (${displayUsers.length})` : `Search Results (${displayUsers.length})`}
+              {searchQuery ? `Search Results (${displayUsers.length})` : `Users (${displayUsers.length}${hasMore ? '+' : ''})`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
             ) : displayUsers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                {showAll ? 'No users found' : 'Search for users to see results'}
+                Click "Show All" to load users, or search for specific users
               </div>
             ) : (
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
@@ -204,6 +240,24 @@ export default function UsersPage() {
                     </div>
                   </div>
                 ))}
+                
+                {/* Load more indicator */}
+                {!searchQuery && hasMore && (
+                  <div ref={observerTarget} className="flex justify-center py-4">
+                    {loadingMore && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="text-sm">Loading more users...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!searchQuery && !hasMore && displayUsers.length > PAGE_SIZE && (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    All users loaded
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
