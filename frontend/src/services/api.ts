@@ -210,9 +210,31 @@ export const roomService = {
     return response.data.conversation;
   },
 
-  async getRoomMembers(roomId: string) {
-    const response = await api.get<{ participants: ChatRoomMember[] }>(`/conversations/${roomId}/participants`);
-    return response.data.participants;
+  async getRoomMembers(roomId: string, offset: number = 0, limit: number = 0) {
+    const params: any = {};
+    if (limit > 0) {
+      params.offset = offset;
+      params.limit = limit;
+    }
+    
+    const response = await api.get(`/conversations/${roomId}/participants`, { params });
+    
+    // Handle both paginated and non-paginated responses
+    if (limit > 0 && response.data.participants && response.data.totalCount !== undefined) {
+      return {
+        participants: response.data.participants,
+        totalCount: response.data.totalCount,
+        hasMore: response.data.hasMore,
+      };
+    }
+    
+    // Backward compatibility: return just the array with mock pagination data
+    const participants = response.data.participants || response.data;
+    return {
+      participants,
+      totalCount: participants.length,
+      hasMore: false,
+    };
   },
 
   async createPrivateRoom(name: string, memberIds: string[]) {

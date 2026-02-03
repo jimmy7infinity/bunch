@@ -432,11 +432,33 @@ export class ChatService {
   /**
    * Get participants of a conversation
    */
-  async getParticipants(conversationId: string) {
-    return this.participantModel
+  async getParticipants(conversationId: string, offset: number = 0, limit: number = 0) {
+    const query = this.participantModel
       .find({ conversation_id: new Types.ObjectId(conversationId) })
-      .populate('user_id', 'username display_name avatar_url is_online')
-      .exec();
+      .populate('user_id', 'username display_name avatar_url is_online rank')
+      .sort({ joined_at: -1 });
+
+    // If limit is 0, return all (backward compatibility)
+    if (limit > 0) {
+      query.skip(offset).limit(limit);
+    }
+
+    const participants = await query.exec();
+
+    // If pagination is used, also return total count and hasMore
+    if (limit > 0) {
+      const totalCount = await this.participantModel
+        .countDocuments({ conversation_id: new Types.ObjectId(conversationId) });
+      
+      return {
+        participants,
+        totalCount,
+        hasMore: offset + participants.length < totalCount,
+      };
+    }
+
+    // Backward compatibility: return just the array
+    return participants;
   }
 
   /**

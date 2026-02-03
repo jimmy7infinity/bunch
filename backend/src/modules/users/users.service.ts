@@ -549,7 +549,7 @@ export class UsersService {
       .exec();
   }
 
-  async getFriends(userId: string): Promise<User[]> {
+  async getFriends(userId: string, offset: number = 0, limit: number = 0): Promise<User[] | { friends: User[], totalCount: number, hasMore: boolean }> {
     const friendships = await this.friendshipModel
       .find({
         $or: [{ user1_id: userId }, { user2_id: userId }],
@@ -560,7 +560,25 @@ export class UsersService {
       f.user1_id.toString() === userId ? f.user2_id : f.user1_id,
     );
 
-    return this.userModel.find({ _id: { $in: friendIds } }).exec();
+    // If limit is 0, return all (backward compatibility)
+    if (limit === 0) {
+      return this.userModel.find({ _id: { $in: friendIds } }).exec();
+    }
+
+    // Paginated response
+    const friends = await this.userModel
+      .find({ _id: { $in: friendIds } })
+      .skip(offset)
+      .limit(limit)
+      .exec();
+
+    const totalCount = friendIds.length;
+
+    return {
+      friends,
+      totalCount,
+      hasMore: offset + friends.length < totalCount,
+    };
   }
 
   async removeFriend(userId: string, friendId: string): Promise<void> {

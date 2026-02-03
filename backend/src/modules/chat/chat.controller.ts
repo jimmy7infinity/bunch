@@ -139,11 +139,25 @@ export class ChatController {
 
   /**
    * Get participants of a conversation
+   * Supports pagination: ?offset=0&limit=50
    */
   @Get(':id/participants')
-  async getParticipants(@Param('id') id: string) {
-    const participants = await this.chatService.getParticipants(id);
-    return { participants };
+  async getParticipants(
+    @Param('id') id: string,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const offsetNum = offset ? parseInt(offset, 10) : 0;
+    const limitNum = limit ? parseInt(limit, 10) : 0;
+    
+    const result = await this.chatService.getParticipants(id, offsetNum, limitNum);
+    
+    // Handle both paginated and non-paginated responses
+    if (limitNum > 0 && typeof result === 'object' && 'participants' in result) {
+      return result; // Return full pagination object
+    }
+    
+    return { participants: result }; // Backward compatibility
   }
 
   /**

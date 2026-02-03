@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Request, Inject, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, Query, UseGuards, Request, Inject, BadRequestException, ConflictException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Server } from 'socket.io';
@@ -122,9 +122,22 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('friends')
-  async getFriends(@Request() req: any) {
-    const friends = await this.usersService.getFriends(req.user.userId);
-    return { friends };
+  async getFriends(
+    @Request() req: any,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const offsetNum = offset ? parseInt(offset, 10) : 0;
+    const limitNum = limit ? parseInt(limit, 10) : 0;
+    
+    const result = await this.usersService.getFriends(req.user.userId, offsetNum, limitNum);
+    
+    // Handle both paginated and non-paginated responses
+    if (limitNum > 0 && typeof result === 'object' && 'friends' in result) {
+      return result; // Return full pagination object
+    }
+    
+    return { friends: result }; // Backward compatibility
   }
 
   @UseGuards(JwtAuthGuard)

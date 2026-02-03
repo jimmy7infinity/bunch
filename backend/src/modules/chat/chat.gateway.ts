@@ -142,8 +142,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Join socket room
       client.join(`conversation:${conversationId}`);
 
-      // Get participants
-      const participants = await this.chatService.getParticipants(conversationId);
+      // Get participants (no pagination for gateway)
+      const participantsResult = await this.chatService.getParticipants(conversationId);
+      const participants = Array.isArray(participantsResult) ? participantsResult : participantsResult.participants;
 
       // Broadcast user joined
       this.server.to(`conversation:${conversationId}`).emit('room:user_joined', {
@@ -154,7 +155,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return {
         success: true,
         conversation,
-        participants: participants.map(p => p.user_id),
+        participants: participants.map((p: any) => p.user_id),
       };
     } catch (error) {
       console.error('Join room error:', error);
@@ -324,8 +325,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           
           // Only send notifications for DM conversations
           if (conversation && conversation.type === 'dm') {
-            // Get all participants except the sender
-            const participants = await this.chatService.getParticipants(conversationId);
+            // Get all participants except the sender (no pagination for gateway)
+            const participantsResult = await this.chatService.getParticipants(conversationId);
+            const participants = Array.isArray(participantsResult) ? participantsResult : participantsResult.participants;
             const sender = populatedMessage.sender_id as any;
             
             for (const participant of participants) {
