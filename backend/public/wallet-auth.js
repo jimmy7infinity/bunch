@@ -88,45 +88,49 @@ async function connectWallet() {
         console.log('✅ Got signature:', signature.slice(0, 20) + '...');
         setStatus('Verifying signature...', 'info');
         
-        // Log what we're about to send
-        console.log('📤 Data being sent to backend:');
-        console.log('  Address:', userAddress);
-        console.log('  Signature:', signature);
-        console.log('  Message:', message);
-        console.log('  Message length:', message.length);
-        console.log('  Message bytes:', new TextEncoder().encode(message).length);
-        console.log('  Nonce:', nonce);
+        // Send to backend for verification
+        const verifyUrl = `${API_URL}/auth/siwe/verify${redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
+        console.log('📡 Verifying at:', verifyUrl);
         
-        // Create a form to POST to the verify endpoint
-        // This allows the backend to do a proper server-side redirect
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `${API_URL}/auth/siwe/verify${redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
+        const verifyResponse = await fetch(verifyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                address: userAddress,
+                signature: signature,
+                message: message,
+                nonce: nonce
+            }),
+            redirect: 'manual' // Don't follow redirects automatically
+        });
         
-        // Add form fields
-        const fields = {
-            address: userAddress,
-            signature: signature,
-            message: message,
-            nonce: nonce
-        };
+        console.log('📥 Verify response status:', verifyResponse.status);
+        console.log('📥 Response type:', verifyResponse.type);
         
-        for (const [key, value] of Object.entries(fields)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            form.appendChild(input);
+        if (verifyResponse.type === 'opaqueredirect' || verifyResponse.status === 0) {
+            // Redirect was initiated - manually follow it
+            const location = verifyResponse.headers.get('Location') || redirectUri + '?token=' + 'check';
+            console.log('🔀 Redirect detected, navigating to extension...');
+            setStatus('✅ Authentication successful! Redirecting...', 'info');
+            setButtonState(true, 'Success!');
+            
+            // Give user feedback before redirect
+            setTimeout(() => {
+                window.location.href = location;
+            }, 500);
+        } else if (verifyResponse.ok) {
+            // Success response
+            const result = await verifyResponse.json();
+            console.log('✅ Verification result:', result);
+            setStatus('✅ Authentication successful!', 'info');
+            setButtonState(true, 'Success!');
+            
+            // Close window after success
+            setTimeout(() => window.close(), 1500);
+        } else {
+            const error = await verifyResponse.text();
+            throw new Error('Verification failed: ' + error);
         }
-        
-        console.log('📡 Submitting form to:', form.action);
-        console.log('📡 Form fields:', Array.from(form.elements).map(el => ({ name: el.name, valueLength: el.value?.length })));
-        document.body.appendChild(form);
-        form.submit();
-        
-        // Note: The page will navigate away after form submission
-        setStatus('✅ Authentication successful! Redirecting...', 'info');
-        setButtonState(true, 'Success!');
         
     } catch (error) {
         console.error('❌ Wallet auth error:', error);

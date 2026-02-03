@@ -48,10 +48,16 @@ export class AuthController {
       // Check if redirect_uri is provided (for extension flow)
       if (redirectUri && redirectUri.includes('.chromiumapp.org')) {
         const redirectUrl = `${redirectUri}?token=${authResult.access_token}`;
-        console.log('📦 Extension flow, redirecting to:', redirectUrl);
-        res.redirect(redirectUrl);
+        console.log('📦 Extension flow, returning redirect URL');
+        
+        // Return JSON with redirect URL so frontend can handle navigation
+        res.json({
+          success: true,
+          redirect: redirectUrl,
+          token: authResult.access_token
+        });
       } else {
-        // Fallback: use auth-success.html page with postMessage
+        // Fallback: use auth-success.html page
         const backendUrl = process.env.NODE_ENV === 'production' 
           ? 'https://bunch.up.railway.app'
           : 'http://localhost:3000';
