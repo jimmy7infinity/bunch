@@ -69,13 +69,21 @@ function App() {
                 'Authorization': `Bearer ${result.authToken}`,
               },
             })
-              .then(res => res.json())
+              .then(res => {
+                console.log('📥 /auth/me response status:', res.status);
+                if (!res.ok) {
+                  throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+              })
               .then(userData => {
+                console.log('✅ User data received:', userData);
                 setAuth(userData, result.authToken);
                 setIsCheckingAuth(false);
               })
               .catch(error => {
                 console.error('Failed to fetch user data:', error);
+                console.error('Error details:', error.message);
                 setIsCheckingAuth(false);
               });
           } else {
