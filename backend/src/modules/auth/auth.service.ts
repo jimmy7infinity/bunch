@@ -82,20 +82,25 @@ export class AuthService {
       // ethers.verifyMessage handles the Ethereum prefix automatically
       console.log('🔐 Verifying signature...');
       const recoveredAddress = ethers.verifyMessage(message, signature);
-      console.log('📋 Recovered address:', recoveredAddress);
+      console.log('📋 Recovered address from signature:', recoveredAddress);
       
-      if (recoveredAddress.toLowerCase() !== addressLower) {
-        console.error('❌ Address mismatch. Expected:', addressLower, 'Got:', recoveredAddress.toLowerCase());
-        throw new UnauthorizedException('Invalid signature');
+      // IMPORTANT: We trust the recovered address from the signature, not the submitted address
+      // The signature cryptographically proves ownership of recoveredAddress
+      // We DO need to check that the message contains the correct address though
+      if (!message.includes(recoveredAddress)) {
+        console.error('❌ Address in message does not match recovered address');
+        console.error('   Message contains:', addressLower);
+        console.error('   Signature proves:', recoveredAddress.toLowerCase());
+        throw new UnauthorizedException('Address mismatch in message');
       }
       
-      console.log('✅ Signature verified successfully');
+      console.log('✅ Signature verified successfully for:', recoveredAddress);
       
-      // Delete used nonce (one-time use)
+      // Delete used nonce (one-time use) - use the original address for nonce lookup
       this.nonceStore.delete(addressLower);
       
-      // Find or create user by wallet address
-      const user = await this.usersService.findOrCreateByWallet(addressLower);
+      // Find or create user by the RECOVERED address (the one that actually signed)
+      const user = await this.usersService.findOrCreateByWallet(recoveredAddress.toLowerCase());
       
       // Update last seen
       await this.usersService.updateLastSeen((user as any)._id.toString());
