@@ -82,7 +82,14 @@ async function connectWallet() {
         console.log('✅ Got signature:', signature.slice(0, 20) + '...');
         setStatus('Verifying signature...', 'info');
         
-        setStatus('Verifying signature...', 'info');
+        // Log what we're about to send
+        console.log('📤 Data being sent to backend:');
+        console.log('  Address:', userAddress);
+        console.log('  Signature:', signature);
+        console.log('  Message:', message);
+        console.log('  Message length:', message.length);
+        console.log('  Message bytes:', new TextEncoder().encode(message).length);
+        console.log('  Nonce:', nonce);
         
         // Create a form to POST to the verify endpoint
         // This allows the backend to do a proper server-side redirect
@@ -107,6 +114,7 @@ async function connectWallet() {
         }
         
         console.log('📡 Submitting form to:', form.action);
+        console.log('📡 Form fields:', Array.from(form.elements).map(el => ({ name: el.name, valueLength: el.value?.length })));
         document.body.appendChild(form);
         form.submit();
         
