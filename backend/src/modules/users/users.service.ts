@@ -209,17 +209,25 @@ export class UsersService {
     }
     
     // No existing account found - create new wallet-only account
-    const username = `user_${wallet_address.slice(0, 8)}`;
+    const username = `user_${wallet_address.slice(2, 10)}`; // Skip 0x prefix
+    
+    console.log(`🆕 Creating new wallet-only account for ${walletLower}`);
+    
     user = new this.userModel({
       wallet_address: walletLower,
       username,
       display_name: username,
       wallet_verified: true,
       is_online: true,
+      rank: 'RECRUIT',
+      status: 'active',
+      role: 'user',
     });
-    await user.save();
     
-    return user;
+    const savedUser = await user.save();
+    console.log(`✅ Wallet user created:`, savedUser._id);
+    
+    return savedUser;
   }
 
   async linkWalletToAccount(userId: string, walletAddress: string, autoMerge: boolean = false): Promise<User> {

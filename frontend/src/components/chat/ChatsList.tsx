@@ -42,6 +42,7 @@ export const ChatsList = () => {
           setAuth(freshUser, token);
         } catch (error) {
           console.error('Failed to refresh user data:', error);
+          console.error('Error details:', error?.response?.data || error?.message || error);
         }
       }
     };
@@ -77,6 +78,7 @@ export const ChatsList = () => {
         setChats(rooms);
       } catch (error) {
         console.error('Failed to load chats:', error);
+        console.error('Error details:', error?.response?.data || error?.message || error);
       } finally {
         setIsLoading(false);
       }
