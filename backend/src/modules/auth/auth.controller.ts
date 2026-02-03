@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException, Req, Res, Query } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -16,6 +17,7 @@ export class AuthController {
     private authService: AuthService,
     private inviteCodesService: InviteCodesService,
     private usersService: UsersService,
+    private configService: ConfigService,
   ) {}
 
   // Wallet auth page (opens in browser window)
@@ -233,6 +235,25 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getBetaStatus(@Request() req: any) {
     const user = await this.usersService.findById(req.user.userId);
+    
+    // Check if BETA_MODE is enabled
+    const betaMode = this.configService.get<string>('BETA_MODE') === 'true';
+    
+    // If beta mode is disabled, everyone has access
+    if (!betaMode) {
+      return {
+        betaAccess: true,
+        requiresActivation: false,
+      };
+    }
+    
+    // Admins, moderators, and creators always have access (exempt from beta gating)
+    if (user.role === 'admin' || user.role === 'moderator' || user.rank === 'CREATOR') {
+      return {
+        betaAccess: true,
+        requiresActivation: false,
+      };
+    }
     
     return {
       betaAccess: user.betaAccess || false,
