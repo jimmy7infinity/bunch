@@ -63,7 +63,8 @@ export default function ChatroomsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedConv) {
+    if (selectedConv?._id) {
+      console.log('Selected conversation:', selectedConv);
       setMessages([]);
       setHasMore(true);
       loadMessages(selectedConv._id, true);
@@ -124,6 +125,10 @@ export default function ChatroomsPage() {
 
   const loadMessages = async (convId: string, reset: boolean = false) => {
     if (typeof window === 'undefined') return; // Skip during SSR
+    if (!convId) {
+      console.error('Invalid conversation ID:', convId);
+      return;
+    }
     
     try {
       if (reset) {
@@ -139,6 +144,8 @@ export default function ChatroomsPage() {
       if (oldestMessage?.created_at) {
         params.before = oldestMessage.created_at;
       }
+      
+      console.log('Loading messages for conversation:', convId);
       
       const res = await axios.get(
         `${API_URL}/conversations/${convId}/messages`,
