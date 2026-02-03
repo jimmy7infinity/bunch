@@ -11,6 +11,7 @@ export interface User {
   rank?: string;
   bio?: string;
   is_online?: boolean;
+  status?: 'active' | 'banned' | 'suspended' | 'deleted';
   polymarket?: {
     verified: boolean;
     username?: string;

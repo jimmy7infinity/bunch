@@ -24,7 +24,9 @@ export const MessageItem = ({ message, onReact, isOwnMessage }: MessageItemProps
         {/* Sender info */}
         {!isOwnMessage && (
           <div className="text-xs text-muted-foreground mb-1 px-2">
-            {message.sender_id.display_name || message.sender_id.username}
+            {message.sender_id.status === 'deleted' 
+              ? 'Deleted Account' 
+              : (message.sender_id.display_name || message.sender_id.username)}
           </div>
         )}
 

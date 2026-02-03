@@ -531,7 +531,22 @@ export class UsersService {
   }
 
   async deleteAccount(userId: string): Promise<void> {
-    // Delete all related data
+    console.log('🗑️ Soft deleting account:', userId);
+    
+    // Soft delete: Mark user as deleted but keep in database
+    await this.userModel.findByIdAndUpdate(userId, {
+      status: 'deleted',
+      deleted_at: new Date(),
+      is_online: false,
+      // Clear sensitive data but keep for admin reference
+      display_name: 'Deleted Account',
+      bio: null,
+      avatar_url: null,
+      // Keep username for message history but mark it
+      // Messages will show as from "Deleted Account" in the UI
+    }).exec();
+    
+    // Clean up relationships (friendships, requests, blocks)
     await Promise.all([
       // Delete friendships where user is involved
       this.friendshipModel.deleteMany({
@@ -539,7 +554,7 @@ export class UsersService {
       }).exec(),
       // Delete friend requests
       this.friendRequestModel.deleteMany({
-        $or: [{ sender_id: userId }, { receiver_id: userId }]
+        $or: [{ from_user_id: userId }, { to_user_id: userId }]
       }).exec(),
       // Delete blocks
       this.blockModel.deleteMany({
@@ -547,8 +562,7 @@ export class UsersService {
       }).exec(),
     ]);
     
-    // Finally, delete the user
-    await this.userModel.findByIdAndDelete(userId).exec();
+    console.log('✅ Account soft deleted successfully');
   }
 
   async areFriends(user1Id: string, user2Id: string): Promise<boolean> {

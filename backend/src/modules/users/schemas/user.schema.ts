@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
-export type UserStatus = 'active' | 'banned' | 'suspended';
+export type UserStatus = 'active' | 'banned' | 'suspended' | 'deleted';
 export type UserRole = 'user' | 'moderator' | 'admin';
 
 @Schema({ timestamps: true })
@@ -52,7 +52,7 @@ export class User {
   @Prop({ default: 'RECRUIT' })
   rank?: string;
 
-  @Prop({ enum: ['active', 'banned', 'suspended'], default: 'active' })
+  @Prop({ enum: ['active', 'banned', 'suspended', 'deleted'], default: 'active' })
   status: UserStatus;
 
   @Prop({ enum: ['user', 'moderator', 'admin'], default: 'user' })
@@ -66,6 +66,9 @@ export class User {
 
   @Prop()
   suspended_until?: Date;
+
+  @Prop()
+  deleted_at?: Date;
 
   @Prop({ default: Date.now })
   created_at: Date;

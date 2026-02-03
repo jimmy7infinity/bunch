@@ -33,6 +33,10 @@ export class BannedUserGuard implements CanActivate {
       throw new ForbiddenException('Your account is temporarily suspended');
     }
 
+    if (user.status === 'deleted') {
+      throw new ForbiddenException('This account has been deleted');
+    }
+
     return true;
   }
 }

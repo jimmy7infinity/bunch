@@ -40,6 +40,19 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.reload();
     }
+    
+    // Check if account is deleted or banned
+    if (error.response?.status === 403) {
+      const message = error.response?.data?.message || '';
+      if (message.includes('deleted') || message.includes('banned')) {
+        console.log('🚫 Account deleted or banned, logging out');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // Redirect to login page
+        window.location.href = '/';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
