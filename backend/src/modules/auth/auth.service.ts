@@ -79,8 +79,30 @@ export class AuthService {
       
       // Verify the signature
       console.log('🔐 Verifying signature with ethers.verifyMessage...');
-      const recoveredAddress = ethers.verifyMessage(message, signature);
-      console.log('📋 Recovered address:', recoveredAddress);
+      console.log('🔐 Message type:', typeof message);
+      console.log('🔐 Message preview:', message.substring(0, 100));
+      console.log('🔐 Signature type:', typeof signature);
+      console.log('🔐 Signature preview:', signature.substring(0, 20));
+      
+      // Try to recover address using ethers.verifyMessage
+      // This handles the Ethereum message prefix automatically
+      let recoveredAddress;
+      try {
+        recoveredAddress = ethers.verifyMessage(message, signature);
+        console.log('📋 Recovered address (verifyMessage):', recoveredAddress);
+      } catch (error) {
+        console.error('❌ verifyMessage failed:', error.message);
+        
+        // Try alternative: maybe message needs to be bytes
+        try {
+          const messageBytes = ethers.toUtf8Bytes(message);
+          recoveredAddress = ethers.verifyMessage(messageBytes, signature);
+          console.log('📋 Recovered address (with bytes):', recoveredAddress);
+        } catch (error2) {
+          console.error('❌ bytes approach also failed:', error2.message);
+          throw new UnauthorizedException('Could not verify signature');
+        }
+      }
       
       if (recoveredAddress.toLowerCase() !== addressLower) {
         console.error('❌ Address mismatch. Expected:', addressLower, 'Got:', recoveredAddress.toLowerCase());
