@@ -337,6 +337,7 @@ export class PolymarketService {
     bio?: string;
     avatarUrl?: string;
     walletAddress: string;
+    xUsername?: string;
   } | null> {
     try {
       console.log('🔍 Fetching Polymarket profile for wallet:', walletAddress);
@@ -367,13 +368,14 @@ export class PolymarketService {
       // - pseudonym: auto-generated pseudonym
       // - profileImage: URL to profile image
       // - bio: profile bio
-      // - xUsername: Twitter username
+      // - xUsername: Twitter username (if linked)
       const username = data.name || data.pseudonym;
       
       console.log('Profile summary:', {
         name: data.name,
         pseudonym: data.pseudonym,
         username: username,
+        xUsername: data.xUsername,
         hasAvatar: !!data.profileImage,
         hasBio: !!data.bio,
         avatarUrl: data.profileImage,
@@ -384,6 +386,7 @@ export class PolymarketService {
         username: username || undefined,
         bio: data.bio || undefined,
         avatarUrl: data.profileImage || undefined,
+        xUsername: data.xUsername || undefined,
         walletAddress: walletAddress.toLowerCase(),
       };
     } catch (error) {
