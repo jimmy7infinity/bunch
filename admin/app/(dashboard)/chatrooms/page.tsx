@@ -229,16 +229,17 @@ export default function ChatroomsPage() {
                         </div>
                         
                         {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                          <div className="flex gap-1 mt-1 ml-2">
+                          <div className="flex flex-wrap gap-1 mt-2 ml-2">
                             {Object.entries(msg.reactions)
                               .filter(([emoji, userIds]) => userIds.length > 0)
                               .map(([emoji, userIds]) => (
                                 <button
                                   key={emoji}
                                   onClick={() => handleReact(msg._id, emoji)}
-                                  className="text-xs bg-[var(--color-secondary)] px-2 py-1 rounded-full hover:bg-[var(--color-accent)] transition-colors"
+                                  className="inline-flex items-center gap-1 text-xs bg-[var(--color-secondary)] px-2 py-1 rounded-full hover:bg-[var(--color-accent)] transition-colors border border-[var(--color-border)]"
                                 >
-                                  {emoji} {userIds.length}
+                                  <span className="text-sm">{emoji}</span>
+                                  <span className="font-medium">{userIds.length}</span>
                                 </button>
                               ))}
                           </div>

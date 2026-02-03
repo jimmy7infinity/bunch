@@ -28,7 +28,7 @@ export default function UsersPage() {
       setLoading(true);
       // Search with a common character to get many users
       const data = await adminApi.searchUsers('a', 100);
-      setAllUsers(data.users.sort((a, b) => 
+      setAllUsers(data.users.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ));
     } catch (error) {
@@ -44,7 +44,7 @@ export default function UsersPage() {
     try {
       setLoading(true);
       const data = await adminApi.searchUsers(searchQuery);
-      setUsers(data.users.sort((a, b) => 
+      setUsers(data.users.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ));
       setShowAll(false);
