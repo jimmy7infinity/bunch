@@ -134,14 +134,17 @@ export default function ChatroomsPage() {
 
       const oldestMessage = reset ? null : messages[0]; // Load from top
       const token = localStorage.getItem('admin_token');
+      
+      const params: any = { limit: PAGE_SIZE };
+      if (oldestMessage?.created_at) {
+        params.before = oldestMessage.created_at;
+      }
+      
       const res = await axios.get(
         `${API_URL}/conversations/${convId}/messages`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: {
-            limit: PAGE_SIZE,
-            before: oldestMessage?.created_at
-          }
+          params
         }
       );
 
