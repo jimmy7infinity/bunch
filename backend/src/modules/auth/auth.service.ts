@@ -108,24 +108,41 @@ export class AuthService {
       
       // Auto-verify Polymarket account if they have one
       // This fetches their Polymarket profile and populates username, avatar, bio
+      console.log('🔍 Checking Polymarket auto-verification status for user:', userId);
+      console.log('Current polymarket.verified status:', user.polymarket?.verified);
+      
       if (!user.polymarket?.verified) {
-        console.log('🔄 Attempting Polymarket auto-verification...');
+        console.log('🔄 Attempting Polymarket auto-verification for wallet:', recoveredAddress.toLowerCase());
         try {
           const verified = await this.polymarketService.autoVerifyFromWallet(
             userId,
             recoveredAddress.toLowerCase()
           );
+          console.log('Polymarket auto-verification result:', verified);
+          
           if (verified) {
-            console.log('✅ Polymarket account auto-verified');
+            console.log('✅ Polymarket account auto-verified, refetching user data...');
             // Refetch user to get updated data
-            return await this.usersService.findById(userId);
+            const updatedUser = await this.usersService.findById(userId);
+            console.log('Updated user data:', {
+              username: updatedUser.username,
+              display_name: updatedUser.display_name,
+              avatar_url: updatedUser.avatar_url,
+              bio: updatedUser.bio,
+              polymarket_verified: updatedUser.polymarket?.verified,
+              polymarket_username: updatedUser.polymarket?.username,
+            });
+            return updatedUser;
           } else {
             console.log('ℹ️ No Polymarket account found for wallet');
           }
         } catch (error) {
           console.error('⚠️ Polymarket auto-verification failed:', error);
+          console.error('Error details:', error.stack);
           // Continue with login even if auto-verification fails
         }
+      } else {
+        console.log('ℹ️ User already has verified Polymarket account, skipping auto-verification');
       }
       
       return user;
