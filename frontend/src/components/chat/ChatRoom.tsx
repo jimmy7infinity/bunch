@@ -537,7 +537,11 @@ export const ChatRoom = ({
     // Rate limiting check
     if (!messageSendLimiter.canProceed()) {
       const timeUntil = messageSendLimiter.getTimeUntilReset();
-      addNotification(`Slow down! You can send another message in ${formatTimeRemaining(timeUntil)}.`, 'warning');
+      addNotification({
+        type: 'system',
+        title: 'Rate Limit',
+        message: `Slow down! You can send another message in ${formatTimeRemaining(timeUntil)}.`,
+      });
       return;
     }
     
