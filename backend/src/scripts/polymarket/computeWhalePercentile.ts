@@ -47,31 +47,42 @@ export async function isUserWhale(
       const markets = event.markets || [];
       console.log(`📊 Found ${markets.length} markets within event`);
       
-      // Check user's positions across all markets in this event
-      let totalSizeUSD = 0;
-      let hasAnyPosition = false;
+      // Check user's positions across all markets in this event (in parallel for speed)
+      console.log(`⚡ Fetching positions for ${markets.length} markets in parallel...`);
       
-      for (const market of markets) {
+      const positionPromises = markets.map(async (market: any) => {
         const conditionId = market.conditionId;
         
-        // Query user's position for this specific market
-        const posUrl = `https://data-api.polymarket.com/positions?user=${normalizedWallet}&market=${conditionId}&sizeThreshold=0.01&limit=100&sortBy=TOKENS&sortDirection=DESC`;
-        const posResponse = await fetch(posUrl);
-        
-        if (!posResponse.ok) {
-          continue; // Skip this market if API call fails
-        }
-        
-        const positions = await posResponse.json();
-        
-        if (positions.length > 0) {
-          hasAnyPosition = true;
-          // Sum up all positions in this market
-          for (const pos of positions) {
-            totalSizeUSD += pos.currentValue || 0;
+        try {
+          // Query user's position for this specific market
+          const posUrl = `https://data-api.polymarket.com/positions?user=${normalizedWallet}&market=${conditionId}&sizeThreshold=0.01&limit=100&sortBy=TOKENS&sortDirection=DESC`;
+          const posResponse = await fetch(posUrl);
+          
+          if (!posResponse.ok) {
+            return 0; // Return 0 if API call fails
           }
+          
+          const positions = await posResponse.json();
+          
+          // Sum up all positions in this market
+          let marketTotal = 0;
+          for (const pos of positions) {
+            marketTotal += pos.currentValue || 0;
+          }
+          
+          return marketTotal;
+        } catch (error) {
+          console.error(`⚠️ Error fetching position for market ${conditionId.slice(0, 10)}...:`, error.message);
+          return 0;
         }
-      }
+      });
+      
+      // Wait for all position fetches to complete
+      const marketTotals = await Promise.all(positionPromises);
+      const totalSizeUSD = marketTotals.reduce((sum, val) => sum + val, 0);
+      const hasAnyPosition = totalSizeUSD > 0;
+      
+      console.log(`✅ Fetched positions from ${markets.length} markets, total: $${totalSizeUSD.toFixed(2)}`);
       
       if (!hasAnyPosition) {
         console.log('❌ No positions found in any market within this event');
