@@ -8,53 +8,125 @@
 import { fetchMarketPositions } from './fetchMarketPositions';
 
 /**
- * Check if a user's wallet is a whale in a specific market
+ * Check if a user has a position in a market (and their size)
+ * Note: Whale detection is disabled because Polymarket API doesn't support fetching all positions
  * 
- * @param marketId - Market ID to check
+ * @param marketId - Market ID or event slug to check
  * @param userWallet - User's wallet address
- * @returns { isWhale: boolean, rank: number, total: number, sizeUSD: number } or null if no position
+ * @returns { isWhale: false, rank: 0, total: 0, sizeUSD: number } or null if no position
  */
 export async function isUserWhale(
   marketId: string,
   userWallet: string
 ): Promise<{ isWhale: boolean; rank: number; total: number; sizeUSD: number } | null> {
-  console.log(`Checking whale status for wallet ${userWallet.slice(0, 8)}...`);
+  console.log(`Checking position for wallet ${userWallet.slice(0, 8)}... in market ${marketId.slice(0, 30)}...`);
 
-  // Fetch all positions for this market (sorted descending by size)
-  const allPositions = await fetchMarketPositions(marketId);
-
-  if (allPositions.length === 0) {
-    console.log(`✗ No positions found for market`);
-    return null;
-  }
-
-  // Find user's position in the sorted list
   const normalizedWallet = userWallet.toLowerCase();
-  const userIndex = allPositions.findIndex(p => p.wallet === normalizedWallet);
-
-  if (userIndex === -1) {
-    console.log(`✗ User has no position in this market`);
-    return null;
+  
+  // Check if marketId is an event slug (doesn't start with 0x) vs a conditionId
+  const isEventSlug = !marketId.startsWith('0x');
+  
+  if (isEventSlug) {
+    console.log(`📍 Detected event slug, checking all markets within event...`);
+    
+    try {
+      // Fetch the event from Gamma API to get all constituent markets
+      const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${marketId}`);
+      if (!eventResponse.ok) {
+        console.error('❌ Failed to fetch event from Gamma API:', eventResponse.status);
+        return null;
+      }
+      
+      const events = await eventResponse.json();
+      if (!events || events.length === 0) {
+        console.log('❌ Event not found:', marketId);
+        return null;
+      }
+      
+      const event = events[0];
+      const markets = event.markets || [];
+      console.log(`📊 Found ${markets.length} markets within event`);
+      
+      // Check user's positions across all markets in this event
+      let totalSizeUSD = 0;
+      let hasAnyPosition = false;
+      
+      for (const market of markets) {
+        const conditionId = market.conditionId;
+        
+        // Query user's position for this specific market
+        const posUrl = `https://data-api.polymarket.com/positions?user=${normalizedWallet}&market=${conditionId}&sizeThreshold=0.01&limit=100&sortBy=TOKENS&sortDirection=DESC`;
+        const posResponse = await fetch(posUrl);
+        
+        if (!posResponse.ok) {
+          continue; // Skip this market if API call fails
+        }
+        
+        const positions = await posResponse.json();
+        
+        if (positions.length > 0) {
+          hasAnyPosition = true;
+          // Sum up all positions in this market
+          for (const pos of positions) {
+            totalSizeUSD += pos.currentValue || 0;
+          }
+        }
+      }
+      
+      if (!hasAnyPosition) {
+        console.log('❌ No positions found in any market within this event');
+        return null;
+      }
+      
+      console.log(`✅ User has position(s) worth $${totalSizeUSD.toFixed(2)} across event markets`);
+      
+      return {
+        isWhale: false, // Whale detection disabled
+        rank: 0,
+        total: 0,
+        sizeUSD: totalSizeUSD,
+      };
+    } catch (error) {
+      console.error('❌ Error checking event positions:', error);
+      return null;
+    }
   }
 
-  const userPosition = allPositions[userIndex];
-  const rank = userIndex + 1; // 1-indexed rank
-  const total = allPositions.length;
-
-  // Calculate whale threshold (top 10%)
-  const whaleThreshold = Math.max(1, Math.floor(total * 0.1));
-  const isWhale = userIndex < whaleThreshold;
-
-  console.log(`✓ User rank: ${rank}/${total} (${isWhale ? '🐳 WHALE' : '⚡ position'})`);
-  console.log(`  Position size: $${userPosition.sizeUSD.toFixed(2)}`);
-  console.log(`  Whale threshold: top ${whaleThreshold} positions`);
-
-  return {
-    isWhale,
-    rank,
-    total,
-    sizeUSD: userPosition.sizeUSD,
-  };
+  // Direct conditionId - query normally
+  try {
+    const posUrl = `https://data-api.polymarket.com/positions?user=${normalizedWallet}&market=${marketId}&sizeThreshold=0.01&limit=100&sortBy=TOKENS&sortDirection=DESC`;
+    const posResponse = await fetch(posUrl);
+    
+    if (!posResponse.ok) {
+      console.error('❌ Failed to fetch positions:', posResponse.status);
+      return null;
+    }
+    
+    const positions = await posResponse.json();
+    
+    if (positions.length === 0) {
+      console.log('❌ No position found for this market');
+      return null;
+    }
+    
+    // Sum up all positions
+    let totalSizeUSD = 0;
+    for (const pos of positions) {
+      totalSizeUSD += pos.currentValue || 0;
+    }
+    
+    console.log(`✅ User has position worth $${totalSizeUSD.toFixed(2)}`);
+    
+    return {
+      isWhale: false, // Whale detection disabled
+      rank: 0,
+      total: 0,
+      sizeUSD: totalSizeUSD,
+    };
+  } catch (error) {
+    console.error('❌ Error checking position:', error);
+    return null;
+  }
 }
 
 /**
