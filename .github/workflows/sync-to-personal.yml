@@ -15,9 +15,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
+      - name: Remove workflow file (can't sync without workflow scope)
+        run: |
+          rm -rf .github/workflows/sync-to-personal.yml
+          
       - name: Push to personal repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add personal https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/jimmy7infinity/bunch.git
+          git add -A
+          git commit -m "Sync from org repo (workflow excluded)" --allow-empty
           git push personal main --force
