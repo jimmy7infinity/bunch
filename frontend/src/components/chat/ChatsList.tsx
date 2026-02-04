@@ -502,22 +502,6 @@ export const ChatsList = () => {
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
           )}
-          <span 
-            style={{
-              fontSize: '15px',
-              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              fontWeight: '400',
-            }}
-          >
-            {activeChatCategory === 'global' && 'General Chats'}
-            {activeChatCategory === 'market' && 'Prediction Chats'}
-            {activeChatCategory === 'private' && 'Private Chats'}
-            {activeChatCategory === 'favorites' && 'Favorites'}
-          </span>
           {activeChatCategory === 'private' && (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -535,6 +519,22 @@ export const ChatsList = () => {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
           )}
+          <span 
+            style={{
+              fontSize: '15px',
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              background: 'linear-gradient(135deg, #C0C0C0, #CBCBCB)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: '400',
+            }}
+          >
+            {activeChatCategory === 'global' && 'General Chats'}
+            {activeChatCategory === 'market' && 'Prediction Chats'}
+            {activeChatCategory === 'private' && 'Private Chats'}
+            {activeChatCategory === 'favorites' && 'Favorites'}
+          </span>
         </div>
 
         {/* USER INFO - Right Side */}
