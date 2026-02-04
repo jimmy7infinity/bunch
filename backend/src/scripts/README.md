@@ -1,6 +1,6 @@
-# Grex Backend Scripts
+# Bunch Backend Scripts
 
-This directory contains all backend scripts for Grex, organized by function.
+This directory contains all backend scripts for Bunch, organized by function.
 
 ## 📁 Directory Structure
 

@@ -10,9 +10,9 @@
 
 ---
 
-## 🚀 What is Grex?
+## 🚀 What is Bunch?
 
-Grex (Latin for "flock") brings real-time chat to Polymarket, the world's largest prediction market. Connect with traders, discuss predictions, and share insights in dedicated chat rooms for every market.
+Bunch brings real-time chat to Polymarket, the world's largest prediction market. Connect with traders, discuss predictions, and share insights in dedicated chat rooms for every market.
 
 ### Key Features
 
@@ -29,7 +29,7 @@ Grex (Latin for "flock") brings real-time chat to Polymarket, the world's larges
 ## 📦 Project Structure
 
 ```
-grex/
+bunch/
 ├── frontend/          # React + TypeScript Chrome Extension
 │   ├── src/
 │   │   ├── components/   # UI components
@@ -137,7 +137,7 @@ grex/
 
 5. **Visit Polymarket**
    - Go to https://polymarket.com
-   - Click the Grex extension icon
+   - Click the Bunch extension icon
    - Login with Twitter/X
    - Start chatting!
 
@@ -156,7 +156,7 @@ grex/
 - Content moderation
 - Rate limiting
 - Security hardening
-- Complete rebrand to Grex
+- Complete rebrand to Bunch
 
 ### ⚠️ In Progress (85%)
 - Logo creation (pending)
@@ -208,10 +208,10 @@ Built by traders, for traders.
 
 ## 📞 Support
 
-For support, email: support@grex.chat (coming soon)
+For support, email: support@bunch.chat (coming soon)
 
 ---
 
-**Grex - Where Traders Talk** 🚀
+**Bunch - Where Traders Talk** 🚀
 
 *Last Updated: January 16, 2026*
