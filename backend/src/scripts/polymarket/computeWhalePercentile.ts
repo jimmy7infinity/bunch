@@ -78,6 +78,13 @@ export async function isUserWhale(
         return null;
       }
       
+      // Minimum position threshold: $10 to filter out dust/test positions
+      const MIN_POSITION_USD = 10;
+      if (totalSizeUSD < MIN_POSITION_USD) {
+        console.log(`❌ Position too small ($${totalSizeUSD.toFixed(2)} < $${MIN_POSITION_USD}), filtering out`);
+        return null;
+      }
+      
       console.log(`✅ User has position(s) worth $${totalSizeUSD.toFixed(2)} across event markets`);
       
       return {
@@ -113,6 +120,13 @@ export async function isUserWhale(
     let totalSizeUSD = 0;
     for (const pos of positions) {
       totalSizeUSD += pos.currentValue || 0;
+    }
+    
+    // Minimum position threshold: $10 to filter out dust/test positions
+    const MIN_POSITION_USD = 10;
+    if (totalSizeUSD < MIN_POSITION_USD) {
+      console.log(`❌ Position too small ($${totalSizeUSD.toFixed(2)} < $${MIN_POSITION_USD}), filtering out`);
+      return null;
     }
     
     console.log(`✅ User has position worth $${totalSizeUSD.toFixed(2)}`);
