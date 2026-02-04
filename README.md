@@ -77,22 +77,14 @@ bunch/
 
 ## 📚 Documentation
 
-- [Migration Guide](./MIGRATION_GUIDE.md) - Moving to new GitHub organization
 - [Privacy Policy](./PRIVACY_POLICY.md)
 - [Terms of Service](./TERMS_OF_SERVICE.md)
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- MongoDB
-- Chrome browser
+## 🚀 Get Started
 
 Install Bunch from the [Chrome Web Store](https://chromewebstore.google.com/detail/bunch/gnpefmfnagkjjmpmcnfpnimicggkcgna).
-
-For local development setup, see the frontend and backend README files.
 
 ---
 
@@ -112,11 +104,13 @@ For local development setup, see the frontend and backend README files.
 - Rate limiting & security
 - Beta access system with invite codes
 
-### 📅 Roadmap
-- **v0.2.0:** Notifications, mentions, message reactions
-- **v0.3.0:** Voice messages, polls, thread replies
-- **v0.4.0:** Mobile companion app
-- **v1.0.0:** Public launch
+### 📅 Coming Soon
+- Personal performance metrics & trading stats
+- AI-powered market insights
+- Thread replies & message reactions
+- Polls & community predictions
+- Enhanced rank system
+- Mobile companion app
 
 ---
 
