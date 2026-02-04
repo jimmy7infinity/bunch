@@ -455,7 +455,7 @@ export const ChatsList = () => {
         >
           {/* Logo */}
           <img 
-            src="/logo.png" 
+            src="/logo2.png" 
             alt="Bunch"
             style={{
               width: '30px',
