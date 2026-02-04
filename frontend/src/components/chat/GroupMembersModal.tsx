@@ -8,6 +8,9 @@ interface GroupMembersModalProps {
   onClose: () => void;
   chatName: string;
   conversationId: string;
+  conversationType?: string;
+  marketPositions?: Record<string, 'yes' | 'no'>;
+  whales?: Record<string, boolean>;
   onMemberClick: (userId: string) => void;
 }
 
@@ -16,6 +19,9 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
   onClose,
   chatName,
   conversationId,
+  conversationType,
+  marketPositions = {},
+  whales = {},
   onMemberClick,
 }) => {
   const [members, setMembers] = useState<any[]>([]);
@@ -281,8 +287,39 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                           fontSize: '13px',
                           color: '#D3D3D3',
                           marginBottom: '3px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
                         }}>
                           {user.display_name || user.username}
+                          {/* Market position status icon (⚡ or 🐳) - only in market chats */}
+                          {conversationType === 'market' && (() => {
+                            const userId = user._id || user.id;
+                            const hasPosition = marketPositions[userId];
+                            const isWhale = whales[userId];
+                            
+                            if (isWhale) {
+                              return <span style={{ fontSize: '10px' }} title="Whale (top 10%)">🐳</span>;
+                            } else if (hasPosition) {
+                              return <span style={{ fontSize: '10px' }} title="Has position">⚡</span>;
+                            } else if (user.polymarket?.verified) {
+                              // Show Polymarket verified if no position status
+                              return (
+                                <img 
+                                  src="/polymarket-logo.png" 
+                                  alt="Polymarket Verified"
+                                  title="Polymarket Verified"
+                                  style={{
+                                    width: '10px',
+                                    height: '10px',
+                                    display: 'inline-block',
+                                    verticalAlign: 'middle',
+                                  }}
+                                />
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                         <div style={{
                           fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',

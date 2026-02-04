@@ -2700,6 +2700,9 @@ export const ChatRoom = ({
         onClose={() => setIsMembersModalOpen(false)}
         chatName={chatName}
         conversationId={conversation._id}
+        conversationType={conversation.type}
+        marketPositions={marketPositions}
+        whales={whales}
         onMemberClick={(userId) => {
           onUserClick?.(userId);
         }}
