@@ -230,16 +230,33 @@ export class PolymarketService {
    */
   async getMarketPosition(userId: string, marketId: string): Promise<{ outcome: string | null; size: number }> {
     try {
+      console.log('🔍 Getting market position for user:', userId, 'marketId:', marketId);
+      
       // Get user to find wallet address
       const user = await this.userModel.findById(userId);
+      console.log('User found:', !!user, 'Has Polymarket wallet:', !!user?.polymarket?.wallet_address);
+      
       if (!user || !user.polymarket?.wallet_address) {
+        console.log('❌ No Polymarket wallet address found for user');
         return { outcome: null, size: 0 };
       }
 
+      console.log('📡 Fetching positions for wallet:', user.polymarket.wallet_address, 'market:', marketId);
       const positions = await this.getUserPositions(user.polymarket.wallet_address, marketId);
+      console.log('📊 Found positions:', positions.length);
+      
+      if (positions.length > 0) {
+        console.log('Position details:', positions.map(p => ({
+          outcome: p.outcome,
+          size: p.size,
+          title: p.title,
+          conditionId: p.conditionId
+        })));
+      }
       
       // Find the position with the largest size for this market
       if (positions.length === 0) {
+        console.log('❌ No positions found for this market');
         return { outcome: null, size: 0 };
       }
 
@@ -248,12 +265,18 @@ export class PolymarketService {
         pos.size > max.size ? pos : max
       , positions[0]);
 
+      console.log('✅ Largest position:', {
+        outcome: largestPosition.outcome,
+        size: largestPosition.size,
+        title: largestPosition.title
+      });
+
       return {
         outcome: largestPosition.outcome, // "Yes" or "No"
         size: largestPosition.size,
       };
     } catch (error) {
-      console.error('Error getting market position:', error);
+      console.error('❌ Error getting market position:', error);
       return { outcome: null, size: 0 };
     }
   }
