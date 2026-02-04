@@ -1,6 +1,8 @@
-# Grex - Chat for Polymarket
+# Bunch - Chat for Polymarket
 
 **Real-time community chat for Polymarket traders**
+
+**Repository**: https://github.com/bunch-extension/bunch
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Status](https://img.shields.io/badge/status-pre--launch-orange)
