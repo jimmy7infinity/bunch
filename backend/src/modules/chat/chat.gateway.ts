@@ -201,7 +201,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('message:send')
   async handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { conversationId: string; text: string; replyTo?: string; mentions?: string[] },
+    @MessageBody() data: { conversationId: string; text: string; replyTo?: string; mentions?: string[]; metadata?: any },
   ) {
     try {
       const userId = client.data.userId;
@@ -210,7 +210,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { error: 'Unauthorized' };
       }
 
-      const { conversationId, text, replyTo, mentions } = data;
+      const { conversationId, text, replyTo, mentions, metadata } = data;
 
       // Rate limiting: 10 messages per 10 seconds
       const now = Date.now();
@@ -262,6 +262,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         text,
         replyTo,
         mentions,
+        metadata,
       );
 
       // Populate sender info

@@ -554,6 +554,7 @@ export class ChatService {
     text: string,
     replyTo?: string,
     mentions?: string[],
+    metadata?: any,
   ): Promise<Message> {
     // Verify sender is participant (except for global and market chats)
     const conversation = await this.getConversation(conversationId);
@@ -576,6 +577,7 @@ export class ChatService {
       text,
       reply_to: replyTo ? new Types.ObjectId(replyTo) : undefined,
       mentions: mentions?.map(id => new Types.ObjectId(id)),
+      metadata,
     });
 
     await message.save();

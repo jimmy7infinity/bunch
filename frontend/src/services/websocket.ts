@@ -119,13 +119,14 @@ class WebSocketService {
   }
 
   // Message operations
-  sendMessage(conversationId: string, text: string, replyTo?: string, mentions?: string[]) {
+  sendMessage(conversationId: string, text: string, replyTo?: string, mentions?: string[], metadata?: any) {
     if (this.socket) {
       this.socket.emit('message:send', { 
         conversationId, 
         text,
         replyTo,
         mentions,
+        metadata,
       });
     }
   }

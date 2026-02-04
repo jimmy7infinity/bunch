@@ -32,6 +32,13 @@ export class Message {
   @Prop({ default: false })
   is_ai?: boolean;
 
+  @Prop({ type: Object })
+  metadata?: {
+    type?: 'position_share';
+    positionSizeUSD?: number;
+    isWhale?: boolean;
+  };
+
   @Prop({ default: Date.now })
   created_at: Date;
 }
