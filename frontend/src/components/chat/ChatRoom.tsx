@@ -1733,7 +1733,7 @@ export const ChatRoom = ({
                             textAlign: isAI ? 'center' : (isOwnMessage ? 'right' : 'left'),
                           }}>
                             {isOwnMessage ? 'You' : senderName}
-                            {/* Market status badges: ⚡ (position) or 🐳 (whale) */}
+                            {/* Market status badges: ⚡ (position) or 🐳 (whale) - shown in market chats */}
                             {conversation.type === 'market' && !isAI && (() => {
                               const senderId = msg.sender_id?._id || msg.sender_id?.id;
                               const position = marketPositions[senderId];
@@ -1749,21 +1749,35 @@ export const ChatRoom = ({
                                 </>
                               );
                             })()}
-                            {/* Polymarket verified badge */}
-                            {!isAI && msg.sender_id?.polymarket?.verified && (
-                              <img 
-                                src="/polymarket-logo.png" 
-                                alt="Polymarket Verified"
-                                title="Polymarket Verified"
-                                style={{
-                                  width: '10px',
-                                  height: '10px',
-                                  marginLeft: '4px',
-                                  display: 'inline-block',
-                                  verticalAlign: 'middle',
-                                }}
-                              />
-                            )}
+                            {/* Polymarket verified badge - only show if NOT in market chat or no active position */}
+                            {!isAI && msg.sender_id?.polymarket?.verified && (() => {
+                              // In market chats, hide verified badge if user has an active position
+                              if (conversation.type === 'market') {
+                                const senderId = msg.sender_id?._id || msg.sender_id?.id;
+                                const hasPosition = marketPositions[senderId] || whales[senderId];
+                                
+                                // Don't show verified badge if they have active position (⚡/🐳 already shown)
+                                if (hasPosition) {
+                                  return null;
+                                }
+                              }
+                              
+                              // Show verified badge in non-market chats or if no position
+                              return (
+                                <img 
+                                  src="/polymarket-logo.png" 
+                                  alt="Polymarket Verified"
+                                  title="Polymarket Verified"
+                                  style={{
+                                    width: '10px',
+                                    height: '10px',
+                                    marginLeft: '4px',
+                                    display: 'inline-block',
+                                    verticalAlign: 'middle',
+                                  }}
+                                />
+                              );
+                            })()}
                           </span>
 
                           {/* Reply Preview - clickable to scroll to original message */}
