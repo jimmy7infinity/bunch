@@ -236,11 +236,21 @@ export class AuthController {
   async getBetaStatus(@Request() req: any) {
     const user = await this.usersService.findById(req.user.userId);
     
+    console.log('🔍 [getBetaStatus] Checking beta status for user:', {
+      userId: user._id,
+      username: user.username,
+      betaAccess: user.betaAccess,
+      role: user.role,
+      rank: user.rank,
+    });
+    
     // Check if BETA_MODE is enabled
     const betaMode = this.configService.get<string>('BETA_MODE') === 'true';
+    console.log('🔍 [getBetaStatus] BETA_MODE:', betaMode);
     
     // If beta mode is disabled, everyone has access
     if (!betaMode) {
+      console.log('✅ [getBetaStatus] Beta mode disabled, granting access');
       return {
         betaAccess: true,
         requiresActivation: false,
@@ -249,16 +259,21 @@ export class AuthController {
     
     // Admins, moderators, and creators always have access (exempt from beta gating)
     if (user.role === 'admin' || user.role === 'moderator' || user.rank === 'CREATOR') {
+      console.log('✅ [getBetaStatus] User is admin/mod/creator, granting access');
       return {
         betaAccess: true,
         requiresActivation: false,
       };
     }
     
-    return {
+    const response = {
       betaAccess: user.betaAccess || false,
       requiresActivation: !user.betaAccess,
     };
+    
+    console.log('📊 [getBetaStatus] Final response:', response);
+    
+    return response;
   }
 }
 

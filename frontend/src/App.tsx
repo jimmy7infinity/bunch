@@ -116,21 +116,36 @@ function App() {
       // Get current user from store
       const currentUser = useAuthStore.getState().user;
       
+      console.log('🔍 [Frontend] Checking beta status for user:', {
+        userId: currentUser?.id || currentUser?._id,
+        username: currentUser?.username,
+        role: currentUser?.role,
+        rank: currentUser?.rank,
+        betaAccess: currentUser?.betaAccess,
+      });
+      
       // Admins, mods, and creators always have access
       if (currentUser?.role === 'admin' || 
           currentUser?.role === 'moderator' || 
           currentUser?.rank === 'CREATOR') {
+        console.log('✅ [Frontend] User is admin/mod/creator, skipping beta check');
         setRequiresBetaActivation(false);
         initializeMarketDetection();
         return;
       }
 
       const status = await authService.getBetaStatus();
+      console.log('📊 [Frontend] Beta status response:', status);
+      
       setRequiresBetaActivation(status.requiresActivation);
+      console.log('📊 [Frontend] Set requiresBetaActivation to:', status.requiresActivation);
       
       // Only initialize market detection if beta access is granted
       if (status.betaAccess) {
+        console.log('✅ [Frontend] Beta access granted, initializing market detection');
         initializeMarketDetection();
+      } else {
+        console.log('❌ [Frontend] Beta access not granted');
       }
     } catch (error) {
       console.error('Failed to check beta status:', error);
