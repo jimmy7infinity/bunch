@@ -48,6 +48,12 @@ export interface Message {
   status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
   // Room this message belongs to
   room_id?: string;
+  // Metadata for special message types (e.g., position shares)
+  metadata?: {
+    type?: 'position_share';
+    positionSizeUSD?: number;
+    isWhale?: boolean;
+  };
 }
 
 export interface ChatRoom {
