@@ -1288,26 +1288,55 @@ export const ChatRoom = ({
             {conversation.type === 'market' && conversation.market_id && (
               <>
                 {myMarketStatus ? (
-                  // Show status badge (⚡ or 🐳)
-                  <div 
-                    title={myMarketStatus === 'whale' ? 'You are a whale (top 10%)' : 'You have a position'}
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      backgroundColor: '#19191A',
-                      border: '1px solid transparent',
-                      backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
-                      backgroundOrigin: 'border-box',
-                      backgroundClip: 'padding-box, border-box',
-                      borderRadius: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '14px',
-                    }}
-                  >
-                    {myMarketStatus === 'whale' ? '🐳' : '⚡'}
-                  </div>
+                  <>
+                    <button
+                      onClick={() => setShowPositionModal(true)}
+                      title="View position"
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        backgroundColor: '#19191A',
+                        border: '1px solid transparent',
+                        backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #7A9BCC, #5C6B8A)',
+                        backgroundOrigin: 'border-box',
+                        backgroundClip: 'padding-box, border-box',
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      {myMarketStatus === 'whale' ? '🐳' : '⚡'}
+                    </button>
+                    <button
+                      onClick={handleShowMyPosition}
+                      disabled={isLoadingStatus}
+                      title="Refresh status"
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        backgroundColor: '#19191A',
+                        border: '1px solid transparent',
+                        backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                        backgroundOrigin: 'border-box',
+                        backgroundClip: 'padding-box, border-box',
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: isLoadingStatus ? 'not-allowed' : 'pointer',
+                        opacity: isLoadingStatus ? 0.5 : 1,
+                        padding: 0,
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                      </svg>
+                    </button>
+                  </>
                 ) : (
                   // Show "Get Status" button
                   <button
@@ -2657,10 +2686,21 @@ export const ChatRoom = ({
               <button
                 onClick={async () => {
                   setShowPositionModal(false);
-                  // Send position share message
                   try {
                     const positionText = `${myMarketStatus === 'whale' ? '🐳' : '⚡'} $${myPositionSizeUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    await sendMessage(positionText);
+                    
+                    websocketService.sendMessage(
+                      conversation._id,
+                      positionText,
+                      undefined,
+                      [],
+                      {
+                        type: 'position_share',
+                        positionSizeUSD: myPositionSizeUSD,
+                        isWhale: myMarketStatus === 'whale',
+                      }
+                    );
+                    
                     addNotification({
                       type: 'system',
                       title: 'Position Shared',
