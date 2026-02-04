@@ -22,7 +22,7 @@ Bunch brings real-time chat to Polymarket, the world's largest prediction market
 - 👥 **Social Features** - Friends, DMs, user profiles, rankings
 - 🐳 **Whale Detection** - See who has positions in markets
 - 🔒 **Secure** - Twitter/X OAuth, content moderation, rate limiting
-- 🎨 **Modern UI** - Beautiful dark theme, responsive design
+- 🎨 **Modern UI** - Dark theme, responsive soft UI/neumorphic design
 
 ---
 
