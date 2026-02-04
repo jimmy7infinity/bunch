@@ -487,6 +487,21 @@ export const ChatsList = () => {
 
         {/* PAGE NAME - Center with Icon */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Dynamic Icon based on active category - MOVED TO LEFT */}
+          {activeChatCategory === 'global' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          {activeChatCategory === 'market' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          )}
           <span 
             style={{
               fontSize: '15px',
@@ -503,21 +518,6 @@ export const ChatsList = () => {
             {activeChatCategory === 'private' && 'Private Chats'}
             {activeChatCategory === 'favorites' && 'Favorites'}
           </span>
-          {/* Dynamic Icon based on active category */}
-          {activeChatCategory === 'global' && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          )}
-          {activeChatCategory === 'market' && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-          )}
           {activeChatCategory === 'private' && (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>

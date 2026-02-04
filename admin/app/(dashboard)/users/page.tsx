@@ -21,6 +21,11 @@ export default function UsersPage() {
 
   const PAGE_SIZE = 50;
 
+  // Initial load
+  useEffect(() => {
+    loadMoreUsers();
+  }, []);
+
   // Infinite scroll observer
   useEffect(() => {
     if (!observerTarget.current || !hasMore || loading || searchQuery) return;

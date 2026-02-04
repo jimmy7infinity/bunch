@@ -152,6 +152,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                   fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                   fontSize: '11px',
                   color: '#5BC854',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 Mark all read

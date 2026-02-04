@@ -115,7 +115,7 @@ export const BetaActivation: React.FC<BetaActivationProps> = ({ onSuccess, onLog
           <p className="footer-text">
             Don't have an invite code?{' '}
             <a 
-              href="https://twitter.com/BunchApp" 
+              href="https://x.com/bunchxyz" 
               target="_blank" 
               rel="noopener noreferrer"
               className="footer-link"

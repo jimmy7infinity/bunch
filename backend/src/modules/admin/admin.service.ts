@@ -48,9 +48,63 @@ export class AdminService {
       .lean()
       .exec();
 
+    // Get all unique participant IDs from DMs and groups
+    const conversationIds = conversations.map(c => c._id);
+    const participants = await this.userModel.aggregate([
+      {
+        $lookup: {
+          from: 'conversationparticipants',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'participations'
+        }
+      },
+      {
+        $unwind: '$participations'
+      },
+      {
+        $match: {
+          'participations.conversation_id': { $in: conversationIds }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          username: 1,
+          display_name: 1,
+          conversation_id: '$participations.conversation_id'
+        }
+      }
+    ]);
+
+    // Group participants by conversation
+    const participantsByConv = participants.reduce((acc, p) => {
+      const convId = p.conversation_id.toString();
+      if (!acc[convId]) acc[convId] = [];
+      acc[convId].push(p);
+      return acc;
+    }, {});
+
     // Enhance conversations with proper display titles
     return conversations.map(conv => {
       let displayTitle = conv.title;
+      const convParticipants = participantsByConv[conv._id.toString()] || [];
+      
+      // For DMs, show participant names
+      if (conv.type === 'dm' && convParticipants.length >= 2) {
+        displayTitle = convParticipants
+          .map((p: any) => p.display_name || p.username)
+          .join(' & ');
+      }
+      
+      // For group chats without title, show participant names
+      if (conv.type === 'group' && !displayTitle && convParticipants.length > 0) {
+        const names = convParticipants.slice(0, 3).map((p: any) => p.display_name || p.username);
+        displayTitle = names.join(', ');
+        if (convParticipants.length > 3) {
+          displayTitle += ` +${convParticipants.length - 3}`;
+        }
+      }
       
       // For market chats, use question from metadata if title is missing
       if (conv.type === 'market' && !displayTitle && conv.metadata?.question) {
@@ -66,7 +120,8 @@ export class AdminService {
       
       return {
         ...conv,
-        displayTitle: displayTitle || conv.slug || `${conv.type} chat`
+        displayTitle: displayTitle || conv.slug || `${conv.type} chat`,
+        participants: convParticipants
       };
     });
   }
