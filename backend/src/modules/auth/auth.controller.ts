@@ -237,7 +237,7 @@ export class AuthController {
     const user = await this.usersService.findById(req.user.userId);
     
     console.log('🔍 [getBetaStatus] Checking beta status for user:', {
-      userId: user._id,
+      userId: req.user.userId,
       username: user.username,
       betaAccess: user.betaAccess,
       role: user.role,
