@@ -486,41 +486,39 @@ export const ChatsList = () => {
         </div>
 
         {/* PAGE NAME - Centered with Icon on Left */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '100%' }}>
-          {/* Dynamic Icon - Positioned to the left of centered text */}
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(calc(-100% - 4px))', display: 'flex', alignItems: 'center' }}>
-            {activeChatCategory === 'global' && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-            )}
-            {activeChatCategory === 'market' && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-            )}
-            {activeChatCategory === 'private' && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            )}
-            {activeChatCategory === 'favorites' && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#starGradientTitle)">
-                <defs>
-                  <radialGradient id="starGradientTitle" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#AE8B2A" />
-                    <stop offset="100%" stopColor="#8F6B17" />
-                  </radialGradient>
-                </defs>
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-            )}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          {/* Dynamic Icon - On the left of text */}
+          {activeChatCategory === 'global' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          {activeChatCategory === 'market' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          )}
+          {activeChatCategory === 'private' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          )}
+          {activeChatCategory === 'favorites' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#starGradientTitle)">
+              <defs>
+                <radialGradient id="starGradientTitle" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#AE8B2A" />
+                  <stop offset="100%" stopColor="#8F6B17" />
+                </radialGradient>
+              </defs>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          )}
           
           {/* Centered Text */}
           <span 
@@ -548,7 +546,7 @@ export const ChatsList = () => {
             right: 'calc((100% - 95%) / 2)',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '2px',
           }}
         >
           {/* USERNAME */}
