@@ -12,6 +12,7 @@
     "seed:global": "ts-node src/scripts/seed-global-chats.ts",
     "migration:messages": "ts-node src/migrate-messages.ts",
     "migration:backfill-last-messages": "ts-node src/backfill-last-messages.ts",
+    "cleanup:null-conversations": "ts-node src/scripts/maintenance/cleanupNullConversations.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
