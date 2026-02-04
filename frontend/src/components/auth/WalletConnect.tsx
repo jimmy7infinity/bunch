@@ -77,7 +77,7 @@ export const WalletConnect = () => {
         {/* MAIN LOGO */}
         <div style={{ width: '250px', height: '250px' }}>
           <img 
-            src="/logo.png" 
+            src="/logo2.png" 
             alt="Bunch Logo" 
             style={{
               width: '100%',
