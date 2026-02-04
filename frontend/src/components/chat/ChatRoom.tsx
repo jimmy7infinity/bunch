@@ -1495,6 +1495,9 @@ export const ChatRoom = ({
                 {Array.isArray(conversationMessages) && conversationMessages
                   .filter(msg => !msg.deleted) // Hide deleted messages
                   .map((msg, index, filteredMessages) => {
+                  // Check if this is a position share system message
+                  const isPositionShare = msg.metadata?.type === 'position_share';
+                  
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
@@ -1558,6 +1561,82 @@ export const ChatRoom = ({
                           <div style={{ flex: 1, height: '1px', backgroundColor: '#333333' }} />
                         </div>
                       )}
+                      
+                      {/* Position Share System Message */}
+                      {isPositionShare ? (
+                        <div
+                          key={msg._id}
+                          ref={el => { messageRefs.current[msg._id] = el; }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: '100%',
+                            gap: '4px',
+                            margin: '10px 0',
+                          }}
+                        >
+                          {/* Time - centered for system messages */}
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '10px',
+                            color: '#707070',
+                          }}>
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </span>
+                          
+                          {/* System Message Bubble - No PFP, Centered */}
+                          <div
+                            style={{
+                              backgroundColor: '#2A2A2A',
+                              border: '1px solid transparent',
+                              backgroundImage: 'linear-gradient(#2A2A2A, #2A2A2A), linear-gradient(135deg, #505050, #3A3A3A)',
+                              backgroundOrigin: 'border-box',
+                              backgroundClip: 'padding-box, border-box',
+                              borderRadius: '20px',
+                              padding: '10px 16px',
+                              maxWidth: '70%',
+                              textAlign: 'center',
+                              boxShadow: '-2.5px -2.5px 5px rgba(255, 255, 255, 0.02), 5px 5px 15px rgba(0, 0, 0, 0.3)',
+                            }}
+                          >
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}>
+                              {/* Position Badge and Amount */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                              }}>
+                                <span style={{ fontSize: '20px' }}>
+                                  {msg.metadata.isWhale ? '🐳' : '⚡'}
+                                </span>
+                                <span style={{
+                                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  fontSize: '15px',
+                                  fontWeight: '600',
+                                  color: '#FFFFFF',
+                                }}>
+                                  ${msg.metadata.positionSizeUSD?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                              
+                              {/* Position share text */}
+                              <span style={{
+                                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                fontSize: '12px',
+                                color: '#A0A0A0',
+                              }}>
+                                {senderName} shared their position
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
             <div 
                       key={msg._id}
                       ref={el => { messageRefs.current[msg._id] = el; }}
@@ -2237,6 +2316,7 @@ export const ChatRoom = ({
                           })()}
               </div>
             </div>
+                      )}
                     </React.Fragment>
                   );
                 })}
