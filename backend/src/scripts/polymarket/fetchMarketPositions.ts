@@ -40,6 +40,13 @@ export async function fetchMarketPositions(marketId: string): Promise<MarketPosi
   }
 
   try {
+    // IMPORTANT: Polymarket Data API requires the 'user' parameter
+    // We cannot fetch all positions for a market without specifying a user
+    // This means whale detection needs a different approach
+    console.warn('⚠️ fetchMarketPositions called but Polymarket API requires user parameter');
+    console.warn('⚠️ Whale detection is currently disabled - API does not support fetching all positions');
+    return [];
+    
     // Fetch positions from Polymarket Data API
     const response = await axios.get(`${POLYMARKET_DATA_API}/positions`, {
       params: {

@@ -241,7 +241,75 @@ export class PolymarketService {
         return { outcome: null, size: 0 };
       }
 
-      console.log('📡 Fetching positions for wallet:', user.polymarket.wallet_address, 'market:', marketId);
+      // Check if marketId is an event slug (doesn't start with 0x) vs a conditionId
+      const isEventSlug = !marketId.startsWith('0x');
+      
+      if (isEventSlug) {
+        console.log('📍 Detected event slug, fetching all markets within event:', marketId);
+        
+        try {
+          // Fetch the event from Gamma API to get all constituent markets
+          const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${marketId}`);
+          if (!eventResponse.ok) {
+            console.error('❌ Failed to fetch event from Gamma API:', eventResponse.status);
+            return { outcome: null, size: 0 };
+          }
+          
+          const events = await eventResponse.json();
+          if (!events || events.length === 0) {
+            console.log('❌ Event not found:', marketId);
+            return { outcome: null, size: 0 };
+          }
+          
+          const event = events[0];
+          const markets = event.markets || [];
+          console.log(`📊 Found ${markets.length} markets within event`);
+          
+          // Check user's positions across all markets in this event
+          let largestPosition: any = null;
+          
+          for (const market of markets) {
+            const conditionId = market.conditionId;
+            console.log(`  Checking market: ${market.question.slice(0, 50)}... (${conditionId.slice(0, 10)}...)`);
+            
+            const positions = await this.getUserPositions(user.polymarket.wallet_address, conditionId);
+            
+            if (positions.length > 0) {
+              // Find largest position in this market
+              const marketLargestPos = positions.reduce((max, pos) => 
+                pos.size > max.size ? pos : max
+              , positions[0]);
+              
+              // Update overall largest if this one is bigger
+              if (!largestPosition || marketLargestPos.size > largestPosition.size) {
+                largestPosition = marketLargestPos;
+              }
+            }
+          }
+          
+          if (!largestPosition) {
+            console.log('❌ No positions found in any market within this event');
+            return { outcome: null, size: 0 };
+          }
+          
+          console.log('✅ Largest position found:', {
+            outcome: largestPosition.outcome,
+            size: largestPosition.size,
+            title: largestPosition.title
+          });
+          
+          return {
+            outcome: largestPosition.outcome,
+            size: largestPosition.size,
+          };
+        } catch (fetchError) {
+          console.error('❌ Error fetching event markets:', fetchError);
+          return { outcome: null, size: 0 };
+        }
+      }
+
+      // Direct conditionId - query normally
+      console.log('📡 Fetching positions for wallet:', user.polymarket.wallet_address, 'conditionId:', marketId);
       const positions = await this.getUserPositions(user.polymarket.wallet_address, marketId);
       console.log('📊 Found positions:', positions.length);
       
