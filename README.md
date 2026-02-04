@@ -4,9 +4,9 @@
 
 **Repository**: https://github.com/bunch-extension/bunch
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![Status](https://img.shields.io/badge/status-pre--launch-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0.1.1-blue)
+![Status](https://img.shields.io/badge/status-beta-orange)
+![Users](https://img.shields.io/badge/users-6-green)
 
 ---
 
@@ -77,23 +77,9 @@ bunch/
 
 ## 📚 Documentation
 
-### For Users
+- [Migration Guide](./MIGRATION_GUIDE.md) - Moving to new GitHub organization
 - [Privacy Policy](./PRIVACY_POLICY.md)
 - [Terms of Service](./TERMS_OF_SERVICE.md)
-- [Rank Guide](./rank_guide.md)
-
-### For Developers
-- [Setup Instructions](./SETUP_INSTRUCTIONS.md)
-- [Project Overview](./OVERVIEW.md)
-- [Security Audit](./SECURITY_AUDIT.md)
-- [Moderation Guide](./MODERATION_GUIDE.md)
-
-### For Launch
-- [Chrome Store Launch Guide](./CHROME_STORE_LAUNCH_GUIDE.md)
-- [Pre-Launch Fixes](./PRE_LAUNCH_FIXES.md)
-- [Final Launch Status](./FINAL_LAUNCH_STATUS.md)
-- [Rebrand Complete](./REBRAND_COMPLETE.md)
-- [Logo Creation Guide](./LOGO_CREATION_GUIDE.md)
 
 ---
 
@@ -104,114 +90,53 @@ bunch/
 - MongoDB
 - Chrome browser
 
-### Installation
+Install Bunch from the [Chrome Web Store](https://chromewebstore.google.com/detail/bunch/gnpefmfnagkjjmpmcnfpnimicggkcgna).
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/jimmy7infinity/poly_banter.git
-   cd poly_banter
-   ```
-
-2. **Setup backend**
-   ```bash
-   cd backend
-   npm install
-   cp env.example .env
-   # Edit .env with your credentials
-   npm run dev
-   ```
-
-3. **Setup frontend**
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   node scripts/copy-extension-files.js
-   ```
-
-4. **Load extension in Chrome**
-   - Open `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select `frontend/dist` folder
-
-5. **Visit Polymarket**
-   - Go to https://polymarket.com
-   - Click the Bunch extension icon
-   - Login with Twitter/X
-   - Start chatting!
+For local development setup, see the frontend and backend README files.
 
 ---
 
 ## 🎯 Current Status
 
-### ✅ Complete (100%)
-- Core chat functionality
-- Real-time messaging
-- User authentication
-- Market detection
-- Global & market-specific chats
+**Live Beta** - Available on [Chrome Web Store](https://chromewebstore.google.com/detail/bunch/gnpefmfnagkjjmpmcnfpnimicggkcgna)
+
+### ✅ Complete
+- Real-time messaging & WebSocket
+- Twitter/X & wallet authentication
+- Market-specific chat rooms
+- Global category chats
 - Friend system & DMs
 - User profiles & rankings
-- Content moderation
-- Rate limiting
-- Security hardening
-- Complete rebrand to Bunch
-
-### ⚠️ In Progress (85%)
-- Logo creation (pending)
-- Database fixes (10 min)
-- Chrome Store submission (pending)
+- Polymarket position detection
+- Content moderation & admin panel
+- Rate limiting & security
+- Beta access system with invite codes
 
 ### 📅 Roadmap
-- v0.2.0: Notifications, mentions, reactions
-- v0.3.0: Voice notes, polls
-- v0.4.0: Mobile app
-- v1.0.0: Full public launch
+- **v0.2.0:** Notifications, mentions, message reactions
+- **v0.3.0:** Voice messages, polls, thread replies
+- **v0.4.0:** Mobile companion app
+- **v1.0.0:** Public launch
 
 ---
 
 ## 🤝 Contributing
 
-This is currently a private project. Contributions will be opened after public launch.
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
+This is a closed-source project. Not accepting contributions at this time.
 
 ---
 
 ## 🔗 Links
 
-- **Website:** Coming soon
-- **Chrome Store:** Coming soon
-- **Twitter:** Coming soon
-- **Discord:** Coming soon
-
----
-
-## 👥 Team
-
-Built by traders, for traders.
-
----
-
-## 🙏 Acknowledgments
-
-- Polymarket for the amazing prediction market platform
-- The crypto trading community
-- All early beta testers
+- **Chrome Extension:** [Get Bunch](https://chromewebstore.google.com/detail/bunch/gnpefmfnagkjjmpmcnfpnimicggkcgna)
+- **Twitter/X:** [@bunchxyz](https://x.com/bunchxyz)
 
 ---
 
 ## 📞 Support
 
-For support, email: support@bunch.chat (coming soon)
+For support, reach out to [@bunchxyz](https://x.com/bunchxyz) on X/Twitter.
 
 ---
 
 **Bunch - Where Traders Talk** 🚀
-
-*Last Updated: January 16, 2026*
