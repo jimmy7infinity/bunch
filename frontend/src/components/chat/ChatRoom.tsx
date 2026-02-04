@@ -329,11 +329,31 @@ export const ChatRoom = ({
       setShowMessageMenu(null); // Close menu if open
     });
 
+    // Listen for position status updates (market chats only)
+    const unsubscribePosition = websocketService.onUserPositionUpdate((data) => {
+      console.log('📊 Received position update:', data);
+      
+      // Update market positions state
+      setMarketPositions(prev => ({
+        ...prev,
+        [data.userId]: 'yes', // They have a position
+      }));
+      
+      // Update whales state
+      if (data.isWhale) {
+        setWhales(prev => ({
+          ...prev,
+          [data.userId]: true,
+        }));
+      }
+    });
+
     return () => {
       unsubscribeNew();
       unsubscribeUpdated();
       unsubscribeReaction();
       unsubscribeDeleted();
+      unsubscribePosition();
       websocketService.leaveRoom(conversation._id);
     };
   }, [conversation._id, token, addMessage, setStoreMessages]);

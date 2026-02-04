@@ -247,6 +247,14 @@ class WebSocketService {
     return () => this.socket?.off('room:users_count', callback);
   }
 
+  // Position status updates (for market chats)
+  onUserPositionUpdate(callback: (data: { userId: string; marketId: string; status: string; isWhale: boolean; positionSizeUSD: number }) => void) {
+    if (this.socket) {
+      this.socket.on('user:position:update', callback);
+    }
+    return () => this.socket?.off('user:position:update', callback);
+  }
+
   onUserTyping(callback: (data: { roomId: string; user: User; typing: boolean }) => void) {
     if (this.socket) {
       this.socket.on('user:typing', callback);

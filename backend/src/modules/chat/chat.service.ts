@@ -158,6 +158,10 @@ export class ChatService {
     return conversation;
   }
 
+  async findConversationByMarketId(marketId: string) {
+    return this.conversationModel.findOne({ type: 'market', market_id: marketId }).exec();
+  }
+
   /**
    * Get all conversations for a user
    */

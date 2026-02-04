@@ -405,6 +405,25 @@ export class ChatController {
       marketId,
     );
 
+    // Broadcast position status to all users in this market chat room
+    if (result.hasPosition) {
+      const socketServer = (global as any).socketServer;
+      if (socketServer) {
+        // Find the conversation for this market
+        const conversation = await this.chatService.findConversationByMarketId(marketId);
+        if (conversation) {
+          console.log(`📡 Broadcasting position status for user ${req.user.userId} to market room ${conversation._id}`);
+          socketServer.to(conversation._id.toString()).emit('user:position:update', {
+            userId: req.user.userId,
+            marketId,
+            status: result.status,
+            isWhale: result.isWhale,
+            positionSizeUSD: result.positionSizeUSD,
+          });
+        }
+      }
+    }
+
     return {
       success: true,
       status: result.status,
