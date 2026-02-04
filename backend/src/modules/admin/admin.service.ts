@@ -225,14 +225,20 @@ export class AdminService {
    * Search users
    */
   async searchUsers(query: string, limit = 20) {
+    // If no query provided, return all users sorted by creation date
+    const filter = query
+      ? {
+          $or: [
+            { username: { $regex: query, $options: 'i' } },
+            { display_name: { $regex: query, $options: 'i' } },
+            { twitter_username: { $regex: query, $options: 'i' } },
+          ],
+        }
+      : {}; // Empty filter returns all users
+
     const users = await this.userModel
-      .find({
-        $or: [
-          { username: { $regex: query, $options: 'i' } },
-          { display_name: { $regex: query, $options: 'i' } },
-          { twitter_username: { $regex: query, $options: 'i' } },
-        ],
-      })
+      .find(filter)
+      .sort({ created_at: -1 }) // Newest first
       .limit(limit)
       .select('username display_name avatar_url rank role status created_at last_seen_at')
       .exec();

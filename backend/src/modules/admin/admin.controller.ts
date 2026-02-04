@@ -111,18 +111,16 @@ export class AdminController {
 
   /**
    * GET /admin/users
-   * Search users
+   * Search users (empty query returns all users)
    */
   @Get('users')
   async searchUsers(
     @Query('q') query?: string,
     @Query('limit') limit?: string,
   ) {
-    if (!query) {
-      return { users: [] };
-    }
-
-    const users = await this.adminService.searchUsers(query, limit ? parseInt(limit) : 20);
+    // Empty query should return all users, not an empty array
+    const searchQuery = query || ''; // Empty string matches all
+    const users = await this.adminService.searchUsers(searchQuery, limit ? parseInt(limit) : 200);
     return { users };
   }
 
