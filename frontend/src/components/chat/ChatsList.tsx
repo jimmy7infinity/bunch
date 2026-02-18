@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useChatStore } from '../../stores/chatStore';
-import { ChatRoom } from './ChatRoom';
+import { ChatRoom } from './ChatRoom.new';
 import { UserProfile } from '../profile/UserProfile';
 import { Settings } from '../profile/Settings';
 import { ProfileDropdown } from '../profile/ProfileDropdown';
