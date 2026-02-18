@@ -1525,7 +1525,9 @@ export const ChatRoom = ({
                   
                   // Get rank colors for border - only use custom colors for + ranks and staff
                   const rankColors = getRankColors(senderRank);
-                  const hasSpecialRank = senderRank.includes('+') || ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank);
+                  const hasSpecialRank = senderRank.includes('+') || 
+                                         ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank) ||
+                                         ['DIAMOND', 'ON FIRE', 'DANK', 'SIZE', 'NINJA', 'EARLY', 'TESTER'].includes(senderRank);
                   const borderGradient = hasSpecialRank
                     ? `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`
                     : 'linear-gradient(135deg, #707070, #333333)';

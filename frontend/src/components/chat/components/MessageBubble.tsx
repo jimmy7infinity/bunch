@@ -64,7 +64,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
   
   // Get rank colors for border
   const rankColors = getRankColors(senderRank);
-  const hasSpecialRank = senderRank.includes('+') || ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank);
+  const hasSpecialRank = senderRank.includes('+') || 
+                         ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank) ||
+                         ['DIAMOND', 'ON FIRE', 'DANK', 'SIZE', 'NINJA', 'EARLY', 'TESTER'].includes(senderRank);
   const borderGradient = hasSpecialRank
     ? `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`
     : 'linear-gradient(135deg, #707070, #333333)';

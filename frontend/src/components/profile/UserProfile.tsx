@@ -98,6 +98,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       loadUserData();
     }
   }, [userId, isOwnProfile]); // Removed currentUser to prevent infinite loop
+  
+  // Listen for changes to currentUser (e.g., from inventory updates)
+  useEffect(() => {
+    if (isOwnProfile && currentUser) {
+      setUserData(currentUser);
+    }
+  }, [currentUser?.equipped_accent, isOwnProfile]);
 
   // Close friend menu when clicking outside
   useEffect(() => {

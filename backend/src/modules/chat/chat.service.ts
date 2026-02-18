@@ -612,7 +612,7 @@ export class ChatService {
       .find(query)
       .sort({ created_at: -1 })
       .limit(limit)
-      .populate('sender_id', 'username display_name avatar_url rank polymarket')
+      .populate('sender_id', 'username display_name avatar_url rank equipped_accent polymarket')
       .populate({
         path: 'reply_to',
         select: 'text sender_id',
