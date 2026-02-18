@@ -34,7 +34,7 @@ export class AdminController {
    * Get all conversations for admin view
    */
   @Get('conversations')
-  async getAllConversations(@Query('limit') limit?: string) {
+  async getAllConversations(@Query('limit') limit?: string): Promise<any> {
     const conversations = await this.adminService.getAllConversations(
       limit ? parseInt(limit) : 100
     );
