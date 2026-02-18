@@ -1,6 +1,6 @@
 import React from 'react';
 import { RankedPFP } from '../../common/RankedPFP';
-import { getRankColors, getDisplayRank } from '../../../utils/ranks';
+import { getRankColors, getDisplayRank, getRankBorderStyle } from '../../../utils/ranks';
 import { renderMessageWithMentions } from '../utils/messageRendering';
 import { isImageMessage, isPositionShare } from '../utils/messageHelpers';
 import { useNotificationStore } from '../../../stores/notificationStore';
@@ -67,8 +67,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
   const hasSpecialRank = senderRank.includes('+') || 
                          ['MOD', 'ADMIN', 'CREATOR'].includes(senderRank) ||
                          ['DIAMOND', 'ON FIRE', 'DANK', 'SIZE', 'NINJA', 'EARLY', 'TESTER'].includes(senderRank);
+  
+  // Use getRankBorderStyle for proper multi-color gradient support
   const borderGradient = hasSpecialRank
-    ? `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`
+    ? getRankBorderStyle(senderRank)
     : 'linear-gradient(135deg, #707070, #333333)';
   
   // Check if this is a position share
