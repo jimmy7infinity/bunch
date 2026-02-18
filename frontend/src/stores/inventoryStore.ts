@@ -1,26 +1,41 @@
 import { create } from 'zustand';
 import api from '../services/api';
 
+export type InventoryItemType = 'rank_accent' | 'pfp_effect' | 'chat_badge' | 'emoji_pack';
+
+export interface InventoryItem {
+  item_id: string;
+  item_type: InventoryItemType;
+  unlocked_at: string;
+  unlock_method: string;
+}
+
 export interface InventoryState {
-  unlockedAccents: string[];
-  equippedAccent: string | null;
-  unlockDates: Record<string, string>;
-  unlockMethods: Record<string, string>;
+  items: InventoryItem[];
+  equipped: Record<InventoryItemType, string | null>;
   specialRanks: string[];
   loading: boolean;
   error: string | null;
   
   // Actions
   fetchInventory: () => Promise<void>;
+  equipItem: (itemId: string | null, itemType: InventoryItemType) => Promise<void>;
+  getItemsByType: (itemType: InventoryItemType) => InventoryItem[];
+  
+  // Legacy helpers for rank accents
+  getUnlockedAccents: () => string[];
+  getEquippedAccent: () => string | null;
   equipAccent: (accentName: string | null) => Promise<void>;
-  getUnlockedAccents: () => Promise<string[]>;
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
-  unlockedAccents: [],
-  equippedAccent: null,
-  unlockDates: {},
-  unlockMethods: {},
+  items: [],
+  equipped: {
+    rank_accent: null,
+    pfp_effect: null,
+    chat_badge: null,
+    emoji_pack: null,
+  },
   specialRanks: [],
   loading: false,
   error: null,
@@ -30,10 +45,13 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     try {
       const response = await api.get('/inventory');
       set({
-        unlockedAccents: response.data.unlocked_accents || [],
-        equippedAccent: response.data.equipped_accent || null,
-        unlockDates: response.data.unlock_dates || {},
-        unlockMethods: response.data.unlock_methods || {},
+        items: response.data.items || [],
+        equipped: response.data.equipped || {
+          rank_accent: null,
+          pfp_effect: null,
+          chat_badge: null,
+          emoji_pack: null,
+        },
         specialRanks: response.data.special_ranks || [],
         loading: false,
       });
@@ -46,29 +64,49 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     }
   },
 
-  equipAccent: async (accentName: string | null) => {
+  equipItem: async (itemId: string | null, itemType: InventoryItemType) => {
     try {
-      await api.post('/inventory/equip', { accent_name: accentName });
-      set({ equippedAccent: accentName });
+      await api.post('/inventory/equip', { 
+        item_id: itemId,
+        item_type: itemType 
+      });
       
-      // Show success feedback
-      console.log(`✅ ${accentName ? `Equipped ${accentName}` : 'Unequipped accent'}`);
+      set(state => ({
+        equipped: {
+          ...state.equipped,
+          [itemType]: itemId,
+        },
+      }));
+      
+      console.log(`✅ Equipped ${itemType}: ${itemId || 'none'}`);
     } catch (error: any) {
-      console.error('Error equipping accent:', error);
+      console.error('Error equipping item:', error);
       set({ 
-        error: error.response?.data?.message || 'Failed to equip accent',
+        error: error.response?.data?.message || 'Failed to equip item',
       });
       throw error;
     }
   },
 
-  getUnlockedAccents: async () => {
-    try {
-      const response = await api.get('/inventory/accents');
-      return response.data.accents || [];
-    } catch (error: any) {
-      console.error('Error fetching unlocked accents:', error);
-      return [];
-    }
+  getItemsByType: (itemType: InventoryItemType) => {
+    const state = get();
+    return state.items.filter(item => item.item_type === itemType);
+  },
+
+  // Legacy helpers for rank accents
+  getUnlockedAccents: () => {
+    const state = get();
+    return state.items
+      .filter(item => item.item_type === 'rank_accent')
+      .map(item => item.item_id);
+  },
+
+  getEquippedAccent: () => {
+    const state = get();
+    return state.equipped.rank_accent;
+  },
+
+  equipAccent: async (accentName: string | null) => {
+    return get().equipItem(accentName, 'rank_accent');
   },
 }));

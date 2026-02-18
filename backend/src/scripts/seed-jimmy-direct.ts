@@ -75,40 +75,27 @@ async function seedRanks() {
     // Create inventory
     const inventory = {
       user_id: userId,
-      unlocked_accents: [
-        'DIAMOND',
-        'ON FIRE', 
-        'DANK',
-        'EARLY',
-        'RECRUIT+',
-        'VETERAN+',
-        'CAPTAIN+'
+      items: [
+        { item_id: 'DIAMOND', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'special_rank' },
+        { item_id: 'ON FIRE', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'special_rank' },
+        { item_id: 'DANK', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'special_rank' },
+        { item_id: 'EARLY', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'special_rank' },
+        { item_id: 'RECRUIT+', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'rank_progression' },
+        { item_id: 'VETERAN+', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'rank_progression' },
+        { item_id: 'CAPTAIN+', item_type: 'rank_accent', unlocked_at: now, unlock_method: 'rank_progression' },
       ],
-      equipped_accent: null,
-      unlock_dates: {
-        'DIAMOND': now,
-        'ON FIRE': now,
-        'DANK': now,
-        'EARLY': now,
-        'RECRUIT+': now,
-        'VETERAN+': now,
-        'CAPTAIN+': now,
-      },
-      unlock_methods: {
-        'DIAMOND': 'special_rank',
-        'ON FIRE': 'special_rank',
-        'DANK': 'special_rank',
-        'EARLY': 'special_rank',
-        'RECRUIT+': 'rank_progression',
-        'VETERAN+': 'rank_progression',
-        'CAPTAIN+': 'rank_progression',
+      equipped: {
+        rank_accent: null,
+        pfp_effect: null,
+        chat_badge: null,
+        emoji_pack: null,
       },
       updated_at: now,
     };
 
     await userInventoryCollection.insertOne(inventory);
-    console.log('\n✅ Created inventory with accents:');
-    inventory.unlocked_accents.forEach(a => console.log(`  ✨ ${a}`));
+    console.log('\n✅ Created inventory with items:');
+    inventory.items.forEach(item => console.log(`  ✨ ${item.item_type}: ${item.item_id}`));
 
     // Update user model with special ranks
     await usersCollection.updateOne(

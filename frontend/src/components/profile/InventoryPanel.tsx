@@ -5,13 +5,13 @@ import { RankedPFP } from '../common/RankedPFP';
 
 const InventoryPanel: React.FC = () => {
   const {
-    unlockedAccents,
-    equippedAccent,
+    getItemsByType,
+    equipped,
     specialRanks,
     loading,
     error,
     fetchInventory,
-    equipAccent,
+    equipItem,
   } = useInventoryStore();
 
   const [equipLoading, setEquipLoading] = useState(false);
@@ -23,7 +23,7 @@ const InventoryPanel: React.FC = () => {
   const handleEquip = async (accentName: string | null) => {
     setEquipLoading(true);
     try {
-      await equipAccent(accentName);
+      await equipItem(accentName, 'rank_accent');
     } catch (error) {
       console.error('Failed to equip accent:', error);
     } finally {
@@ -61,6 +61,10 @@ const InventoryPanel: React.FC = () => {
     );
   }
 
+  // Get all rank accent items
+  const rankAccents = getItemsByType('rank_accent');
+  const equippedAccent = equipped.rank_accent;
+
   // Group accents by category
   const groupedAccents: Record<string, string[]> = {
     performance: [],
@@ -69,7 +73,8 @@ const InventoryPanel: React.FC = () => {
     staff: [],
   };
 
-  unlockedAccents.forEach(accentName => {
+  rankAccents.forEach(item => {
+    const accentName = item.item_id;
     const rank = RANKS[accentName];
     if (rank) {
       if (rank.category === 'performance') {
@@ -280,7 +285,7 @@ const InventoryPanel: React.FC = () => {
       })}
 
       {/* Empty State */}
-      {unlockedAccents.length === 0 && (
+      {rankAccents.length === 0 && (
         <div style={{
           padding: '30px 20px',
           textAlign: 'center',

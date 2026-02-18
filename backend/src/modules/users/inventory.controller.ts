@@ -2,16 +2,17 @@ import {
   Controller, 
   Get, 
   Post, 
-  Patch,
   Body, 
   UseGuards, 
   Request,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { InventoryService } from '../users/inventory.service';
 import { SpecialRanksService } from '../users/special-ranks.service';
+import { InventoryItemType } from './schemas/user-inventory.schema';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard)
@@ -22,7 +23,7 @@ export class InventoryController {
   ) {}
 
   /**
-   * Get user's inventory
+   * Get user's full inventory
    * GET /inventory
    */
   @Get()
@@ -31,16 +32,27 @@ export class InventoryController {
     const specialRanks = await this.specialRanksService.getActiveRanks(req.user.userId);
 
     return {
-      unlocked_accents: inventory.unlocked_accents,
-      equipped_accent: inventory.equipped_accent,
-      unlock_dates: inventory.unlock_dates,
-      unlock_methods: inventory.unlock_methods,
+      items: inventory.items,
+      equipped: inventory.equipped,
       special_ranks: specialRanks,
     };
   }
 
   /**
-   * Get unlocked accents list
+   * Get items by type
+   * GET /inventory/items?type=rank_accent
+   */
+  @Get('items')
+  async getItemsByType(
+    @Request() req: any,
+    @Query('type') type: InventoryItemType = 'rank_accent'
+  ) {
+    const items = await this.inventoryService.getItemsByType(req.user.userId, type);
+    return { items };
+  }
+
+  /**
+   * Legacy: Get unlocked rank accents
    * GET /inventory/accents
    */
   @Get('accents')
@@ -50,34 +62,36 @@ export class InventoryController {
   }
 
   /**
-   * Equip a rank accent
+   * Equip an item (automatically unequips previous item of same type)
    * POST /inventory/equip
-   * Body: { accent_name: string | null }
+   * Body: { item_id: string | null, item_type: InventoryItemType }
    */
   @Post('equip')
   @HttpCode(HttpStatus.OK)
-  async equipAccent(
+  async equipItem(
     @Request() req: any,
-    @Body('accent_name') accentName: string | null,
+    @Body('item_id') itemId: string | null,
+    @Body('item_type') itemType: InventoryItemType = 'rank_accent'
   ) {
-    await this.inventoryService.equipAccent(req.user.userId, accentName);
+    await this.inventoryService.equipItem(req.user.userId, itemId, itemType);
     
     return {
       success: true,
-      equipped_accent: accentName,
-      message: accentName ? `Equipped ${accentName}` : 'Unequipped accent',
+      equipped: {
+        [itemType]: itemId,
+      },
+      message: itemId ? `Equipped ${itemType}: ${itemId}` : `Unequipped ${itemType}`,
     };
   }
 
   /**
-   * Get active special ranks
+   * Get active special ranks with details
    * GET /inventory/special-ranks
    */
   @Get('special-ranks')
   async getSpecialRanks(@Request() req: any) {
     const ranks = await this.specialRanksService.getActiveRanks(req.user.userId);
     
-    // Get details for each rank
     const details = await Promise.all(
       ranks.map(async (rankName) => {
         const detail = await this.specialRanksService.getRankDetails(req.user.userId, rankName);
@@ -94,21 +108,22 @@ export class InventoryController {
   }
 
   /**
-   * Manual unlock (admin only - you'd add admin guard here)
+   * Manual unlock (admin only)
    * POST /inventory/unlock
-   * Body: { user_id: string, accent_name: string }
+   * Body: { user_id: string, item_id: string, item_type: InventoryItemType }
    */
   @Post('unlock')
   @HttpCode(HttpStatus.OK)
-  async unlockAccent(
+  async unlockItem(
     @Body('user_id') userId: string,
-    @Body('accent_name') accentName: string,
+    @Body('item_id') itemId: string,
+    @Body('item_type') itemType: InventoryItemType = 'rank_accent'
   ) {
-    await this.inventoryService.unlockAccent(userId, accentName, 'manual');
+    await this.inventoryService.unlockItem(userId, itemId, itemType, 'manual');
     
     return {
       success: true,
-      message: `Unlocked ${accentName} for user ${userId}`,
+      message: `Unlocked ${itemType}:${itemId} for user ${userId}`,
     };
   }
 }
