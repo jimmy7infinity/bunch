@@ -437,7 +437,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         }}>
           {/* RankedPFP Component - xlarge size for profile */}
           <RankedPFP 
-            rank={userData?.rank || 'RECRUIT'} 
+            rank={getDisplayRank(userData)} 
             size="xlarge" 
             showRankLabel={true}
             avatarUrl={userData?.avatar_url}
