@@ -1,5 +1,6 @@
 import React from 'react';
 import { RankedPFP } from '../../common/RankedPFP';
+import { getDisplayRank } from '../../../utils/ranks';
 
 interface MentionPickerProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export const MentionPicker: React.FC<MentionPickerProps> = ({
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <RankedPFP
-            rank={u.rank || 'RECRUIT'}
+            rank={getDisplayRank(u)}
             size="tiny"
             showRankLabel={false}
             avatarUrl={u.avatar_url}
@@ -85,7 +86,7 @@ export const MentionPicker: React.FC<MentionPickerProps> = ({
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              {u.rank || 'RECRUIT'}
+              {getDisplayRank(u)}
             </div>
           </div>
         </button>

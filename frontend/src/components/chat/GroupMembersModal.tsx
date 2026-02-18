@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { roomService } from '../../services/api';
 import { RankedPFP } from '../common/RankedPFP';
+import { getDisplayRank } from '../../utils/ranks';
 import './GroupMembersModal.css';
 
 interface GroupMembersModalProps {
@@ -257,7 +258,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                       {/* PFP with online indicator */}
                       <div style={{ position: 'relative' }}>
                         <RankedPFP 
-                          rank={user.rank || 'RECRUIT'} 
+                          rank={getDisplayRank(user)} 
                           size="small" 
                           showRankLabel={false}
                           avatarUrl={user.avatar_url}
@@ -326,7 +327,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                           fontSize: '11px',
                           color: '#707070',
                         }}>
-                          {user.rank || 'RECRUIT'}
+                          {getDisplayRank(user)}
                         </div>
                       </div>
                     </div>

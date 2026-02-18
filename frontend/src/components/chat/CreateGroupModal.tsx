@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { friendService } from '../../services/api';
 import { RankedPFP } from '../common/RankedPFP';
+import { getDisplayRank } from '../../utils/ranks';
 import type { User } from '../../types';
 import './CreateGroupModal.css';
 
@@ -274,7 +275,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <RankedPFP 
-                        rank={friend.rank || 'RECRUIT'} 
+                        rank={getDisplayRank(friend)} 
                         size="small" 
                         showRankLabel={false}
                         avatarUrl={friend.avatar_url}

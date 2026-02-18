@@ -11,6 +11,7 @@ import { Leaderboard } from '../leaderboard/Leaderboard';
 import { RankedPFP } from '../common/RankedPFP';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import { roomService, userService } from '../../services/api';
+import { getDisplayRank } from '../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import './ChatsList.css';
 
@@ -570,7 +571,7 @@ export const ChatsList = () => {
             }}
           >
             <RankedPFP 
-              rank={user?.rank || 'RECRUIT'} 
+              rank={getDisplayRank(user)} 
               size="tiny" 
               showRankLabel={false}
               borderOnly={true}
@@ -1094,7 +1095,7 @@ export const ChatsList = () => {
             {/* Last Message Sender PFP with Rank Border (borderOnly mode) */}
             {chat.last_message_id?.sender_id ? (
               <RankedPFP
-                rank={chat.last_message_id.sender_id.rank || 'RECRUIT'}
+                rank={getDisplayRank(chat.last_message_id.sender_id)}
                 size="small"
                 showRankLabel={false}
                 borderOnly={true}

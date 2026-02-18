@@ -4,6 +4,7 @@ import { useChatStore } from '../../../stores/chatStore';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { websocketService } from '../../../services/websocket';
 import { messageService } from '../../../services/api';
+import { getDisplayRank } from '../../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../../types';
 
 interface UseChatMessagesProps {
@@ -191,7 +192,7 @@ export const useChatMessages = ({ conversation, chatWindowRef }: UseChatMessages
             username: msg.sender_id.username,
             display_name: msg.sender_id.display_name,
             avatar_url: msg.sender_id.avatar_url,
-            rank: msg.sender_id.rank || 'RECRUIT',
+            rank: getDisplayRank(msg.sender_id),
           });
         }
       }

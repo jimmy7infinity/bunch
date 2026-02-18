@@ -7,7 +7,7 @@ import { messageService, mediaService, roomService, marketPositionService, polym
 import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import { RankedPFP } from '../common/RankedPFP';
-import { getRankColors } from '../../utils/ranks';
+import { getRankColors, getDisplayRank } from '../../utils/ranks';
 import { ChatRoomHeader } from './ChatRoomHeader';
 import { ChatBoxHeader } from './ChatBoxHeader';
 import type { ChatRoom as ChatRoomType } from '../../types';
@@ -371,7 +371,7 @@ export const ChatRoom = ({
             username: msg.sender_id.username,
             display_name: msg.sender_id.display_name,
             avatar_url: msg.sender_id.avatar_url,
-            rank: msg.sender_id.rank || 'RECRUIT',
+            rank: getDisplayRank(msg.sender_id),
           });
         }
       }
@@ -586,7 +586,7 @@ export const ChatRoom = ({
           username: user?.username || 'You',
           display_name: user?.display_name || user?.username || 'You',
           avatar_url: user?.avatar_url,
-          rank: user?.rank || 'RECRUIT',
+          rank: getDisplayRank(user),
           wallet_address: user?.wallet_address || '',
         },
         text: message.trim(),
@@ -663,7 +663,7 @@ export const ChatRoom = ({
             username: user?.username || 'You',
             display_name: user?.display_name || user?.username || 'You',
             avatar_url: user?.avatar_url,
-            rank: user?.rank || 'RECRUIT',
+            rank: getDisplayRank(user),
             wallet_address: user?.wallet_address || '',
           },
           text: gifUrl,
@@ -738,7 +738,7 @@ export const ChatRoom = ({
           username: user?.username || 'You',
           display_name: user?.display_name || user?.username || 'You',
           avatar_url: user?.avatar_url,
-          rank: user?.rank || 'RECRUIT',
+          rank: getDisplayRank(user),
           wallet_address: user?.wallet_address || '',
         },
         text: imageUrl,
@@ -1521,7 +1521,7 @@ export const ChatRoom = ({
                   const isOwnMessage = msg.sender_id?._id === (user?._id || user?.id) || msg.sender_id?.id === (user?._id || user?.id);
                   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
                   const isAI = msg.is_ai === true;
-                  const senderRank = msg.sender_id?.rank || 'RECRUIT';
+                  const senderRank = getDisplayRank(msg.sender_id);
                   
                   // Get rank colors for border - only use custom colors for + ranks and staff
                   const rankColors = getRankColors(senderRank);
@@ -2418,7 +2418,7 @@ export const ChatRoom = ({
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   <RankedPFP
-                    rank={u.rank || 'RECRUIT'}
+                    rank={getDisplayRank(u)}
                     size="tiny"
                     showRankLabel={false}
                     avatarUrl={u.avatar_url}
@@ -2433,7 +2433,7 @@ export const ChatRoom = ({
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
                     }}>
-                      {u.rank || 'RECRUIT'}
+                      {getDisplayRank(u)}
                     </div>
                   </div>
                 </button>

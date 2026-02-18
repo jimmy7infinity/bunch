@@ -8,6 +8,7 @@ import { GroupMembersModal } from './GroupMembersModal';
 import { GifPicker } from './GifPicker';
 import type { ChatRoom as ChatRoomType } from '../../types';
 import { messageSendLimiter, formatTimeRemaining } from '../../utils/rateLimiting';
+import { getDisplayRank } from '../../utils/ranks';
 import './ChatRoom.css';
 
 // Hooks
@@ -207,7 +208,7 @@ export const ChatRoom = ({
           username: user?.username || 'You',
           display_name: user?.display_name || user?.username || 'You',
           avatar_url: user?.avatar_url,
-          rank: user?.rank || 'RECRUIT',
+          rank: getDisplayRank(user),
           wallet_address: user?.wallet_address || '',
         },
         text: chatState.message.trim(),
@@ -284,7 +285,7 @@ export const ChatRoom = ({
             username: user?.username || 'You',
             display_name: user?.display_name || user?.username || 'You',
             avatar_url: user?.avatar_url,
-            rank: user?.rank || 'RECRUIT',
+            rank: getDisplayRank(user),
             wallet_address: user?.wallet_address || '',
           },
           text: gifUrl,
@@ -359,7 +360,7 @@ export const ChatRoom = ({
           username: user?.username || 'You',
           display_name: user?.display_name || user?.username || 'You',
           avatar_url: user?.avatar_url,
-          rank: user?.rank || 'RECRUIT',
+          rank: getDisplayRank(user),
           wallet_address: user?.wallet_address || '',
         },
         text: imageUrl,

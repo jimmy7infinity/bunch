@@ -1,6 +1,6 @@
 import React from 'react';
 import { RankedPFP } from '../../common/RankedPFP';
-import { getRankColors } from '../../../utils/ranks';
+import { getRankColors, getDisplayRank } from '../../../utils/ranks';
 import { renderMessageWithMentions } from '../utils/messageRendering';
 import { isImageMessage, isPositionShare } from '../utils/messageHelpers';
 import { useNotificationStore } from '../../../stores/notificationStore';
@@ -60,7 +60,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
   
   const senderName = msg.sender_id?.display_name || msg.sender_id?.username || 'Unknown';
   const isAI = msg.is_ai === true;
-  const senderRank = msg.sender_id?.rank || 'RECRUIT';
+  const senderRank = getDisplayRank(msg.sender_id);
   
   // Get rank colors for border
   const rankColors = getRankColors(senderRank);
