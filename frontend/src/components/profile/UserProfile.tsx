@@ -30,6 +30,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [isUploadingPFP, setIsUploadingPFP] = useState(false);
+  const [friendMenuOpen, setFriendMenuOpen] = useState<string | null>(null);
   const pfpInputRef = useRef<HTMLInputElement>(null);
 
   // Store original values for cancel functionality
@@ -96,6 +97,22 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     }
   }, [userId, isOwnProfile]); // Removed currentUser to prevent infinite loop
 
+  // Close friend menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (friendMenuOpen) {
+        setFriendMenuOpen(null);
+      }
+    };
+
+    if (friendMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [friendMenuOpen]);
+
   // Mock user data - will be replaced with actual API calls
   const mockData = {
     pfp: '👤',
@@ -109,9 +126,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
       setFriendshipStatus('request_sent');
       setShowRequestSent(true);
       setTimeout(() => setShowRequestSent(false), 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send friend request:', error);
-      alert('Failed to send friend request. Please try again.');
+      
+      // Handle 409 Conflict - request already exists or already friends
+      if (error.response?.status === 409) {
+        const message = error.response?.data?.message || '';
+        console.log('409 Conflict:', message);
+        
+        if (message.includes('Already friends')) {
+          // They're already friends - update status
+          setFriendshipStatus('friends');
+        } else if (message.includes('already exists') || message.includes('Friend request')) {
+          // Friend request already sent - show success state
+          setFriendshipStatus('request_sent');
+          setShowRequestSent(true);
+          setTimeout(() => setShowRequestSent(false), 2000);
+        } else {
+          // Generic conflict - treat as request already sent
+          setFriendshipStatus('request_sent');
+          setShowRequestSent(true);
+          setTimeout(() => setShowRequestSent(false), 2000);
+        }
+      } else {
+        // Other errors
+        alert('Failed to send friend request. Please try again.');
+      }
     }
   };
 
@@ -153,6 +193,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     } catch (error) {
       console.error('Failed to reject friend request:', error);
       alert('Failed to reject friend request. Please try again.');
+    }
+  };
+
+  const handleRemoveFriend = async (friendId: string) => {
+    try {
+      await friendService.removeFriend(friendId);
+      // Reload friends list
+      const friendsList = await friendService.getFriends();
+      setFriends(friendsList);
+      setFriendMenuOpen(null);
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+      alert('Failed to remove friend. Please try again.');
     }
   };
 
@@ -446,47 +499,75 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
         }}>
           {isEditingUsername && isOwnProfile ? (
             <>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Display Name"
-                disabled={isSaving}
-                style={{
-                  backgroundColor: '#19191A',
-                  border: '1px solid #333333',
-                  borderRadius: '10px',
-                  padding: '8px 15px',
-                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '18px',
-                  color: '#D3D3D3',
-                  outline: 'none',
-                  textAlign: 'center',
-                  width: '100%',
-                  maxWidth: '250px',
-                  marginBottom: '5px',
-                }}
-              />
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                disabled={isSaving}
-                style={{
-                  backgroundColor: '#19191A',
-                  border: '1px solid #333333',
-                  borderRadius: '10px',
-                  padding: '8px 15px',
-                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '18px',
-                  color: '#D3D3D3',
-                  outline: 'none',
-                  textAlign: 'center',
-                  width: '100%',
-                  maxWidth: '250px',
-                }}
-              />
+              {/* Display Name Input with Label */}
+              <div style={{ width: '100%', maxWidth: '250px', marginBottom: '10px' }}>
+                <label style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '11px',
+                  color: '#707070',
+                  marginBottom: '4px',
+                  display: 'block',
+                  textAlign: 'left',
+                  paddingLeft: '5px',
+                }}>
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Display Name"
+                  disabled={isSaving}
+                  style={{
+                    backgroundColor: '#19191A',
+                    border: '1px solid #333333',
+                    borderRadius: '10px',
+                    padding: '8px 15px',
+                    fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '18px',
+                    color: '#D3D3D3',
+                    outline: 'none',
+                    textAlign: 'center',
+                    width: '100%',
+                  }}
+                />
+              </div>
+              
+              {/* Username Input with Label */}
+              <div style={{ width: '100%', maxWidth: '250px', marginBottom: '10px' }}>
+                <label style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '11px',
+                  color: '#707070',
+                  marginBottom: '4px',
+                  display: 'block',
+                  textAlign: 'left',
+                  paddingLeft: '5px',
+                }}>
+                  Username (@username)
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  disabled={isSaving}
+                  style={{
+                    backgroundColor: '#19191A',
+                    border: '1px solid #333333',
+                    borderRadius: '10px',
+                    padding: '8px 15px',
+                    fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '18px',
+                    color: '#D3D3D3',
+                    outline: 'none',
+                    textAlign: 'center',
+                    width: '100%',
+                  }}
+                />
+              </div>
+              
+              {/* Save/Cancel Buttons */}
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={handleSaveUsername}
@@ -1203,43 +1284,128 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                     {friends.map((friend: User, index: number) => (
                     <React.Fragment key={friend._id || friend.id}>
                       <div 
-                        onClick={() => onUserClick?.(friend._id || friend.id)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
                           padding: '10px 0',
-                          cursor: 'pointer',
+                          position: 'relative',
                         }}
                       >
-                        <div style={{
-                          width: '35px',
-                          height: '35px',
-                          borderRadius: '50%',
-                          border: '2px solid #888888',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#2A2A2A',
-                          overflow: 'hidden',
-                        }}>
-                          {friend.avatar_url ? (
-                            <img 
-                              src={friend.avatar_url} 
-                              alt={friend.username}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: '16px' }}>👤</span>
+                        <div 
+                          onClick={() => onUserClick?.(friend._id || friend.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            flex: 1,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            border: '2px solid #888888',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#2A2A2A',
+                            overflow: 'hidden',
+                          }}>
+                            {friend.avatar_url ? (
+                              <img 
+                                src={friend.avatar_url} 
+                                alt={friend.username}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '16px' }}>👤</span>
+                            )}
+                          </div>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '12px',
+                            color: '#B9B7B7',
+                          }}>
+                            {friend.display_name || friend.username || 'User'}
+                          </span>
+                        </div>
+                        
+                        {/* 3-dot menu button */}
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFriendMenuOpen(friendMenuOpen === (friend._id || friend.id) ? null : (friend._id || friend.id));
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              color: '#707070',
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="1"/>
+                              <circle cx="12" cy="5" r="1"/>
+                              <circle cx="12" cy="19" r="1"/>
+                            </svg>
+                          </button>
+                          
+                          {/* Dropdown menu */}
+                          {friendMenuOpen === (friend._id || friend.id) && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                right: 0,
+                                top: '100%',
+                                backgroundColor: '#19191A',
+                                border: '1px solid #333333',
+                                borderRadius: '8px',
+                                padding: '5px',
+                                zIndex: 1000,
+                                minWidth: '150px',
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                              }}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Remove ${friend.display_name || friend.username} from your friends?`)) {
+                                    handleRemoveFriend(friend._id || friend.id);
+                                  }
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  cursor: 'pointer',
+                                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  fontSize: '12px',
+                                  color: '#C85454',
+                                  transition: 'background-color 0.2s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A2A'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6"/>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Remove Friend
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <span style={{
-                          fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                          fontSize: '12px',
-                          color: '#B9B7B7',
-                        }}>
-                          {friend.display_name || friend.username || 'User'}
-                        </span>
                       </div>
                       {index < friends.length - 1 && (
                         <div style={{

@@ -10,6 +10,7 @@ interface ProfileDropdownProps {
   onLogout: () => void;
   anchorEl: HTMLElement | null;
   onNavigateToChat?: (conversationId: string) => void;
+  onUserClick?: (userId: string) => void;
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
@@ -20,6 +21,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onLogout,
   anchorEl,
   onNavigateToChat,
+  onUserClick,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { notifications, markAsRead, markAllAsRead, removeNotification } = useNotificationStore();
@@ -114,17 +116,16 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           borderRadius: '15px',
           padding: '15px',
           display: 'flex',
+          flexDirection: 'column',
           gap: '15px',
           width: '100%',
         }}
       >
-        {/* LEFT COLUMN: Notifications */}
+        {/* NOTIFICATIONS - Full Width */}
         <div style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
-          minWidth: '0', // Allow flex shrink
         }}>
           {/* Notifications Header */}
           <div style={{
@@ -186,9 +187,25 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                   key={notif.id}
                   onClick={() => {
                     markAsRead(notif.id);
-                    // Navigate to chat if conversationId exists
-                    if (onNavigateToChat && (notif as any).conversationId) {
-                      onNavigateToChat((notif as any).conversationId);
+                    
+                    // Handle navigation based on notification type
+                    if (notif.type === 'message' || notif.type === 'mention') {
+                      // Navigate to the conversation
+                      if (onNavigateToChat && notif.data?.conversationId) {
+                        onNavigateToChat(notif.data.conversationId);
+                        onClose();
+                      }
+                    } else if (notif.type === 'friend_request') {
+                      // Navigate to own profile (where friend requests are shown)
+                      onViewProfile();
+                      onClose();
+                    } else if (notif.data?.userId && onUserClick) {
+                      // Navigate to user profile if userId is provided
+                      onUserClick(notif.data.userId);
+                      onClose();
+                    } else if (notif.data?.conversationId && onNavigateToChat) {
+                      // Fallback: navigate to conversation if conversationId exists
+                      onNavigateToChat(notif.data.conversationId);
                       onClose();
                     }
                   }}
@@ -223,9 +240,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: '200px',
                       }}>
-                        {notif.message.length > 40 ? notif.message.substring(0, 40) + '...' : notif.message}
+                        {notif.message.length > 60 ? notif.message.substring(0, 60) + '...' : notif.message}
                       </div>
                       <div style={{
                         fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -262,126 +278,126 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           </div>
         </div>
 
-        {/* VERTICAL DIVIDER */}
-        <div style={{
-          width: '1px',
-          backgroundColor: '#333333',
-          alignSelf: 'stretch',
-        }} />
-
-        {/* RIGHT COLUMN: Menu */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '5px',
-          minWidth: '160px',
-        }}>
-        {/* View Profile */}
-        <button
-          onClick={() => {
-            onViewProfile();
-            onClose();
-          }}
-          className="dropdown-item"
-          style={{
-            width: '100%',
-            padding: '12px 15px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span style={{
-            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '13px',
-            color: '#B9B7B7',
-          }}>
-            View My Profile
-          </span>
-        </button>
-
-        {/* Settings */}
-        <button
-          onClick={() => {
-            onSettings();
-            onClose();
-          }}
-          className="dropdown-item"
-          style={{
-            width: '100%',
-            padding: '12px 15px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
-          </svg>
-          <span style={{
-            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '13px',
-            color: '#B9B7B7',
-          }}>
-            Settings
-          </span>
-        </button>
-
-        {/* Divider */}
+        {/* HORIZONTAL DIVIDER */}
         <div style={{
           height: '1px',
           backgroundColor: '#333333',
-          margin: '5px 0',
         }} />
 
-        {/* Logout */}
-        <button
-          onClick={() => {
-            onLogout();
-            onClose();
-          }}
-          className="dropdown-item dropdown-item-danger"
-          style={{
-            width: '100%',
-            padding: '12px 15px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span style={{
-            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '13px',
-            color: '#C85454',
-          }}>
-            Logout
-          </span>
-        </button>
+        {/* MENU BUTTONS - Horizontal Row */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          justifyContent: 'space-between',
+        }}>
+          {/* View Profile */}
+          <button
+            onClick={() => {
+              onViewProfile();
+              onClose();
+            }}
+            className="dropdown-item"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '12px 8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#B9B7B7',
+              whiteSpace: 'nowrap',
+            }}>
+              View Profile
+            </span>
+          </button>
+
+          {/* Settings */}
+          <button
+            onClick={() => {
+              onSettings();
+              onClose();
+            }}
+            className="dropdown-item"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '12px 8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B9B7B7" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#B9B7B7',
+              whiteSpace: 'nowrap',
+            }}>
+              Settings
+            </span>
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={() => {
+              onLogout();
+              onClose();
+            }}
+            className="dropdown-item dropdown-item-danger"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '12px 8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C85454" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '12px',
+              color: '#C85454',
+              whiteSpace: 'nowrap',
+            }}>
+              Logout
+            </span>
+          </button>
         </div>
       </div>
     </div>

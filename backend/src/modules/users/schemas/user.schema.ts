@@ -52,6 +52,12 @@ export class User {
   @Prop({ default: 'RECRUIT' })
   rank?: string;
 
+  @Prop({ type: [String], default: [] })
+  special_ranks?: string[]; // Active special ranks: ['DIAMOND', 'ON FIRE']
+
+  @Prop()
+  equipped_accent?: string; // Currently displayed rank accent (from inventory)
+
   @Prop({ enum: ['active', 'banned', 'suspended', 'deleted'], default: 'active' })
   status: UserStatus;
 

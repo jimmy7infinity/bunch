@@ -12,6 +12,7 @@ import { MediaModule } from './modules/media/media.module';
 import { PolymarketModule } from './modules/polymarket/polymarket.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { InviteCodesModule } from './modules/invite-codes/invite-codes.module';
+import { RanksModule } from './modules/ranks/ranks.module';
 import { Conversation, ConversationSchema } from './modules/chat/schemas/conversation.schema';
 
 @Module({
@@ -53,6 +54,7 @@ import { Conversation, ConversationSchema } from './modules/chat/schemas/convers
     PolymarketModule,
     AdminModule,
     InviteCodesModule,
+    RanksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

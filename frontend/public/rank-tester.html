@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bunch Rank Alignment Tester</title>
+  <link href="https://fonts.googleapis.com/css2?family=Stalinist+One&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #19191A;
+      color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Compact Text', sans-serif;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-family: 'Stalinist One', sans-serif;
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #888888;
+      font-size: 16px;
+    }
+
+    .controls {
+      max-width: 1400px;
+      margin: 0 auto 40px;
+      padding: 20px;
+      background: #222222;
+      border-radius: 12px;
+      border: 1px solid #333333;
+    }
+
+    .controls label {
+      display: inline-block;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+
+    .controls select {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: #2A2A2A;
+      color: #FFFFFF;
+      border: 1px solid #444444;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 20px;
+    }
+
+    .section {
+      max-width: 1400px;
+      margin: 0 auto 60px;
+    }
+
+    .section-header {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #333333;
+    }
+
+    .section-header h2 {
+      font-family: 'Stalinist One', sans-serif;
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .section-header p {
+      color: #888888;
+      font-size: 14px;
+    }
+
+    .ranks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 30px;
+      justify-items: center;
+    }
+
+    .rank-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      background: #222222;
+      border-radius: 12px;
+      border: 1px solid #333333;
+      min-width: 200px;
+      transition: all 0.2s;
+    }
+
+    .rank-card:hover {
+      transform: translateY(-4px);
+      border-color: #555555;
+    }
+
+    /* PFP Component */
+    .pfp-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .pfp-wrapper {
+      position: relative;
+      filter: drop-shadow(-1px -1px 2px rgba(255, 255, 255, 0.08)) 
+              drop-shadow(10px 10px 20px rgba(0, 0, 0, 0.25));
+    }
+
+    .pfp-border {
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pfp-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #2A2A2A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .pfp-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .pfp-emoji {
+      font-size: 90px;
+      line-height: 1;
+    }
+
+    /* Rank Accent Overlay */
+    .rank-accent {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+      /* Default positioning - will be overridden per rank */
+      bottom: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .rank-accent img {
+      display: block;
+      width: auto;
+      height: auto;
+      image-rendering: auto;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Rank Label */
+    .rank-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rank-label-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rank-label-text {
+      font-family: 'Stalinist One', sans-serif;
+      font-size: 5px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Rank Info */
+    .rank-info {
+      text-align: center;
+      width: 100%;
+    }
+
+    .rank-name {
+      font-family: 'Stalinist One', sans-serif;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .rank-meta {
+      font-size: 11px;
+      color: #888888;
+      margin-bottom: 8px;
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .color-box {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #444444;
+      border-radius: 4px;
+    }
+
+    .color-label {
+      font-size: 9px;
+      color: #666666;
+    }
+
+    /* Adjustment Controls */
+    .adjustment-controls {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #333333;
+      font-size: 11px;
+    }
+
+    .adjustment-controls label {
+      display: block;
+      margin: 5px 0;
+      color: #AAAAAA;
+    }
+
+    .adjustment-controls input {
+      width: 60px;
+      padding: 4px;
+      background: #2A2A2A;
+      border: 1px solid #444444;
+      color: #FFFFFF;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 5px;
+    }
+
+    .code-output {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #1A1A1A;
+      border-radius: 12px;
+      border: 1px solid #333333;
+    }
+
+    .code-output h3 {
+      font-family: 'Stalinist One', sans-serif;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .code-output pre {
+      background: #0A0A0A;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      color: #00FF00;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎖️ Bunch Rank Alignment Tester</h1>
+    <p>Adjust accent positioning for each rank • Changes auto-generate code below</p>
+  </div>
+
+  <div class="controls">
+    <label>PFP Size:</label>
+    <select id="sizeSelect">
+      <option value="tiny">Tiny (45x45)</option>
+      <option value="small">Small (28x28)</option>
+      <option value="medium">Medium (50x50 - Base)</option>
+      <option value="chat">Chat (75x75)</option>
+      <option value="large">Large (100x100)</option>
+      <option value="xlarge" selected>XLarge (150x150)</option>
+      <option value="xlarge125">XLarge125 (187.5x187.5)</option>
+      <option value="xxlarge">XXLarge (225x225)</option>
+    </select>
+
+    <label>Filter:</label>
+    <select id="filterSelect">
+      <option value="all">All Ranks</option>
+      <option value="user">Regular Ranks</option>
+      <option value="staff">Staff Ranks</option>
+      <option value="performance">Performance Ranks</option>
+      <option value="special">Special Ranks</option>
+      <option value="accents-only">Only Ranks with Accents</option>
+    </select>
+  </div>
+
+  <div id="ranksContainer"></div>
+
+  <div class="code-output">
+    <h3>📋 Generated Offset Code</h3>
+    <p style="color: #888888; font-size: 13px; margin-bottom: 15px;">
+      Copy these values into your ranks.ts file for custom accent positioning:
+    </p>
+    <pre id="codeOutput">// Adjustments will appear here as you modify values above</pre>
+  </div>
+
+  <script>
+    // Size mapping matching RankedPFP.tsx
+    const SIZES = {
+      tiny: 45,      // 0.9 * 50
+      small: 28,     // 0.56 * 50  
+      medium: 50,    // 1.0 * 50 (base)
+      chat: 75,      // 1.5 * 50
+      large: 100,    // 2.0 * 50
+      xlarge: 150,   // 3.0 * 50
+      xlarge125: 187.5, // 3.75 * 50
+      xxlarge: 225,  // 4.5 * 50
+    };
+
+    // RANK DATA - matches your specs
+    const RANKS = {
+      // Regular Ranks
+      RECRUIT: {
+        name: 'RECRUIT',
+        pfpBorder: ['#918E8E', '#2A2929'],
+        rankBorder: ['#918E8E', '#2A2929'],
+        rankText: '#B9B7B7',
+        rankFill: '#282828',
+        category: 'user',
+        hasAccent: false,
+      },
+      VETERAN: {
+        name: 'VETERAN',
+        pfpBorder: ['#B2FF00', '#009B3E'],
+        rankBorder: ['#B2FF00', '#009B3E'],
+        rankText: '#BFFF00',
+        rankFill: '#16280D',
+        category: 'user',
+        hasAccent: false,
+      },
+      CAPTAIN: {
+        name: 'CAPTAIN',
+        pfpBorder: ['#00FFFB', '#001EFF'],
+        rankBorder: ['#00FFFB', '#001EFF'],
+        rankText: '#00E1FF',
+        rankFill: '#001455',
+        category: 'user',
+        hasAccent: false,
+      },
+      CHAMP: {
+        name: 'CHAMP',
+        pfpBorder: ['#FFB200', '#FF2600'],
+        rankBorder: ['#FFB200', '#FF2600'],
+        rankText: '#FFB200',
+        rankFill: '#550E00',
+        category: 'user',
+        hasAccent: false,
+      },
+      HERO: {
+        name: 'HERO',
+        pfpBorder: ['#37FFDA', '#00FF59'],
+        rankBorder: ['#37FFDA', '#00FF59'],
+        rankText: '#00FFD0',
+        rankFill: '#002F26',
+        category: 'user',
+        hasAccent: false,
+      },
+      TITAN: {
+        name: 'TITAN',
+        pfpBorder: ['#F701FF', '#FF0000'],
+        rankBorder: ['#F701FF', '#FF0000'],
+        rankText: '#FF31DD',
+        rankFill: '#2E0014',
+        category: 'user',
+        hasAccent: false,
+      },
+      ICON: {
+        name: 'ICON',
+        pfpBorder: ['#BF00FF', '#5100FF'],
+        rankBorder: ['#BF00FF', '#5100FF'],
+        rankText: '#FF31FF',
+        rankFill: '#000038',
+        category: 'user',
+        hasAccent: false,
+      },
+      LEGEND: {
+        name: 'LEGEND',
+        pfpBorder: ['#D9FF00', '#FF8C00'],
+        rankBorder: ['#D9FF00', '#FF8C00'],
+        rankText: '#F2FF64',
+        rankFill: '#4E3C00',
+        category: 'user',
+        hasAccent: false,
+      },
+
+      // + Ranks
+      'VETERAN+': {
+        name: 'VETERAN+',
+        pfpBorder: ['#B2FF00', '#009B3E'],
+        rankBorder: ['#B2FF00', '#009B3E'],
+        rankText: '#BFFF00',
+        rankFill: '#16280D',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'veteran.png',
+      },
+      'CAPTAIN+': {
+        name: 'CAPTAIN+',
+        pfpBorder: ['#00FFFB', '#001EFF'],
+        rankBorder: ['#00FFFB', '#001EFF'],
+        rankText: '#00E1FF',
+        rankFill: '#001455',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'captain.png',
+      },
+      'CHAMP+': {
+        name: 'CHAMP+',
+        pfpBorder: ['#FFB200', '#FF2600'],
+        rankBorder: ['#FFB200', '#FF2600'],
+        rankText: '#FFB200',
+        rankFill: '#550E00',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'champ.png',
+      },
+      'HERO+': {
+        name: 'HERO+',
+        pfpBorder: ['#37FFDA', '#00FF59'],
+        rankBorder: ['#37FFDA', '#00FF59'],
+        rankText: '#00FFD0',
+        rankFill: '#002F26',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'hero.png',
+      },
+      'TITAN+': {
+        name: 'TITAN+',
+        pfpBorder: ['#F701FF', '#FF0000'],
+        rankBorder: ['#F701FF', '#FF0000'],
+        rankText: '#FF31DD',
+        rankFill: '#2E0014',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'titan.png',
+      },
+      'ICON+': {
+        name: 'ICON+',
+        pfpBorder: ['#BF00FF', '#5100FF'],
+        rankBorder: ['#BF00FF', '#5100FF'],
+        rankText: '#FF31FF',
+        rankFill: '#000038',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'icon.png',
+      },
+      'LEGEND+': {
+        name: 'LEGEND+',
+        pfpBorder: ['#D9FF00', '#FF8C00'],
+        rankBorder: ['#D9FF00', '#FF8C00'],
+        rankText: '#F2FF64',
+        rankFill: '#4E3C00',
+        category: 'user',
+        hasAccent: true,
+        accentFile: 'legend.png',
+      },
+
+      // Staff Ranks
+      CREATOR: {
+        name: 'CREATOR',
+        pfpBorder: ['#D4F4FF', '#BCBCBC'],
+        rankBorder: ['#D4F4FF', '#BCBCBC'],
+        rankText: '#E9F3FF',
+        rankFill: '#1E1E1E',
+        category: 'staff',
+        hasAccent: true,
+        accentFile: 'creator.png',
+      },
+      ADMIN: {
+        name: 'ADMIN',
+        pfpBorder: ['#0915FF', '#1D0931'],
+        rankBorder: ['#0915FF', '#1D0931'],
+        rankText: '#FF1115',
+        rankFill: '#370F0F',
+        category: 'staff',
+        hasAccent: true,
+        accentFile: 'admin.png',
+      },
+      MOD: {
+        name: 'MOD',
+        pfpBorder: ['#FF1115', '#3C0000'],
+        rankBorder: ['#FF1115', '#3C0000'],
+        rankText: '#0062FF',
+        rankFill: '#111535',
+        category: 'staff',
+        hasAccent: true,
+        accentFile: 'mod.png',
+      },
+
+      // Performance Ranks (Temporary)
+      DIAMOND: {
+        name: 'DIAMOND',
+        pfpBorder: ['#93E2FF', '#4C93FF'],
+        rankBorder: ['#93E2FF', '#4C93FF'],
+        rankText: '#E3E3FF',
+        rankFill: '#1D1954',
+        category: 'performance',
+        hasAccent: true,
+        accentFile: 'diamond.gif',
+        isAnimated: true,
+      },
+      'ON FIRE': {
+        name: 'ON FIRE',
+        pfpBorder: ['#FEFF41', '#E61212'],
+        rankBorder: ['#FEFF41', '#E61212'],
+        rankText: '#FF4800',
+        rankFill: '#340808',
+        category: 'performance',
+        hasAccent: true,
+        accentFile: 'on-fire.gif',
+        isAnimated: true,
+      },
+      DANK: {
+        name: 'DANK',
+        pfpBorder: ['#0301EC', '#16FCFE', '#1BFF05', '#F6FF00', '#E612C6'], // 5 colors
+        rankBorder: ['#0301EC', '#16FCFE', '#1BFF05', '#F6FF00', '#E612C6'], // 5 colors - same as PFP
+        rankText: '#DFFF6D',
+        rankFill: '#150038',
+        category: 'performance',
+        hasAccent: true,
+        accentFile: 'dank.gif',
+        isAnimated: true,
+      },
+      SIZE: {
+        name: 'SIZE',
+        pfpBorder: ['#FFFFFF', '#14141A', '#444444', '#000000'], // 4 colors
+        rankBorder: ['#FFFFFF', '#14141A', '#444444', '#000000'], // 4 colors - same as PFP
+        rankText: '#E8E8E8',
+        rankFill: '#151515',
+        category: 'performance',
+        hasAccent: true,
+        accentFile: 'size.gif',
+        isAnimated: true,
+      },
+
+      // Special Ranks
+      EARLY: {
+        name: 'EARLY',
+        pfpBorder: ['#FFF4BB', '#FFBAA3'],
+        rankBorder: ['#FFF4BB', '#FFBAA3'],
+        rankText: '#FFF872',
+        rankFill: '#202129',
+        category: 'special',
+        hasAccent: true,
+        accentFile: 'early.png',
+      },
+      NINJA: {
+        name: 'NINJA',
+        pfpBorder: ['#2A2929', '#0A0A0A'],
+        rankBorder: ['#2A2929', '#0A0A0A'],
+        rankText: '#B6B6B6',
+        rankFill: '#0B0B0B',
+        category: 'special',
+        hasAccent: true,
+        accentFile: 'ninja.png',
+      },
+      TESTER: {
+        name: 'TESTER',
+        pfpBorder: ['#00FF9D', '#66AD16'],
+        rankBorder: ['#00FF9D', '#66AD16'],
+        rankText: '#98FF59',
+        rankFill: '#13382F',
+        category: 'special',
+        hasAccent: true,
+        accentFile: 'tester.png',
+      },
+    };
+
+    // Store adjustments
+    const adjustments = {};
+
+    function renderRanks() {
+      const container = document.getElementById('ranksContainer');
+      const filter = document.getElementById('filterSelect').value;
+      const sizeName = document.getElementById('sizeSelect').value;
+      const size = SIZES[sizeName];
+
+      container.innerHTML = '';
+
+      // Group by category
+      const categories = {
+        user: { title: 'Regular Ranks', subtitle: 'RECRUIT → LEGEND → LEGEND+', ranks: [] },
+        staff: { title: 'Team Ranks', subtitle: 'Staff & Contributors', ranks: [] },
+        performance: { title: 'Performance Ranks', subtitle: 'Temporary - Earned through gameplay', ranks: [] },
+        special: { title: 'Special Ranks', subtitle: 'Unlockable & Limited Edition', ranks: [] },
+      };
+
+      // Filter and group ranks
+      Object.entries(RANKS).forEach(([key, rank]) => {
+        if (filter === 'accents-only' && !rank.hasAccent) return;
+        if (filter !== 'all' && filter !== 'accents-only' && rank.category !== filter) return;
+
+        categories[rank.category].ranks.push({ key, ...rank });
+      });
+
+      // Render each category
+      Object.entries(categories).forEach(([cat, data]) => {
+        if (data.ranks.length === 0) return;
+
+        const section = document.createElement('div');
+        section.className = 'section';
+
+        section.innerHTML = `
+          <div class="section-header">
+            <h2>${data.title}</h2>
+            <p>${data.subtitle}</p>
+          </div>
+          <div class="ranks-grid" id="grid-${cat}"></div>
+        `;
+
+        container.appendChild(section);
+
+        const grid = document.getElementById(`grid-${cat}`);
+        data.ranks.forEach(rank => {
+          grid.appendChild(createRankCard(rank, size));
+        });
+      });
+
+      updateCodeOutput();
+    }
+
+    function createRankCard(rank, size) {
+      const card = document.createElement('div');
+      card.className = 'rank-card';
+
+      // Match RankedPFP.tsx sizing EXACTLY
+      // Base size is 50x50 from Figma
+      const BASE_SIZE = 50;
+      const scale = size / BASE_SIZE; // Calculate scale based on selected size
+      
+      const pfpSize = BASE_SIZE * scale;
+      const borderWidth = 1.5 * scale;
+      const rankWidth = BASE_SIZE * scale; // Fixed width matching PFP
+      const rankHeight = 13 * scale;
+      const gap = 3 * scale;
+      const rankFontSize = 5 * scale;
+      const emojiSize = pfpSize * 0.6;
+      
+      // Accent scaling - accents were designed for 1000x1000 PFP
+      const accentScaleFactor = pfpSize / 1000;
+      
+      // Shadow scaling (capped at 2x)
+      const shadowScale = Math.min(scale, 2);
+      const pfpShadow = `${-1 * shadowScale}px ${-1 * shadowScale}px ${2 * shadowScale}px 0 rgba(255, 255, 255, 0.08), ${10 * shadowScale}px ${10 * shadowScale}px ${20 * shadowScale}px 0 rgba(0, 0, 0, 0.25)`;
+
+      // Get adjustments or defaults
+      const offsetY = adjustments[rank.key]?.offsetY || 0;
+      const offsetX = adjustments[rank.key]?.offsetX || 0;
+      const customAccentScale = adjustments[rank.key]?.scale || 1.0;
+
+      // Generate gradient string from color array (supports 2+ colors)
+      const generateGradient = (colors) => {
+        if (colors.length === 2) {
+          return `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
+        }
+        // Multi-color gradient with even distribution
+        const stops = colors.map((color, i) => {
+          const position = (i / (colors.length - 1)) * 100;
+          return `${color} ${position}%`;
+        }).join(', ');
+        return `linear-gradient(135deg, ${stops})`;
+      };
+
+      const pfpBorderGradient = generateGradient(rank.pfpBorder);
+      const rankBorderGradient = generateGradient(rank.rankBorder);
+
+      card.innerHTML = `
+        <div class="pfp-container" style="gap: ${gap}px;">
+          <div class="pfp-wrapper" style="filter: drop-shadow(${pfpShadow});">
+            <div class="pfp-border" style="
+              width: ${pfpSize}px;
+              height: ${pfpSize}px;
+              padding: ${borderWidth}px;
+              background: ${pfpBorderGradient};
+            ">
+              <div class="pfp-inner">
+                <div class="pfp-emoji" style="font-size: ${emojiSize}px;">👤</div>
+              </div>
+            </div>
+            ${rank.hasAccent ? `
+              <div class="rank-accent" style="
+                bottom: ${-gap + (offsetY * scale)}px;
+                left: calc(50% + ${offsetX * scale}px);
+                transform: translateX(-50%) scale(${accentScaleFactor * customAccentScale});
+                transform-origin: center bottom;
+              ">
+                <img 
+                  src="/rank_accent/${rank.accentFile}" 
+                  alt="${rank.name} accent"
+                  onerror="console.error('Failed to load: /rank_accent/${rank.accentFile}')"
+                  onload="console.log('Loaded: /rank_accent/${rank.accentFile}'); ${rank.isAnimated ? 'this.dataset.src = this.src;' : ''}"
+                  ${rank.isAnimated ? `onloadeddata="if(this.dataset.loop !== 'fixed') { this.dataset.loop = 'fixed'; setInterval(() => { const src = this.dataset.src; this.src = ''; this.src = src; }, 3000); }"` : ''}
+                />
+              </div>
+            ` : ''}
+          </div>
+          <div class="rank-label" style="
+            width: ${rankWidth}px;
+            height: ${rankHeight}px;
+            padding: ${borderWidth}px;
+            border-radius: ${rankHeight / 2}px;
+            background: ${rankBorderGradient};
+            filter: drop-shadow(${pfpShadow});
+          ">
+            <div class="rank-label-inner" style="
+              background: ${rank.rankFill};
+              border-radius: ${(rankHeight - borderWidth * 2) / 2}px;
+            ">
+              <span class="rank-label-text" style="
+                font-size: ${rankFontSize}px;
+                color: ${rank.rankText};
+                font-weight: 400;
+                letter-spacing: 0.2px;
+              ">${rank.name}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rank-info">
+          <div class="rank-name">${rank.name}</div>
+          <div class="rank-meta">
+            ${rank.category.toUpperCase()}
+            ${rank.hasAccent ? ' • Accent' : ''}
+            ${rank.isAnimated ? ' • GIF' : ''}
+          </div>
+          <div class="color-swatches">
+            ${rank.pfpBorder.map(color => `
+              <div class="color-swatch">
+                <div class="color-box" style="background: ${color};"></div>
+                <div class="color-label">${color}</div>
+              </div>
+            `).join('')}
+            <div class="color-swatch">
+              <div class="color-box" style="background: ${rank.rankFill};"></div>
+              <div class="color-label">${rank.rankFill}</div>
+            </div>
+            <div class="color-swatch">
+              <div class="color-box" style="background: ${rank.rankText};"></div>
+              <div class="color-label">${rank.rankText}</div>
+            </div>
+          </div>
+
+          ${rank.hasAccent ? `
+            <div class="adjustment-controls">
+              <label>
+                Y Offset: 
+                <input 
+                  type="number" 
+                  value="${offsetY}" 
+                  step="1"
+                  onchange="updateAdjustment('${rank.key}', 'offsetY', parseFloat(this.value))"
+                />px
+              </label>
+              <label>
+                X Offset: 
+                <input 
+                  type="number" 
+                  value="${offsetX}" 
+                  step="1"
+                  onchange="updateAdjustment('${rank.key}', 'offsetX', parseFloat(this.value))"
+                />px
+              </label>
+              <label>
+                Scale: 
+                <input 
+                  type="number" 
+                  value="${customAccentScale}" 
+                  step="0.05"
+                  onchange="updateAdjustment('${rank.key}', 'scale', parseFloat(this.value))"
+                />
+              </label>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      return card;
+    }
+
+    function updateAdjustment(rankKey, property, value) {
+      if (!adjustments[rankKey]) {
+        adjustments[rankKey] = {};
+      }
+      adjustments[rankKey][property] = value;
+      renderRanks();
+    }
+
+    function updateCodeOutput() {
+      const output = document.getElementById('codeOutput');
+      
+      if (Object.keys(adjustments).length === 0) {
+        output.textContent = '// No adjustments yet. Modify offset/scale values above to generate code.';
+        return;
+      }
+
+      let code = '// Add these properties to your rank definitions:\n\n';
+      
+      Object.entries(adjustments).forEach(([rankKey, adj]) => {
+        code += `${rankKey}: {\n`;
+        code += `  // ... existing properties ...\n`;
+        if (adj.offsetY !== undefined && adj.offsetY !== 0) {
+          code += `  accentOffsetY: ${adj.offsetY}, // Vertical offset in pixels at base scale\n`;
+        }
+        if (adj.offsetX !== undefined && adj.offsetX !== 0) {
+          code += `  accentOffsetX: ${adj.offsetX}, // Horizontal offset in pixels at base scale\n`;
+        }
+        if (adj.scale !== undefined && adj.scale !== 1.0) {
+          code += `  accentScale: ${adj.scale}, // Scale multiplier for accent\n`;
+        }
+        code += `},\n\n`;
+      });
+
+      output.textContent = code;
+    }
+
+    // Event listeners
+    document.getElementById('sizeSelect').addEventListener('change', renderRanks);
+    document.getElementById('filterSelect').addEventListener('change', renderRanks);
+
+    // Initial render
+    renderRanks();
+  </script>
+</body>
+</html>

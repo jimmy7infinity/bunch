@@ -1,5 +1,5 @@
 import React from 'react';
-import { getRankColors } from '../../utils/ranks';
+import { getRankColors, getPFPBorderStyle, getRankBorderStyle } from '../../utils/ranks';
 
 interface RankedPFPProps {
   rank: string;
@@ -52,6 +52,10 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
   // Accents were designed for 1000x1000 PFP
   const accentScaleFactor = pfpSize / 1000;
   
+  // Apply custom offsets if defined (at base scale)
+  const accentOffsetY = (rankColors.accentOffsetY || 0) * scale;
+  const accentOffsetX = (rankColors.accentOffsetX || 0) * scale;
+  
   // Neumorphic shadows (scaled based on PFP size, designed for 50x50)
   // Keep shadow size proportional but not linearly scaled to avoid huge shadows
   const shadowScale = Math.min(scale, 2); // Cap shadow scaling at 2x
@@ -60,7 +64,7 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
   // Determine border style
   const borderStyle = borderColor 
     ? borderColor // Use provided solid color
-    : `linear-gradient(135deg, ${rankColors.pfpBorder.topLeft}, ${rankColors.pfpBorder.bottomRight})`; // Use rank gradient
+    : getPFPBorderStyle(rank); // Use rank gradient (supports multi-color)
 
   return (
     <div style={{
@@ -120,8 +124,8 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
           <div
             style={{
               position: 'absolute',
-              bottom: `${-gap}px`,
-              left: '50%',
+              bottom: `${-gap + accentOffsetY}px`,
+              left: `calc(50% + ${accentOffsetX}px)`,
               transform: `translateX(-50%) scale(${accentScaleFactor})`,
               transformOrigin: 'center bottom',
               pointerEvents: 'none',
@@ -147,7 +151,7 @@ export const RankedPFP: React.FC<RankedPFPProps> = ({
           style={{
             width: `${rankWidth}px`, // Fixed width, not minWidth
             height: `${rankHeight}px`,
-            background: `linear-gradient(135deg, ${rankColors.rankBorder.topLeft}, ${rankColors.rankBorder.bottomRight})`,
+            background: getRankBorderStyle(rank), // Use helper function (supports multi-color)
             padding: `${borderWidth}px`,
             borderRadius: `${rankHeight / 2}px`,
             display: 'flex',
