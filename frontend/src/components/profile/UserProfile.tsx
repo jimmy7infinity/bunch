@@ -1184,7 +1184,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                         justifyContent: 'space-between',
                         padding: '10px 0',
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div 
+                          onClick={() => onUserClick?.(request.from_user_id?._id || request.from_user_id?.id)}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '10px',
+                            cursor: 'pointer',
+                            flex: 1,
+                          }}
+                        >
                           <div style={{
                             width: '35px',
                             height: '35px',
@@ -1216,7 +1225,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                         </div>
                         <div style={{ display: 'flex', gap: '5px' }}>
                           <button 
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation();
                               try {
                                 await friendService.acceptFriendRequest(request._id);
                                 setFriendRequests(prev => prev.filter(r => r._id !== request._id));
@@ -1244,7 +1254,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                             </svg>
                           </button>
                           <button 
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation();
                               try {
                                 await friendService.rejectFriendRequest(request._id);
                                 setFriendRequests(prev => prev.filter(r => r._id !== request._id));
