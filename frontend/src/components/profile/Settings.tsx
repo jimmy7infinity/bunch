@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { polymarketService, userService } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
-import InventoryPanel from './InventoryPanel';
 import './Settings.css';
 
 interface SettingsProps {
@@ -639,24 +638,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               )}
             </>
           )}
-        </div>
-
-        {/* Rank Accents Inventory */}
-        <div 
-          className="bio-section"
-          style={{
-            width: '90%',
-            maxWidth: '500px',
-            backgroundColor: '#19191A',
-            border: '1px solid transparent',
-            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'padding-box, border-box',
-            borderRadius: '20px',
-            padding: '0px',
-          }}
-        >
-          <InventoryPanel />
         </div>
 
         {/* Polymarket Settings Section */}

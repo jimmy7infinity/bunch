@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useInventoryStore } from '../../stores/inventoryStore';
-import { RANKS, getRankColors } from '../../utils/ranks';
+import { RANKS } from '../../utils/ranks';
 import { RankedPFP } from '../common/RankedPFP';
 
 const InventoryPanel: React.FC = () => {
@@ -14,24 +14,16 @@ const InventoryPanel: React.FC = () => {
     equipAccent,
   } = useInventoryStore();
 
-  const [selectedAccent, setSelectedAccent] = useState<string | null>(null);
   const [equipLoading, setEquipLoading] = useState(false);
 
   useEffect(() => {
     fetchInventory();
   }, [fetchInventory]);
 
-  useEffect(() => {
-    if (equippedAccent) {
-      setSelectedAccent(equippedAccent);
-    }
-  }, [equippedAccent]);
-
   const handleEquip = async (accentName: string | null) => {
     setEquipLoading(true);
     try {
       await equipAccent(accentName);
-      setSelectedAccent(accentName);
     } catch (error) {
       console.error('Failed to equip accent:', error);
     } finally {
@@ -41,64 +33,97 @@ const InventoryPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">Loading inventory...</div>
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center',
+        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize: '12px',
+        color: '#707070',
+      }}>
+        Loading...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-        <p className="text-red-400">{error}</p>
+      <div style={{ 
+        padding: '15px', 
+        backgroundColor: '#2E1A1A',
+        border: '1px solid #5C2E2E',
+        borderRadius: '10px',
+        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize: '11px',
+        color: '#C85454',
+      }}>
+        {error}
       </div>
     );
   }
 
   // Group accents by category
   const groupedAccents: Record<string, string[]> = {
-    special: [],
     performance: [],
-    'user+': [],
+    special: [],
+    plus: [],
     staff: [],
   };
 
   unlockedAccents.forEach(accentName => {
     const rank = RANKS[accentName];
     if (rank) {
-      if (rank.category === 'special') {
-        groupedAccents.special.push(accentName);
-      } else if (rank.category === 'performance') {
+      if (rank.category === 'performance') {
         groupedAccents.performance.push(accentName);
+      } else if (rank.category === 'special') {
+        groupedAccents.special.push(accentName);
       } else if (accentName.endsWith('+')) {
-        groupedAccents['user+'].push(accentName);
+        groupedAccents.plus.push(accentName);
       } else if (rank.category === 'staff') {
         groupedAccents.staff.push(accentName);
       }
     }
   });
 
-  return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Rank Accents</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            {unlockedAccents.length} accent{unlockedAccents.length !== 1 ? 's' : ''} unlocked
-          </p>
-        </div>
-      </div>
+  const categoryLabels: Record<string, string> = {
+    performance: '⚡ Performance',
+    special: '🎭 Special',
+    plus: '✨ Plus',
+    staff: '👑 Staff',
+  };
 
-      {/* Special Ranks Badge */}
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Active Special Ranks Badge */}
       {specialRanks.length > 0 && (
-        <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg">
-          <h3 className="text-sm font-semibold text-purple-300 mb-2">Active Special Ranks</h3>
-          <div className="flex flex-wrap gap-2">
+        <div style={{
+          padding: '12px',
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(219, 39, 119, 0.1))',
+          border: '1px solid rgba(124, 58, 237, 0.3)',
+          borderRadius: '10px',
+        }}>
+          <div style={{
+            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '11px',
+            color: '#A78BFA',
+            marginBottom: '8px',
+            fontWeight: 600,
+          }}>
+            Active Ranks
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {specialRanks.map(rankName => (
               <span
                 key={rankName}
-                className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-xs font-medium"
+                style={{
+                  padding: '4px 10px',
+                  backgroundColor: 'rgba(124, 58, 237, 0.2)',
+                  border: '1px solid rgba(124, 58, 237, 0.3)',
+                  borderRadius: '12px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '10px',
+                  color: '#C4B5FD',
+                  fontWeight: 500,
+                }}
               >
                 {rankName}
               </span>
@@ -109,20 +134,50 @@ const InventoryPanel: React.FC = () => {
 
       {/* Currently Equipped */}
       {equippedAccent && (
-        <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
-          <h3 className="text-sm font-semibold text-gray-300 mb-3">Currently Equipped</h3>
-          <div className="flex items-center gap-4">
+        <div style={{
+          padding: '12px',
+          backgroundColor: '#242424',
+          borderRadius: '10px',
+        }}>
+          <div style={{
+            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '11px',
+            color: '#B9B7B7',
+            marginBottom: '10px',
+            fontWeight: 600,
+          }}>
+            Equipped Accent
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <RankedPFP
               pfpUrl="https://via.placeholder.com/150"
               rank={equippedAccent}
-              size={80}
+              size={50}
             />
-            <div>
-              <p className="text-white font-semibold">{equippedAccent}</p>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '12px',
+                color: '#E5E5E5',
+                marginBottom: '4px',
+                fontWeight: 500,
+              }}>
+                {equippedAccent}
+              </div>
               <button
                 onClick={() => handleEquip(null)}
                 disabled={equipLoading}
-                className="mt-2 px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors disabled:opacity-50"
+                style={{
+                  padding: '4px 10px',
+                  backgroundColor: '#333333',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '10px',
+                  color: '#B9B7B7',
+                  cursor: equipLoading ? 'not-allowed' : 'pointer',
+                  opacity: equipLoading ? 0.5 : 1,
+                }}
               >
                 Unequip
               </button>
@@ -135,49 +190,85 @@ const InventoryPanel: React.FC = () => {
       {Object.entries(groupedAccents).map(([category, accents]) => {
         if (accents.length === 0) return null;
 
-        const categoryLabels: Record<string, string> = {
-          special: '🎭 Special Ranks',
-          performance: '⚡ Performance Ranks',
-          'user+': '✨ Plus Ranks',
-          staff: '👑 Staff Ranks',
-        };
-
         return (
           <div key={category}>
-            <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+            <div style={{
+              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '11px',
+              color: '#707070',
+              marginBottom: '8px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
               {categoryLabels[category]}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+              gap: '8px',
+            }}>
               {accents.map(accentName => {
                 const isEquipped = equippedAccent === accentName;
-                const isSelected = selectedAccent === accentName;
 
                 return (
                   <div
                     key={accentName}
-                    onClick={() => !isEquipped && handleEquip(accentName)}
-                    className={`
-                      relative p-4 rounded-lg border-2 cursor-pointer transition-all
-                      ${isEquipped 
-                        ? 'border-green-500 bg-green-500/10' 
-                        : isSelected
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-gray-700 bg-gray-800/30 hover:border-gray-600 hover:bg-gray-800/50'
+                    onClick={() => !isEquipped && !equipLoading && handleEquip(accentName)}
+                    style={{
+                      position: 'relative',
+                      padding: '10px',
+                      backgroundColor: isEquipped ? 'rgba(91, 200, 84, 0.1)' : '#242424',
+                      border: isEquipped ? '1px solid #5BC854' : '1px solid #333333',
+                      borderRadius: '10px',
+                      cursor: isEquipped || equipLoading ? 'default' : 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: equipLoading ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isEquipped && !equipLoading) {
+                        e.currentTarget.style.backgroundColor = '#2A2A2A';
+                        e.currentTarget.style.borderColor = '#444444';
                       }
-                      ${equipLoading ? 'opacity-50 pointer-events-none' : ''}
-                    `}
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isEquipped) {
+                        e.currentTarget.style.backgroundColor = '#242424';
+                        e.currentTarget.style.borderColor = '#333333';
+                      }
+                    }}
                   >
-                    <div className="flex flex-col items-center gap-2">
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
                       <RankedPFP
                         pfpUrl="https://via.placeholder.com/150"
                         rank={accentName}
-                        size={60}
+                        size={45}
                       />
-                      <p className="text-xs text-center text-gray-300 font-medium">
+                      <div style={{
+                        fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '9px',
+                        color: isEquipped ? '#5BC854' : '#B9B7B7',
+                        textAlign: 'center',
+                        fontWeight: 500,
+                        lineHeight: '1.2',
+                      }}>
                         {accentName}
-                      </p>
+                      </div>
                       {isEquipped && (
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full" />
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          width: '6px',
+                          height: '6px',
+                          backgroundColor: '#5BC854',
+                          borderRadius: '50%',
+                        }} />
                       )}
                     </div>
                   </div>
@@ -190,11 +281,25 @@ const InventoryPanel: React.FC = () => {
 
       {/* Empty State */}
       {unlockedAccents.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg mb-2">No accents unlocked yet</div>
-          <p className="text-gray-600 text-sm">
-            Earn special ranks and level up to unlock new rank accents!
-          </p>
+        <div style={{
+          padding: '30px 20px',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '13px',
+            color: '#707070',
+            marginBottom: '6px',
+          }}>
+            No accents unlocked yet
+          </div>
+          <div style={{
+            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '11px',
+            color: '#505050',
+          }}>
+            Earn special ranks to unlock accents
+          </div>
         </div>
       )}
     </div>

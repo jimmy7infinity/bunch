@@ -3,6 +3,7 @@ import { RankedPFP } from '../common/RankedPFP';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { userService, friendService, blockService, mediaService, dmService } from '../../services/api';
+import InventoryPanel from './InventoryPanel';
 import type { User } from '../../types';
 import './UserProfile.css';
 
@@ -981,6 +982,35 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             </p>
           )}
         </div>
+
+        {/* Rank Accents Inventory */}
+        {isOwnProfile && (
+          <div 
+            className="bio-section"
+            style={{
+              width: '90%',
+              maxWidth: '500px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              padding: '20px',
+            }}
+          >
+            <span style={{
+              fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: '14px',
+              color: '#B9B7B7',
+              marginBottom: '15px',
+              display: 'block',
+            }}>
+              Rank Accents
+            </span>
+            <InventoryPanel />
+          </div>
+        )}
 
         {/* Account Links Section */}
         {(userData?.twitter_username || userData?.polymarket?.username) && (
