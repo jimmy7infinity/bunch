@@ -145,29 +145,63 @@ const InventoryPanel: React.FC = () => {
         <div style={{
           padding: '12px',
           backgroundColor: '#242424',
+          border: '1px solid rgba(91, 200, 84, 0.3)',
           borderRadius: '10px',
         }}>
           <div style={{
             fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '11px',
-            color: '#B9B7B7',
+            color: '#5BC854',
             marginBottom: '10px',
             fontWeight: 600,
           }}>
             Equipped Accent
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <RankedPFP
-              pfpUrl={userPfp}
-              rank={equippedAccent}
-              size={50}
-            />
+            {/* Simple preview matching grid items */}
+            <div style={{
+              position: 'relative',
+              width: '45px',
+              height: '45px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              {(() => {
+                const rankData = RANKS[equippedAccent];
+                const hasAccent = rankData?.hasAccent && rankData?.accentFile;
+                
+                if (hasAccent) {
+                  return (
+                    <img
+                      src={`/rank_accent/${rankData.accentFile}`}
+                      alt={equippedAccent}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  );
+                } else {
+                  return (
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${rankData?.pfpBorder.topLeft || '#707070'}, ${rankData?.pfpBorder.bottomRight || '#333333'})`,
+                    }} />
+                  );
+                }
+              })()}
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '12px',
+                fontSize: '11px',
                 color: '#E5E5E5',
-                marginBottom: '4px',
+                marginBottom: '6px',
                 fontWeight: 500,
               }}>
                 {equippedAccent}
@@ -185,6 +219,12 @@ const InventoryPanel: React.FC = () => {
                   color: '#B9B7B7',
                   cursor: equipLoading ? 'not-allowed' : 'pointer',
                   opacity: equipLoading ? 0.5 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!equipLoading) e.currentTarget.style.backgroundColor = '#444444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#333333';
                 }}
               >
                 Unequip

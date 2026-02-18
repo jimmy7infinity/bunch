@@ -83,7 +83,11 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       const { refreshUser } = useAuthStore.getState();
       await refreshUser();
       
+      // Log to verify the update
+      const updatedUser = useAuthStore.getState().user;
       console.log(`✅ Equipped ${itemType}: ${itemId || 'none'}`);
+      console.log('Updated user equipped_accent:', updatedUser?.equipped_accent);
+      console.log('Full user object:', updatedUser);
     } catch (error: any) {
       console.error('Error equipping item:', error);
       set({ 
