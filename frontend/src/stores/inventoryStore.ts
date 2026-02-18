@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
+import { useAuthStore } from './authStore';
 
 export type InventoryItemType = 'rank_accent' | 'pfp_effect' | 'chat_badge' | 'emoji_pack';
 
@@ -77,6 +78,10 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
           [itemType]: itemId,
         },
       }));
+      
+      // Auto-refresh user data to update equipped_accent everywhere in the app
+      const { refreshUser } = useAuthStore.getState();
+      await refreshUser();
       
       console.log(`✅ Equipped ${itemType}: ${itemId || 'none'}`);
     } catch (error: any) {
