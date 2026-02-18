@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useInventoryStore } from '../../stores/inventoryStore';
+import { useAuthStore } from '../../stores/authStore';
 import { RANKS } from '../../utils/ranks';
 import { RankedPFP } from '../common/RankedPFP';
 
@@ -14,6 +15,7 @@ const InventoryPanel: React.FC = () => {
     equipItem,
   } = useInventoryStore();
 
+  const { user } = useAuthStore();
   const [equipLoading, setEquipLoading] = useState(false);
 
   useEffect(() => {
@@ -64,6 +66,7 @@ const InventoryPanel: React.FC = () => {
   // Get all rank accent items
   const rankAccents = getItemsByType('rank_accent');
   const equippedAccent = equipped.rank_accent;
+  const userPfp = user?.avatar_url || 'https://via.placeholder.com/150';
 
   // Group accents by category
   const groupedAccents: Record<string, string[]> = {
@@ -155,7 +158,7 @@ const InventoryPanel: React.FC = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <RankedPFP
-              pfpUrl="https://via.placeholder.com/150"
+              pfpUrl={userPfp}
               rank={equippedAccent}
               size={50}
             />
@@ -210,7 +213,7 @@ const InventoryPanel: React.FC = () => {
             </div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '8px',
             }}>
               {accents.map(accentName => {
@@ -250,7 +253,7 @@ const InventoryPanel: React.FC = () => {
                       gap: '6px',
                     }}>
                       <RankedPFP
-                        pfpUrl="https://via.placeholder.com/150"
+                        pfpUrl={userPfp}
                         rank={accentName}
                         size={45}
                       />
