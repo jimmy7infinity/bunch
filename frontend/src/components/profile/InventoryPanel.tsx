@@ -218,6 +218,8 @@ const InventoryPanel: React.FC = () => {
             }}>
               {accents.map(accentName => {
                 const isEquipped = equippedAccent === accentName;
+                const rankData = RANKS[accentName];
+                const hasAccent = rankData?.hasAccent && rankData?.accentFile;
 
                 return (
                   <div
@@ -225,13 +227,14 @@ const InventoryPanel: React.FC = () => {
                     onClick={() => !isEquipped && !equipLoading && handleEquip(accentName)}
                     style={{
                       position: 'relative',
-                      padding: '10px',
+                      padding: '15px',
                       backgroundColor: isEquipped ? 'rgba(91, 200, 84, 0.1)' : '#242424',
                       border: isEquipped ? '1px solid #5BC854' : '1px solid #333333',
                       borderRadius: '10px',
                       cursor: isEquipped || equipLoading ? 'default' : 'pointer',
                       transition: 'all 0.2s',
                       opacity: equipLoading ? 0.5 : 1,
+                      minHeight: '100px',
                     }}
                     onMouseEnter={(e) => {
                       if (!isEquipped && !equipLoading) {
@@ -250,19 +253,43 @@ const InventoryPanel: React.FC = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '10px',
                     }}>
-                      <RankedPFP
-                        pfpUrl={userPfp}
-                        rank={accentName}
-                        size={45}
-                      />
+                      {/* Simple accent preview */}
+                      <div style={{
+                        position: 'relative',
+                        width: '60px',
+                        height: '60px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        {hasAccent ? (
+                          <img
+                            src={`/rank_accent/${rankData.accentFile}`}
+                            alt={accentName}
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              objectFit: 'contain',
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            background: `linear-gradient(135deg, ${rankData.pfpBorder.topLeft}, ${rankData.pfpBorder.bottomRight})`,
+                          }} />
+                        )}
+                      </div>
+                      
                       <div style={{
                         fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                        fontSize: '9px',
+                        fontSize: '10px',
                         color: isEquipped ? '#5BC854' : '#B9B7B7',
                         textAlign: 'center',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         lineHeight: '1.2',
                       }}>
                         {accentName}
@@ -270,12 +297,13 @@ const InventoryPanel: React.FC = () => {
                       {isEquipped && (
                         <div style={{
                           position: 'absolute',
-                          top: '6px',
-                          right: '6px',
-                          width: '6px',
-                          height: '6px',
+                          top: '8px',
+                          right: '8px',
+                          width: '8px',
+                          height: '8px',
                           backgroundColor: '#5BC854',
                           borderRadius: '50%',
+                          boxShadow: '0 0 0 2px rgba(91, 200, 84, 0.2)',
                         }} />
                       )}
                     </div>
