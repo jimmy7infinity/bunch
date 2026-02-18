@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { userService, friendService, blockService, mediaService, dmService } from '../../services/api';
 import InventoryPanel from './InventoryPanel';
+import { getDisplayRank } from '../../utils/ranks';
 import type { User } from '../../types';
 import './UserProfile.css';
 

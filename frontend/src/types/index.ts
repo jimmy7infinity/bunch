@@ -9,6 +9,8 @@ export interface User {
   display_name?: string;
   avatar_url?: string;
   rank?: string;
+  equipped_accent?: string; // Equipped rank accent (overrides rank for display)
+  special_ranks?: string[]; // Active special ranks
   bio?: string;
   is_online?: boolean;
   status?: 'active' | 'banned' | 'suspended' | 'deleted';

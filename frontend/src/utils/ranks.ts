@@ -21,6 +21,14 @@ export interface RankColors {
   accentOffsetX?: number; // Custom horizontal offset for accent (in pixels at base scale)
 }
 
+/**
+ * Get the display rank for a user (equipped accent takes priority over base rank)
+ */
+export const getDisplayRank = (user: { rank?: string; equipped_accent?: string } | null | undefined): string => {
+  if (!user) return 'RECRUIT';
+  return user.equipped_accent || user.rank || 'RECRUIT';
+};
+
 export const RANKS: Record<string, RankColors> = {
   // ==================== REGULAR RANKS ====================
   RECRUIT: {
