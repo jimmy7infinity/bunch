@@ -40,6 +40,8 @@ export class RanksCronService {
       let checked = 0;
       for (const user of activeUsers) {
         try {
+          if (!user.polymarket?.wallet_address) continue;
+          
           const positions = await this.positionCache.getUserPositions(
             user.polymarket.wallet_address
           );

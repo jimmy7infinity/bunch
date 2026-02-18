@@ -90,8 +90,7 @@ export class PositionCacheService {
       });
 
       const response = await fetch(
-        `https://data-api.polymarket.com/positions?${params.toString()}`,
-        { timeout: 10000 }
+        `https://data-api.polymarket.com/positions?${params.toString()}`
       );
 
       if (!response.ok) {

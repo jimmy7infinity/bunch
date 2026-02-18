@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import { RANKS, getRankColors } from '../../utils/ranks';
-import RankedPFP from '../common/RankedPFP';
+import { RankedPFP } from '../common/RankedPFP';
 
 const InventoryPanel: React.FC = () => {
   const {
