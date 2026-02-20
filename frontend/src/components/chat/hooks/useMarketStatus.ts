@@ -62,7 +62,10 @@ export const useMarketStatus = ({
         positionSizeUSD: result.positionSizeUSD,
       });
       
-      setShowPositionModal(true);
+      // Only show modal if position value is greater than 0
+      if (result.positionSizeUSD && result.positionSizeUSD > 0) {
+        setShowPositionModal(true);
+      }
 
       // Load all positions for this market
       const positionsResult = await marketPositionService.getMarketPositions(marketId);

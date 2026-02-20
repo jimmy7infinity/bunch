@@ -3,7 +3,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useChatStore } from '../../../stores/chatStore';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { websocketService } from '../../../services/websocket';
-import { messageService } from '../../../services/api';
+import { messageService, marketPositionService, polymarketService } from '../../../services/api';
 import { getDisplayRank } from '../../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../../types';
 
@@ -199,6 +199,47 @@ export const useChatMessages = ({ conversation, chatWindowRef }: UseChatMessages
     });
     setParticipants(Array.from(uniqueUsers.values()));
   }, [storeMessages, conversation._id]);
+  
+  // Auto-load market positions for position badges (⚡/🐳) in market chats
+  useEffect(() => {
+    if (conversation.type !== 'market' || !conversation.market_id) {
+      // Clear positions if not in a market chat
+      setMarketPositions({});
+      setWhales({});
+      return;
+    }
+
+    const loadMarketPositions = async () => {
+      try {
+        console.log('[useChatMessages] Loading market positions for:', conversation.market_id);
+        
+        // Load all positions for this market (for badges beside user names)
+        const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
+        const positionsMap: Record<string, 'yes' | 'no'> = {};
+        const activeUserIds: string[] = [];
+        
+        positionsResult.positions.forEach((pos) => {
+          const userId = pos.user_id._id || pos.user_id;
+          positionsMap[userId] = pos.position;
+          activeUserIds.push(userId);
+        });
+        
+        setMarketPositions(positionsMap);
+        console.log('[useChatMessages] Loaded market positions:', positionsMap);
+
+        // Load whale data for active position holders
+        if (activeUserIds.length > 0) {
+          const whalesResult = await polymarketService.getMarketWhales(conversation.market_id, activeUserIds);
+          setWhales(whalesResult.whales);
+          console.log('[useChatMessages] Loaded whales:', whalesResult.whales);
+        }
+      } catch (error) {
+        console.error('[useChatMessages] Failed to load market positions:', error);
+      }
+    };
+
+    loadMarketPositions();
+  }, [conversation._id, conversation.type, conversation.market_id]);
   
   // Load more messages (infinite scroll pagination)
   const loadMoreMessages = async () => {

@@ -781,7 +781,7 @@ export const ChatRoom = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {conversation.type === 'market' && conversation.market_id && (
               <>
-                {myMarketStatus ? (
+                {myMarketStatus && myPositionSizeUSD > 0 ? (
                   <>
                     <button
                       onClick={() => setShowPositionModal(true)}
