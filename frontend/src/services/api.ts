@@ -383,8 +383,8 @@ export const blockService = {
   },
 
   async getBlockedUsers() {
-    const response = await api.get<User[]>('/users/blocked');
-    return response.data;
+    const response = await api.get<{ blockedUsers: User[] }>('/users/blocked');
+    return response.data.blockedUsers;
   },
 };
 

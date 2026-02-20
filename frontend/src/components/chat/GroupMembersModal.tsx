@@ -87,15 +87,27 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
     }
   };
 
-  // Filter members by search query
-  const filteredMembers = members.filter(member => {
-    const user = member.user_id;
-    if (!user) return false;
-    const username = user.username?.toLowerCase() || '';
-    const displayName = user.display_name?.toLowerCase() || '';
-    const query = searchQuery.toLowerCase();
-    return username.includes(query) || displayName.includes(query);
-  });
+  // Filter and sort members by search query and online status
+  const filteredMembers = members
+    .filter(member => {
+      const user = member.user_id;
+      if (!user) return false;
+      const username = user.username?.toLowerCase() || '';
+      const displayName = user.display_name?.toLowerCase() || '';
+      const query = searchQuery.toLowerCase();
+      return username.includes(query) || displayName.includes(query);
+    })
+    .sort((a, b) => {
+      // Sort by online status first (online users at top)
+      const aOnline = a.user_id?.is_online ? 1 : 0;
+      const bOnline = b.user_id?.is_online ? 1 : 0;
+      if (aOnline !== bOnline) return bOnline - aOnline;
+      
+      // Then sort alphabetically by display name or username
+      const aName = (a.user_id?.display_name || a.user_id?.username || '').toLowerCase();
+      const bName = (b.user_id?.display_name || b.user_id?.username || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
 
   const onlineCount = members.filter(m => m.user_id?.is_online).length;
 

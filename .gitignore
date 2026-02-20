@@ -46,7 +46,12 @@ docker-compose.override.yml
 # Misc
 .turbo
 
-
+# Development/Planning Documents (not for public repo)
+SIE.md
+MODULE_*.md
+CHATROOM_*.md
+NEXT.md
+IMPLEMENTATION_GUIDE.md
 
 
 

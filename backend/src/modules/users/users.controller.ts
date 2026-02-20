@@ -168,18 +168,20 @@ export class UsersController {
     // Get sender info for notification
     const sender = await this.usersService.findById(req.user.userId);
     
-    // Emit notification to receiver
-    this.server.to(`user:${userId}`).emit('notification', {
-      type: 'friend_request',
-      title: 'New Friend Request',
-      message: `${sender.display_name || sender.username} sent you a friend request`,
-      data: {
-        requestId: (friendRequest as any)._id,
-        senderId: req.user.userId,
-        senderName: sender.display_name || sender.username,
-        senderAvatar: sender.avatar_url,
-      },
-    });
+    // Emit notification to receiver (if socket server is available)
+    if (this.server) {
+      this.server.to(`user:${userId}`).emit('notification', {
+        type: 'friend_request',
+        title: 'New Friend Request',
+        message: `${sender.display_name || sender.username} sent you a friend request`,
+        data: {
+          requestId: (friendRequest as any)._id,
+          senderId: req.user.userId,
+          senderName: sender.display_name || sender.username,
+          senderAvatar: sender.avatar_url,
+        },
+      });
+    }
     
     return { success: true };
   }

@@ -364,6 +364,14 @@ export const ChatsList = () => {
         userId={user?.id || ''}
         isOwnProfile={true}
         onBack={() => setViewMode('chats')}
+        onUserClick={(userId) => {
+          setSelectedUserId(userId);
+          setViewMode('other-profile');
+        }}
+        onNavigateToChat={(conversation) => {
+          setViewMode('chat');
+          setSelectedChat(conversation);
+        }}
       />
     );
   }
@@ -377,6 +385,14 @@ export const ChatsList = () => {
         onBack={() => {
           setViewMode('chats');
           setSelectedUserId(null);
+        }}
+        onUserClick={(userId) => {
+          setSelectedUserId(userId);
+          setViewMode('other-profile');
+        }}
+        onNavigateToChat={(conversation) => {
+          setViewMode('chat');
+          setSelectedChat(conversation);
         }}
       />
     );

@@ -31,8 +31,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   const [friendshipStatus, setFriendshipStatus] = useState<'friends' | 'pending' | 'not_friends' | 'request_sent'>('not_friends');
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<User[]>([]);
   const [isUploadingPFP, setIsUploadingPFP] = useState(false);
   const [friendMenuOpen, setFriendMenuOpen] = useState<string | null>(null);
+  const [blockedMenuOpen, setBlockedMenuOpen] = useState<string | null>(null);
   const pfpInputRef = useRef<HTMLInputElement>(null);
 
   // Store original values for cancel functionality
@@ -56,8 +58,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
             setAuth(user, token);
           }
           
-          // Load friend requests and friends for own profile
-          const [requests, friendsList] = await Promise.all([
+          // Load friend requests, friends, and blocked users for own profile
+          const [requests, friendsList, blocked] = await Promise.all([
             friendService.getFriendRequests().catch((err) => {
               console.error('Failed to load friend requests:', err);
               return [];
@@ -66,11 +68,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
               console.error('Failed to load friends:', err);
               return [];
             }),
+            blockService.getBlockedUsers().catch((err) => {
+              console.error('Failed to load blocked users:', err);
+              return [];
+            }),
           ]);
           console.log('Friend requests loaded:', requests);
           console.log('Friends loaded:', friendsList);
+          console.log('Blocked users loaded:', blocked);
           setFriendRequests(requests);
           setFriends(friendsList);
+          setBlockedUsers(blocked);
         } else {
           // For other users, fetch their data and friendship status
           user = await userService.getUser(userId);
@@ -109,18 +117,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
   // Close friend menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (friendMenuOpen) {
+      if (friendMenuOpen || blockedMenuOpen) {
         setFriendMenuOpen(null);
+        setBlockedMenuOpen(null);
       }
     };
 
-    if (friendMenuOpen) {
+    if (friendMenuOpen || blockedMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [friendMenuOpen]);
+  }, [friendMenuOpen, blockedMenuOpen]);
 
   // Mock user data - will be replaced with actual API calls
   const mockData = {
@@ -215,6 +224,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
     } catch (error) {
       console.error('Failed to remove friend:', error);
       alert('Failed to remove friend. Please try again.');
+    }
+  };
+
+  const handleUnblockUser = async (userId: string) => {
+    try {
+      await blockService.unblockUser(userId);
+      // Reload blocked users list
+      const blocked = await blockService.getBlockedUsers();
+      setBlockedUsers(blocked);
+      setBlockedMenuOpen(null);
+    } catch (error) {
+      console.error('Failed to unblock user:', error);
+      alert('Failed to unblock user. Please try again.');
     }
   };
 
@@ -1474,6 +1496,126 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile, 
                   margin: 0,
                 }}>
                   No friends yet
+                </p>
+              )}
+            </div>
+
+            {/* Blocked Users List */}
+            <div 
+                className="bio-section"
+                style={{
+                  width: '90%',
+                  maxWidth: '500px',
+                  backgroundColor: '#19191A',
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderRadius: '20px',
+                  padding: '20px',
+                }}
+              >
+                <span style={{
+                  fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '14px',
+                  color: '#B9B7B7',
+                  marginBottom: '15px',
+                  display: 'block',
+                }}>
+                  Blocked Users ({blockedUsers.length})
+                </span>
+                {blockedUsers.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {blockedUsers.map((blocked: User, index: number) => (
+                    <React.Fragment key={blocked._id || blocked.id}>
+                      <div 
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 0',
+                          position: 'relative',
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          flex: 1,
+                        }}>
+                          <div style={{
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            border: '2px solid #888888',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#2A2A2A',
+                            overflow: 'hidden',
+                          }}>
+                            {blocked.avatar_url ? (
+                              <img 
+                                src={blocked.avatar_url} 
+                                alt={blocked.username}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '16px' }}>👤</span>
+                            )}
+                          </div>
+                          <span style={{
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '12px',
+                            color: '#B9B7B7',
+                          }}>
+                            {blocked.display_name || blocked.username || 'User'}
+                          </span>
+                        </div>
+                        
+                        {/* Unblock button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Unblock ${blocked.display_name || blocked.username}?`)) {
+                              handleUnblockUser(blocked._id || blocked.id);
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#19191A',
+                            border: '1px solid #5BC854',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: '11px',
+                            color: '#5BC854',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1F2A1F'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#19191A'}
+                        >
+                          Unblock
+                        </button>
+                      </div>
+                      {index < blockedUsers.length - 1 && (
+                        <div style={{
+                          height: '1px',
+                          backgroundColor: '#333333',
+                          margin: '5px 0',
+                        }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                <p style={{
+                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '12px',
+                  color: '#707070',
+                  margin: 0,
+                }}>
+                  No blocked users
                 </p>
               )}
             </div>

@@ -24,7 +24,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onUserClick,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { notifications, markAsRead, markAllAsRead, removeNotification } = useNotificationStore();
+  const { notifications, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotificationStore();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -144,21 +144,38 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               Notifications
             </span>
             {notifications.length > 0 && (
-              <button
-                onClick={markAllAsRead}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '11px',
-                  color: '#5BC854',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-              >
-                Mark all read
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button
+                  onClick={markAllAsRead}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '11px',
+                    color: '#5BC854',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  Mark all read
+                </button>
+                <button
+                  onClick={clearAll}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '11px',
+                    color: '#C85454',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  Clear all
+                </button>
+              </div>
             )}
           </div>
 
