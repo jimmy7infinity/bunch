@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { polymarketService, userService } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
+import { ethers } from 'ethers';
 import './Settings.css';
+
+// Declare ethereum on window object
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 interface SettingsProps {
   onBack: () => void;
@@ -11,6 +19,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [privateProfile, setPrivateProfile] = useState(false);
+  
+  // Wallet linking state
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+  const [walletError, setWalletError] = useState('');
   
   // Polymarket verification state
   const { user, refreshUser, logout } = useAuthStore();
@@ -107,6 +119,71 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
       console.error('Failed to update setting:', error);
       // Revert on error
       setAutoPredictionChat(!newValue);
+    }
+  };
+
+  const handleLinkWallet = async () => {
+    try {
+      setIsLinkingWallet(true);
+      setWalletError('');
+
+      // Check if MetaMask or other Web3 provider is available
+      if (!window.ethereum) {
+        throw new Error('Please install MetaMask or another Web3 wallet to continue');
+      }
+
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const address = accounts[0];
+
+      if (!address) {
+        throw new Error('No wallet address found');
+      }
+
+      // Create message for signing
+      const message = `Sign this message to link your wallet to Bunch.\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
+
+      // Request signature
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, address],
+      });
+
+      // Send to backend
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${apiUrl}/users/link-wallet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          wallet_address: address,
+          signature,
+          message,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to link wallet');
+      }
+
+      const data = await response.json();
+      console.log('✅ Wallet linked successfully:', data);
+
+      // Refresh user data
+      await refreshUser();
+      
+      alert('Wallet linked successfully!');
+    } catch (error: any) {
+      console.error('Failed to link wallet:', error);
+      setWalletError(error.message || 'Failed to link wallet');
+      alert(`Error: ${error.message || 'Failed to link wallet'}`);
+    } finally {
+      setIsLinkingWallet(false);
     }
   };
 
@@ -854,21 +931,19 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               </span>
             ) : (
               <button
-                onClick={() => {
-                  const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://bunch.up.railway.app';
-                  window.open(`${apiUrl}/api/auth/wallet`, '_blank', 'width=420,height=700');
-                }}
+                onClick={handleLinkWallet}
+                disabled={isLinkingWallet}
                 style={{
                   fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                   fontSize: '10px',
-                  color: '#5BC854',
+                  color: isLinkingWallet ? '#707070' : '#5BC854',
                   backgroundColor: 'transparent',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: isLinkingWallet ? 'not-allowed' : 'pointer',
                   textDecoration: 'underline',
                 }}
               >
-                Connect
+                {isLinkingWallet ? 'Connecting...' : 'Connect'}
               </button>
             )}
           </div>
