@@ -22,25 +22,54 @@ const CATEGORY_MAPPING = {
 
 /**
  * Extract market ID from Polymarket URL
- * Polymarket URLs are typically: https://polymarket.com/event/{slug}?tid={marketId}
- * or https://polymarket.com/event/{slug}
- * or category pages: https://polymarket.com/geopolitics, /sports/live, /politics/anything
+ * Polymarket URLs can be:
+ * - https://polymarket.com/event/{slug}?tid={marketId}
+ * - https://polymarket.com/event/{slug}
+ * - https://polymarket.com/sports/{league}/{slug} (sports markets)
+ * - Category pages: https://polymarket.com/geopolitics, /sports/live, /politics/anything
  */
 function extractMarketInfo() {
   const url = window.location.href;
   const pathname = window.location.pathname;
 
-  // Check if we're on a category page first (matches /category or /category/*)
-  const categoryMatch = pathname.match(/^\/([^\/]+)(?:\/|$)/);
+  // Check for sports market pages first (more specific pattern)
+  // Pattern: /sports/{league}/{slug} or /sports/{category}/{league}/{slug}
+  const sportsMatch = pathname.match(/^\/sports\/([^\/]+\/[^\/\?]+)/);
+  if (sportsMatch) {
+    const slug = sportsMatch[1]; // e.g., "epl/epl-wol-ars-2026-02-18"
+    
+    // Try to get market ID from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const tid = urlParams.get('tid');
+    
+    // Use tid if available, otherwise use full path as slug
+    const marketId = tid || slug.replace(/\//g, '-'); // Convert slashes to dashes for ID
+    
+    // Try to extract market title from page
+    let marketTitle = extractMarketTitle(slug);
+    
+    return {
+      marketId,
+      marketTitle,
+      url,
+      categorySlug: null, // This is a specific market, not a category page
+    };
+  }
+
+  // Check if we're on a general category page (matches /category or /category/*)
+  // But NOT if it looks like a specific event
+  const categoryMatch = pathname.match(/^\/([^\/]+)(?:\/([^\/]+))?$/);
   if (categoryMatch) {
     const topLevelPath = categoryMatch[1];
-    const categorySlug = CATEGORY_MAPPING[topLevelPath];
-    if (categorySlug) {
+    const secondLevel = categoryMatch[2];
+    
+    // If second level looks like "live" or other category pages, treat as category
+    if (CATEGORY_MAPPING[topLevelPath] && (!secondLevel || secondLevel === 'live' || secondLevel === 'trending')) {
       return {
         marketId: null,
         marketTitle: null,
         url,
-        categorySlug, // Signal this is a category page
+        categorySlug: CATEGORY_MAPPING[topLevelPath],
       };
     }
   }
@@ -63,35 +92,39 @@ function extractMarketInfo() {
   const marketId = tid || slug;
 
   // Try to extract market title from page
-  let marketTitle = null;
-  
-  // Method 1: Try to get from page title
-  const pageTitle = document.title;
-  if (pageTitle && !pageTitle.includes('Polymarket')) {
-    marketTitle = pageTitle.replace(' | Polymarket', '').trim();
-  }
-
-  // Method 2: Try to get from H1 tag
-  if (!marketTitle) {
-    const h1 = document.querySelector('h1');
-    if (h1) {
-      marketTitle = h1.textContent.trim();
-    }
-  }
-
-  // Method 3: Try to get from meta tags
-  if (!marketTitle) {
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) {
-      marketTitle = ogTitle.getAttribute('content');
-    }
-  }
+  let marketTitle = extractMarketTitle(slug);
 
   return {
     marketId,
-    marketTitle: marketTitle || slug,
+    marketTitle,
     url,
   };
+}
+
+/**
+ * Extract market title from page
+ */
+function extractMarketTitle(fallbackSlug) {
+  // Method 1: Try to get from page title
+  const pageTitle = document.title;
+  if (pageTitle && !pageTitle.includes('Polymarket')) {
+    return pageTitle.replace(' | Polymarket', '').trim();
+  }
+
+  // Method 2: Try to get from H1 tag
+  const h1 = document.querySelector('h1');
+  if (h1) {
+    return h1.textContent.trim();
+  }
+
+  // Method 3: Try to get from meta tags
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) {
+    return ogTitle.getAttribute('content');
+  }
+
+  // Fallback to slug
+  return fallbackSlug;
 }
 
 /**
