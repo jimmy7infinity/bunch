@@ -3,7 +3,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useChatStore } from '../../../stores/chatStore';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { websocketService } from '../../../services/websocket';
-import { messageService, marketPositionService, polymarketService } from '../../../services/api';
+import { messageService, marketPositionService } from '../../../services/api';
 import { getDisplayRank } from '../../../utils/ranks';
 import type { ChatRoom as ChatRoomType } from '../../../types';
 
@@ -211,30 +211,33 @@ export const useChatMessages = ({ conversation, chatWindowRef }: UseChatMessages
 
     const loadMarketPositions = async () => {
       try {
-        console.log('[useChatMessages] Loading market positions for:', conversation.market_id);
+        console.log('[useChatMessages] Loading market statuses for:', conversation.market_id);
         
-        // Load all positions for this market (for badges beside user names)
-        const positionsResult = await marketPositionService.getMarketPositions(conversation.market_id);
+        // Load all market statuses (actual Polymarket positions detected via API)
+        const statusesResult = await marketPositionService.getMarketStatuses(conversation.market_id);
         const positionsMap: Record<string, 'yes' | 'no'> = {};
-        const activeUserIds: string[] = [];
+        const whalesMap: Record<string, boolean> = {};
         
-        positionsResult.positions.forEach((pos) => {
-          const userId = pos.user_id._id || pos.user_id;
-          positionsMap[userId] = pos.position;
-          activeUserIds.push(userId);
+        statusesResult.statuses.forEach((status) => {
+          const userId = status.userId;
+          
+          if (status.status === 'whale') {
+            whalesMap[userId] = true;
+            positionsMap[userId] = 'yes'; // Whales have positions too
+          } else if (status.status === 'position') {
+            positionsMap[userId] = 'yes';
+          }
         });
         
         setMarketPositions(positionsMap);
-        console.log('[useChatMessages] Loaded market positions:', positionsMap);
-
-        // Load whale data for active position holders
-        if (activeUserIds.length > 0) {
-          const whalesResult = await polymarketService.getMarketWhales(conversation.market_id, activeUserIds);
-          setWhales(whalesResult.whales);
-          console.log('[useChatMessages] Loaded whales:', whalesResult.whales);
-        }
+        setWhales(whalesMap);
+        
+        console.log('[useChatMessages] Loaded market statuses:', {
+          positions: Object.keys(positionsMap).length,
+          whales: Object.keys(whalesMap).length,
+        });
       } catch (error) {
-        console.error('[useChatMessages] Failed to load market positions:', error);
+        console.error('[useChatMessages] Failed to load market statuses:', error);
       }
     };
 

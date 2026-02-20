@@ -481,6 +481,20 @@ export const marketPositionService = {
     const response = await api.delete(`/conversations/markets/${marketId}/position`);
     return response.data;
   },
+
+  /**
+   * Get all market statuses (actual Polymarket positions) for showing ⚡/🐳 badges
+   */
+  async getMarketStatuses(marketId: string) {
+    const response = await api.get<{ 
+      statuses: Array<{ 
+        userId: string; 
+        status: 'position' | 'whale'; 
+        positionSizeUSD: number;
+      }> 
+    }>(`/conversations/markets/${marketId}/statuses`);
+    return response.data;
+  },
 };
 
 // DM service

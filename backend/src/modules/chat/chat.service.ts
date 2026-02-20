@@ -822,6 +822,18 @@ export class ChatService {
     );
   }
 
+  /**
+   * Get all market statuses for a market (for showing badges)
+   */
+  async getMarketStatuses(marketId: string) {
+    const statuses = await this.marketUserStatusModel
+      .find({ market_id: marketId })
+      .populate('user_id', '_id username')
+      .exec();
+
+    return statuses;
+  }
+
   // ==================== REPORTS ====================
 
   /**

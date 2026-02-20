@@ -460,6 +460,23 @@ export class ChatController {
     };
   }
 
+  /**
+   * Get all market statuses for a market (for showing ⚡/🐳 badges)
+   * GET /conversations/markets/:marketId/statuses
+   */
+  @Get('markets/:marketId/statuses')
+  async getMarketStatuses(@Param('marketId') marketId: string) {
+    const statuses = await this.chatService.getMarketStatuses(marketId);
+    
+    return {
+      statuses: statuses.map((s) => ({
+        userId: s.user_id._id || s.user_id,
+        status: s.status,
+        positionSizeUSD: s.position_size_usd,
+      })),
+    };
+  }
+
   // ==================== REPORT ENDPOINTS ====================
 
   /**
