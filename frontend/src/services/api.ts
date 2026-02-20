@@ -460,28 +460,8 @@ export const polymarketService = {
   },
 };
 
-// Market positions service
+// Market status service (for actual Polymarket positions)
 export const marketPositionService = {
-  async setPosition(marketId: string, position: 'yes' | 'no') {
-    const response = await api.post(`/conversations/market/${marketId}/position`, { position });
-    return response.data;
-  },
-
-  async getMyPosition(marketId: string) {
-    const response = await api.get<{ position: { position: 'yes' | 'no' } | null }>(`/conversations/markets/${marketId}/my-position`);
-    return response.data;
-  },
-
-  async getMarketPositions(marketId: string) {
-    const response = await api.get<{ positions: Array<{ user_id: any; position: 'yes' | 'no' }> }>(`/conversations/markets/${marketId}/positions`);
-    return response.data;
-  },
-
-  async clearPosition(marketId: string) {
-    const response = await api.delete(`/conversations/markets/${marketId}/position`);
-    return response.data;
-  },
-
   /**
    * Get all market statuses (actual Polymarket positions) for showing ⚡/🐳 badges
    */

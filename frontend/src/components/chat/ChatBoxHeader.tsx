@@ -1,20 +1,15 @@
 import type { ChatRoom as ChatRoomType } from '../../types';
-import { PositionPicker } from './PositionPicker';
 
 interface ChatBoxHeaderProps {
   conversation: ChatRoomType;
   onlineCount: number;
   onMembersClick: () => void;
-  myPosition: 'yes' | 'no' | null;
-  onPositionChange: (position: 'yes' | 'no' | null) => void;
 }
 
 export const ChatBoxHeader = ({
   conversation,
   onlineCount,
   onMembersClick,
-  myPosition,
-  onPositionChange,
 }: ChatBoxHeaderProps) => {
   const getChatTypeIcon = () => {
     if (conversation.type === 'global') {
@@ -97,17 +92,8 @@ export const ChatBoxHeader = ({
         </span>
       </button>
 
-      {/* Right: Position Picker (for market chats) + Online Indicator */}
+      {/* Right: Online Indicator */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Position Picker - Only for market chats */}
-        {conversation.type === 'market' && conversation.market_id && (
-          <PositionPicker
-            marketId={conversation.market_id}
-            myPosition={myPosition}
-            onPositionChange={onPositionChange}
-          />
-        )}
-
         {/* Online Indicator */}
         <div
           className="online-indicator"

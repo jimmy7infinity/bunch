@@ -9,7 +9,6 @@ import { ChatScheduler } from './chat.scheduler';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { Conversation, ConversationSchema } from './schemas/conversation.schema';
 import { Participant, ParticipantSchema } from './schemas/participant.schema';
-import { UserMarketPosition, UserMarketPositionSchema } from './schemas/user-market-position.schema';
 import { MarketUserStatus, MarketUserStatusSchema } from './schemas/market-user-status.schema';
 import { Report, ReportSchema } from './schemas/report.schema';
 import { UsersModule } from '../users/users.module';
@@ -21,7 +20,6 @@ import { AuthModule } from '../auth/auth.module';
       { name: Message.name, schema: MessageSchema },
       { name: Conversation.name, schema: ConversationSchema },
       { name: Participant.name, schema: ParticipantSchema },
-      { name: UserMarketPosition.name, schema: UserMarketPositionSchema },
       { name: MarketUserStatus.name, schema: MarketUserStatusSchema },
       { name: Report.name, schema: ReportSchema },
     ]),
