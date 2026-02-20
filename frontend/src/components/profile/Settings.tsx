@@ -472,20 +472,22 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         </div>
 
         {/* Polymarket Verification Section */}
-        <div 
-          className="bio-section"
-          style={{
-            width: '90%',
-            maxWidth: '500px',
-            backgroundColor: '#19191A',
-            border: '1px solid transparent',
-            backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'padding-box, border-box',
-            borderRadius: '20px',
-            padding: '20px',
-          }}
-        >
+        {/* Hide if user signed up with wallet+Polymarket (already verified at signup) */}
+        {!(user?.wallet_address && user?.polymarket?.verified && !user?.twitter_id) && (
+          <div 
+            className="bio-section"
+            style={{
+              width: '90%',
+              maxWidth: '500px',
+              backgroundColor: '#19191A',
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#19191A, #19191A), linear-gradient(135deg, #707070, #333333)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              borderRadius: '20px',
+              padding: '20px',
+            }}
+          >
           <span style={{
             fontFamily: 'SF Compact Text, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '14px',
@@ -716,6 +718,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             </>
           )}
         </div>
+        )}
 
         {/* Polymarket Settings Section */}
         <div 
@@ -883,34 +886,85 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           </div>
 
           {/* Wallet Connection */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px',
-            backgroundColor: '#242424',
-            borderRadius: '10px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M17 9V7C17 5.89543 16.1046 5 15 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H15C16.1046 19 17 18.1046 17 17V15M17 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17M17 9V15M17 15V17"
-                  stroke="#B9B7B7"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="14" cy="12" r="1" fill="#B9B7B7" />
-              </svg>
-              <div>
-                <div style={{
-                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '11px',
-                  color: '#E5E5E5',
-                }}>
-                  Crypto Wallet
+          {/* Only show if user doesn't have a wallet yet AND has Twitter account */}
+          {!user?.wallet_address && user?.twitter_id && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px',
+              backgroundColor: '#242424',
+              borderRadius: '10px',
+              marginBottom: '8px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M17 9V7C17 5.89543 16.1046 5 15 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H15C16.1046 19 17 18.1046 17 17V15M17 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17M17 9V15M17 15V17"
+                    stroke="#B9B7B7"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="14" cy="12" r="1" fill="#B9B7B7" />
+                </svg>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '11px',
+                    color: '#E5E5E5',
+                  }}>
+                    Crypto Wallet
+                  </div>
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '9px',
+                    color: '#707070',
+                    marginTop: '2px',
+                  }}>
+                    Verify your Polymarket account to link wallet
+                  </div>
                 </div>
-                {user?.wallet_address && (
+              </div>
+              <span style={{
+                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: '10px',
+                color: '#707070',
+              }}>
+                Not connected
+              </span>
+            </div>
+          )}
+
+          {/* Show wallet if already connected (read-only) */}
+          {user?.wallet_address && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px',
+              backgroundColor: '#242424',
+              borderRadius: '10px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M17 9V7C17 5.89543 16.1046 5 15 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H15C16.1046 19 17 18.1046 17 17V15M17 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17M17 9V15M17 15V17"
+                    stroke="#B9B7B7"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="14" cy="12" r="1" fill="#B9B7B7" />
+                </svg>
+                <div>
+                  <div style={{
+                    fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: '11px',
+                    color: '#E5E5E5',
+                  }}>
+                    Crypto Wallet
+                  </div>
                   <div style={{
                     fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                     fontSize: '10px',
@@ -918,10 +972,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                   }}>
                     {user.wallet_address.slice(0, 6)}...{user.wallet_address.slice(-4)}
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-            {user?.wallet_address ? (
               <span style={{
                 fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: '10px',
@@ -929,24 +981,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               }}>
                 Connected
               </span>
-            ) : (
-              <button
-                onClick={handleLinkWallet}
-                disabled={isLinkingWallet}
-                style={{
-                  fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: '10px',
-                  color: isLinkingWallet ? '#707070' : '#5BC854',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: isLinkingWallet ? 'not-allowed' : 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                {isLinkingWallet ? 'Connecting...' : 'Connect'}
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Account Section */}
